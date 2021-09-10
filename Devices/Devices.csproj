@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CSUtils\CSUtils.csproj" />
+    <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
   </ItemGroup>
 
 </Project>

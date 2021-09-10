@@ -17,8 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
+    <ProjectReference Include="..\Devices\Devices.csproj" />
     <ProjectReference Include="..\WPF Controls\CustomWindows\CustomWindows.csproj" />
-    <ProjectReference Include="..\WPF Controls\Devices\Devices.csproj" />
     <ProjectReference Include="..\WPF Controls\Number Text Boxes\Number Text Boxes.csproj" />
   </ItemGroup>
   

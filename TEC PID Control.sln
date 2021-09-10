@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Number Text Boxes", "WPF Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomWindows", "WPF Controls\CustomWindows\CustomWindows.csproj", "{7C2E0B09-32ED-4AE7-8039-D711497D950B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Devices", "WPF Controls\Devices\Devices.csproj", "{166F66B5-9880-4DE5-B2F7-558C5C309AE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Devices", "Devices\Devices.csproj", "{166F66B5-9880-4DE5-B2F7-558C5C309AE9}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208} = {8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}
 	EndProjectSection
