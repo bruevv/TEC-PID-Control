@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
+using SerialPorting;
+using ThreadQueuing;
 
 namespace Devices.Keithley
 {
-  using System.ComponentModel;
-  using System.Threading.Tasks;
-  using System.Windows;
-  using Devices;
-  using SerialPorting;
-  using ThreadQueuing;
-  using UCCommands;
   using SG = System.Globalization;
 
   public enum CK2400
@@ -33,10 +31,9 @@ namespace Devices.Keithley
     RangeI,
     AutoRangeV,
     AutoRangeI,
-
   };
 
-  public class KeithleyDevCon : UARTConnection<string>
+  class KeithleyDevCon : UARTConnection<string>
   {
     protected override string InitString => "KEITHLEY INSTRUMENTS INC.,";
     protected override IDictionary<Enum, string> Coms => coms;
@@ -55,9 +52,10 @@ namespace Devices.Keithley
 
     //    void 
   }
-  public class Keithley2400Con : KeithleyDevCon
+  class Keithley2400Con : KeithleyDevCon
   {
     protected override IDictionary<Enum, string> Coms => coms;
+    // this dictionary is appended in static constructor
     static new readonly Dictionary<Enum, string> coms = new Dictionary<Enum, string>() {
             {CK2400.Fetch,      "FETC"},
             {CK2400.SetMeasureV,"FORM:ELEM VOLT" },
@@ -79,6 +77,7 @@ namespace Devices.Keithley
             {CK2400.AutoRangeV, "VOLT:RANG:AUTO" },
             {CK2400.Output,     "OUTP" },
        };
+
     public enum Mode
     {
       CURR,
@@ -86,7 +85,7 @@ namespace Devices.Keithley
       BOTH,
       unknown,
     }
-   // public override bool AddQuestionMark => true;
+    // public override bool AddQuestionMark => true;
     static Keithley2400Con()
     {
       foreach(var keyValuePair in KeithleyDevCon.coms)
@@ -94,10 +93,10 @@ namespace Devices.Keithley
     }
     public Keithley2400Con(WaitHandle abortWaitHandle) : base(abortWaitHandle) { }
   }
-  public class KeithleyDevice<Connection> : TDevice<string, Connection>
-    where Connection : KeithleyDevCon
+  public class KeithleyDevice : ASCIIDevice
   {
-    protected override Connection InitSPI() => (Connection)new KeithleyDevCon(EventAbort);
+    new private protected KeithleyDevCon iCI => (KeithleyDevCon)base.iCI;
+    private protected override ConnectionBase InitSPI() => new KeithleyDevCon(EventAbort);
 
     void CustomCommand_AS(string command)
     {
@@ -122,9 +121,14 @@ namespace Devices.Keithley
       iCI.TQ.EnqueueUnique(CustomCommand_AS, command);
     }
   }
-  public class Keithley2400 : KeithleyDevice<Keithley2400Con>, INotifyPropertyChanged
+  public class Keithley2400 : KeithleyDevice, INotifyPropertyChanged
   {
+    new private protected Keithley2400Con iCI => (Keithley2400Con)base.iCI;
+
     public event PropertyChangedEventHandler PropertyChanged;
+    void OnPropertyChanged([CallerMemberName] string property = "") =>
+     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+
     double voltage = double.NaN;
     double current = double.NaN;
     double time = 0;
@@ -134,7 +138,7 @@ namespace Devices.Keithley
       protected set {
         if(voltage != value) {
           voltage = value;
-          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Voltage)));
+          OnPropertyChanged();
         }
       }
     }
@@ -143,7 +147,7 @@ namespace Devices.Keithley
       protected set {
         if(current != value) {
           current = value;
-          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Current)));
+          OnPropertyChanged();
         }
       }
     }
@@ -152,7 +156,7 @@ namespace Devices.Keithley
       protected set {
         if(time != value) {
           time = value;
-          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Time)));
+          OnPropertyChanged();
         }
       }
     }
@@ -161,7 +165,7 @@ namespace Devices.Keithley
       protected set {
         if(status != value) {
           status = value;
-          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Status)));
+          OnPropertyChanged();
         }
       }
     }
@@ -170,7 +174,7 @@ namespace Devices.Keithley
     Keithley2400Con.Mode SourceMode = Keithley2400Con.Mode.unknown;
     Keithley2400Con.Mode MeasureMode = Keithley2400Con.Mode.unknown;
 
-    protected override Keithley2400Con InitSPI() => new Keithley2400Con(EventAbort);
+    private protected override Keithley2400Con InitSPI() => new Keithley2400Con(EventAbort);
 
     void Reset_AS()
     {

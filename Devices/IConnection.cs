@@ -14,7 +14,7 @@ namespace Devices
     Busy = 4,
     Error = 8
   }
-  public abstract class ConnectionBase : IDisposable
+  abstract class ConnectionBase : IDisposable
   {
     /// <summary> Default is 100 </summary> 
     public virtual int BasicTimeout => 100;
@@ -93,35 +93,5 @@ namespace Devices
       Dispose(true);
     }
     #endregion
-  }
-
-  /// <summary>
-  /// ConnectionInterface rncapsulates all transactions to the device
-  /// </summary>
-  /// <typeparam name="T">Connection communication style (ASCII:string or Binary: byte[])</typeparam>
-  public interface IConnection<T> : IDisposable where T : class
-  {
-    string PortName { get; }
-    SState State { get; }
-    ThreadQueue TQ { get; }
-
-    bool IsConnected { get; }
-
-    event EventHandler Connected;
-    event EventHandler Disconnected;
-    event EventHandler Idle;
-
-    void Connect(string port);
-    void Disconnect();
-
-    string Iitialize();
-    void Reset();
-    void Abort();
-    void Flush();
-
-    public void Command(Enum c);
-    void Command(Enum c, T args);
-    string Request(Enum r);
-    void Request(Enum r, byte[] buf, int BytesToReceive, int WaitTimeout);
   }
 }

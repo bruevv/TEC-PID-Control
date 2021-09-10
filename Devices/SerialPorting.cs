@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using ThreadQueuing;
 
-namespace UCCommands
+namespace Devices
 {
   public enum CCmd
   {
@@ -24,7 +24,7 @@ namespace SerialPorting
 {
   using Devices;
 
-  public abstract class UARTConnectionBase : ConnectionBase
+  abstract class UARTConnectionBase : ConnectionBase
   {
 
     protected SerialPort SP = null;
@@ -101,7 +101,7 @@ namespace SerialPorting
   /// ConnectionInterface incapsulates all transactions to the device
   /// </summary>
   /// <typeparam name="T">Connection communication style (ASCII:string or Binary: byte[])</typeparam>
-  abstract public class UARTConnection<T> : UARTConnectionBase, IConnection<T>
+  abstract class UARTConnection<T> : UARTConnectionBase
     where T : class
   {
     enum TransferType { ASCII, Binary };
@@ -127,7 +127,7 @@ namespace SerialPorting
         Flush();
         switch(TT) {
           case TransferType.ASCII:
-            ret = Request(Coms[CCmd.Init], null, true);
+            ret = Request(GenCommand(CCmd.Init), null, true);
             break;
           case TransferType.Binary:
             byte[] ba = new byte[1];
@@ -151,7 +151,7 @@ namespace SerialPorting
       int rt = ReadTimeOut;
       try {
         SP.ReadTimeout = BasicTimeout;
-        Request(Coms[CCmd.Reset], null);
+        Request(GenCommand(CCmd.Reset), null);
       } catch(TimeoutException) {
       } finally {
         ReadTimeOut = rt;
@@ -166,7 +166,7 @@ namespace SerialPorting
       int rt = ReadTimeOut;
       try {
         SP.ReadTimeout = BasicTimeout;
-        Request(Coms[CCmd.Abort], null);
+        Request(GenCommand(CCmd.Abort), null);
 
         Flush();
       } finally {
@@ -174,6 +174,7 @@ namespace SerialPorting
       }
     }
 
+    protected virtual string ArgSeparator => " ";
     string Request(string cmd, T args, bool NeedReturn = false)
     {
       if(!IsConnected) throw new Exception("Serial Port Disconnected");
@@ -190,10 +191,10 @@ namespace SerialPorting
       switch(args) {
         case string str_args:
           if(string.IsNullOrEmpty(cmd)) SP.Write(str_args);
-          else SP.Write($"{cmd} {str_args}");
+          else SP.Write(cmd + ArgSeparator + str_args);
           break;
         case byte[] ba_args:
-          if(!string.IsNullOrEmpty(cmd)) SP.Write(cmd);
+          if(!string.IsNullOrEmpty(cmd)) SP.Write(cmd + ArgSeparator);
           SP.Write(ba_args, 0, ba_args.Length);
           break;
         case null:
@@ -210,7 +211,7 @@ namespace SerialPorting
         return TrimDevCtrlCahrs ? rl.Trim('\u0013', '\u0011') : rl;
       } else {
         return null;
-      }  
+      }
     }
 
     static string AsString(T t)
@@ -230,7 +231,7 @@ namespace SerialPorting
       string ack;
 
       try {
-        ack = Request(Coms[c], null);
+        ack = Request(GenCommand(c), null);
       } catch(Exception e) {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Failed\n{e.Message}", e);
@@ -246,7 +247,7 @@ namespace SerialPorting
     {
       string ack;
       try {
-        ack = Request(Coms[c], args);
+        ack = Request(GenCommand(c), args);
       } catch(Exception e) {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Args '{AsString(args)}' Failed\n{e.Message}", e);
@@ -257,6 +258,9 @@ namespace SerialPorting
       }
       State = SState.Connected;
     }
+
+    protected virtual string GenCommand(Enum c) => Coms[c];
+
     /// <summary> In Milliseconds </summary>
     const int SerialReadInterval = 10;
 
@@ -298,7 +302,7 @@ namespace SerialPorting
       string ret;
       State |= SState.Busy;
       try {
-        ret = Request($"{Coms[r]}{(AddQuestionMark ? "?" : "")}", args, true);
+        ret = Request($"{GenCommand(r)}{(AddQuestionMark ? "?" : "")}", args, true);
       } catch(Exception e) {
         State &= ~SState.Busy;
         State |= SState.Error;
@@ -314,7 +318,7 @@ namespace SerialPorting
       if(WaitTimeout == -1) WaitTimeout = BasicTimeout;
       State |= SState.Busy;
       try {
-        Request($"{Coms[r]}", null);
+        Request($"{GenCommand(r)}", null);
         Read(buf, BytesToReceive, WaitTimeout);
       } catch(AbortException) {
         State &= ~SState.Busy;

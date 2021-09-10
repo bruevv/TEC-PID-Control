@@ -104,13 +104,11 @@ namespace Devices
       public bool HasError => (DState & DevState.Error) == DevState.Error;
     }
   }
-
-  public abstract class TDevice<T, C> : Device, IDisposable
+  public abstract class TDevice<T> : Device, IDisposable
     where T : class
-    where C : IConnection<T>
   {
 
-    readonly protected C iCI;
+    readonly private protected ConnectionBase iCI;
 
     public string PortName => iCI.PortName;
 
@@ -126,7 +124,7 @@ namespace Devices
         ChangeStatus(DevState.Disconnected);
     }
 
-    abstract protected C InitSPI();
+    abstract private protected ConnectionBase InitSPI();
     protected TDevice()
     {
       iCI = InitSPI();
@@ -205,7 +203,7 @@ namespace Devices
   }
 
   //  abstract class UARTDevice<T> : TDevice<T, UARTConnection<T>> where T : class { }
-  public abstract class ASCIIDevice : TDevice<string, IConnection<string>>
+  public abstract class ASCIIDevice : TDevice<string>
   {
 
   }
