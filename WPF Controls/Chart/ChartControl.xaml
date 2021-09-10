@@ -1,0 +1,30 @@
+﻿<UserControl x:Class="WPFControls.ChartControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:wfc="clr-namespace:System.Windows.Forms.DataVisualization.Charting;assembly=System.Windows.Forms.DataVisualization"
+             mc:Ignorable="d"
+             d:DesignHeight="300"
+             d:DesignWidth="300"
+             Focusable="True"
+             BorderThickness="1">
+  <WindowsFormsHost x:Name="windowsFormsHost">
+    <wfc:Chart x:Name="chart"
+               Dock="Fill"
+               AxisViewChanged="Chart_AxisViewChanged"
+               MouseMove="Chart_MouseMove"
+               GetToolTipText="Chart_GetToolTipText"
+               MouseClick="Chart_MouseClick"
+               MouseDown="Chart_MouseDown"
+               CursorPositionChanging="Chart_CPChanging"
+               CursorPositionChanged="Chart_CPChanging"
+               SelectionRangeChanged="Chart_SRChanged"
+               BorderlineWidth="0">
+      <wfc:Chart.ChartAreas>
+        <wfc:ChartArea x:Name="chartArea" />
+      </wfc:Chart.ChartAreas>
+    </wfc:Chart>
+  </WindowsFormsHost>
+
+</UserControl>

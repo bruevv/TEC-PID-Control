@@ -1,0 +1,48 @@
+﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPFControls.PropertyGrid"
+        xmlns:c="clr-namespace:Xceed.Wpf.Toolkit.Core;assembly=Xceed.Wpf.Toolkit"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        x:Class="WPFControls.PropertyGrid.PropertyWindow"
+        mc:Ignorable="d"
+        Title="Property Window"
+        d:DesignWidth="456.25"
+        d:DesignHeight="393.75"
+        MinWidth="350"
+        MinHeight="250"
+        WindowStyle="ToolWindow"
+        ResizeMode="CanResizeWithGrip">
+  <Window.CommandBindings>
+    <CommandBinding Command="local:PropertyWindow.Command_Ok"
+                    CanExecute="CommandBinding_OkCanExecute" />
+    <CommandBinding Command="local:PropertyWindow.Command_Apply"
+                    CanExecute="CommandBinding_ApplyCanExecute" />
+    <CommandBinding Command="local:PropertyWindow.Command_Cancel"
+                    CanExecute="CommandBinding_CancelCanExecute" />
+  </Window.CommandBindings>
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="100*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <StackPanel Grid.Column="1"
+                Margin="2"
+                Width="100">
+      <Button Content="Ok"
+              Command="local:PropertyWindow.Command_Ok"
+              Margin="2"
+              IsDefault="True" />
+      <Button Content="Apply"
+              Margin="2" />
+      <Button Content="Cancel"
+              Margin="2"
+              MinWidth="50"
+              IsCancel="True" />
+    </StackPanel>
+
+    <xctk:PropertyGrid x:Name="propertygrid" />
+
+  </Grid>
+</Window>

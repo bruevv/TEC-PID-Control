@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <RootNamespace>TEC_PID_Control</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RawInput.Sharp" Version="0.0.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
+    <ProjectReference Include="..\WPF Controls\CustomWindows\CustomWindows.csproj" />
+    <ProjectReference Include="..\WPF Controls\Devices\Devices.csproj" />
+    <ProjectReference Include="..\WPF Controls\Number Text Boxes\Number Text Boxes.csproj" />
+  </ItemGroup>
+  
+  
+
+</Project>

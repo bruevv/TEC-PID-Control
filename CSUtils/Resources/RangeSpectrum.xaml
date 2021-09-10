@@ -1,0 +1,9 @@
+﻿<Span xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      Foreground="Black">
+  <Bold>{0}</Bold> : <LineBreak />
+  From: <Bold Foreground="Red">{1:N1}</Bold> nm <LineBreak />
+  To: <Bold Foreground="Red">{2:N1}</Bold> nm <LineBreak />
+  Step: <Bold Foreground="Red">{3:N1}</Bold> nm <LineBreak />
+  Averages: <Bold Foreground="Blue">{4}</Bold> <LineBreak />
+  Gate <Bold Foreground="DarkViolet">{5}</Bold> 
+</Span>

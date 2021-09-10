@@ -1,0 +1,19 @@
+﻿<Span xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      Foreground="Black">
+  <Bold>{0}</Bold>:
+  <LineBreak />
+  Wavelength: {{
+  <Bold Foreground="Red">{1:N1}</Bold> -
+  <Bold Foreground="Red">{2:N1}</Bold> by
+  <Bold Foreground="Red">{3:N1}</Bold>
+  }} nm
+  <LineBreak />
+  Period: <Bold Foreground="LimeGreen">{4:N1}</Bold> µs
+  <LineBreak />
+  L/ONTime: <Bold Foreground="LimeGreen">{5:N1}</Bold> µs
+  <LineBreak />
+  Averages:
+  <Bold Foreground="Blue">{6}</Bold>
+  <LineBreak />
+  Gate <Bold Foreground="DarkViolet">{7}</Bold>  
+</Span>

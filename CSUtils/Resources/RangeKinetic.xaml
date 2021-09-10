@@ -1,0 +1,11 @@
+﻿<Span xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      Foreground="Black">
+  <!--Name, From, To, NBins, Period, LONTime, Averages-->
+  <Bold>{0}</Bold> : <LineBreak />
+  (<Bold Foreground="Red">{1:N1}</Bold> - <Bold Foreground="Red">{2}</Bold>) us <LineBreak />
+  Nuber of BINs: <Bold Foreground="Red">{3}</Bold> <LineBreak />
+  Period: <Bold Foreground="LimeGreen">{4}</Bold> us <LineBreak />
+  Laser Pulse Width: <Bold Foreground="LimeGreen">{5}</Bold> us <LineBreak />
+  Averages: <Bold Foreground="Blue">{6}</Bold> <LineBreak />
+  Gate <Bold Foreground="DarkViolet">{7}</Bold>
+</Span>
