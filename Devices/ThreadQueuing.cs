@@ -9,10 +9,10 @@ namespace ThreadQueuing
   {
     public static void InContextInvoke<TEventArgs>(object caller, EventHandler<TEventArgs> EH, TEventArgs EA)
     {
-      if(EH == null) return;
+      if (EH == null) return;
 
-      foreach(EventHandler<TEventArgs> del in EH.GetInvocationList()) {
-        if(del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
+      foreach (EventHandler<TEventArgs> del in EH.GetInvocationList()) {
+        if (del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
           DO.Dispatcher.BeginInvoke(del, caller, EA);
         } else {
           del(caller, EA);
@@ -21,10 +21,10 @@ namespace ThreadQueuing
     }
     public static void InContextInvoke(object caller, EventHandler EH, EventArgs EA)
     {
-      if(EH == null) return;
+      if (EH == null) return;
 
-      foreach(EventHandler del in EH.GetInvocationList()) {
-        if(del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
+      foreach (EventHandler del in EH.GetInvocationList()) {
+        if (del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
           DO.Dispatcher.BeginInvoke(EH, caller, EA);
         } else {
           del(caller, EA);
@@ -122,11 +122,13 @@ namespace ThreadQueuing
     readonly Action ThreadInit;
 
     public event Action ThreadIdle;
+    public event Action ThreadIdleTimeOut;
     public event Action ExitIdle;
     public event Action ThreadDispose;
 
     protected void OnThreadInit() => ThreadInit?.Invoke();
     protected void OnThreadIdle() { IsIdle = true; ThreadIdle?.Invoke(); }
+    protected void OnThreadIdleTimeOut() { ThreadIdleTimeOut?.Invoke(); }
     protected void OnThreadExitIdle() { IsIdle = false; ExitIdle?.Invoke(); }
     protected void OnThreadDispose() => ThreadDispose?.Invoke();
 
@@ -137,7 +139,7 @@ namespace ThreadQueuing
 
     static ThreadQueue FindInstance(string name)
     {
-      if(insts.ContainsKey(name))
+      if (insts.ContainsKey(name))
         return insts[name];
       else
         return null;
@@ -146,7 +148,7 @@ namespace ThreadQueuing
     // TODO make isolated enumerator
     List<object> userObjects = new List<object>();
     public IEnumerable<object> UserObjects {
-      get { foreach(object o in userObjects) { yield return o; } }
+      get { foreach (object o in userObjects) { yield return o; } }
     }
     public string Name { get; }
     /*TODO public ThreadQueue ChangeNameOrThis(string newname)
@@ -165,8 +167,8 @@ namespace ThreadQueuing
     /// <param name="threadInit">Only runs if new ThreadQueue is created</param>
     public static ThreadQueue Create(string name, object owner, Action threadInit = null)
     {
-      ThreadQueue tq = FindInstance(name);
-      if(tq == null)
+      ThreadQueue tq = name == "noname" ? null : FindInstance(name);
+      if (tq == null)
         tq = new ThreadQueue(owner, name, threadInit);
       else
         tq.userObjects.Add(owner);
@@ -179,7 +181,8 @@ namespace ThreadQueuing
       ThreadInit = threadInit;
       Owner = owner;
       Name = name;
-      insts.Add(name, this);
+      if (name != "noname")
+        insts.Add(name, this);
       userObjects.Add(owner);
       thread = new Thread(Cycle) {
         Priority = ThreadPriority.AboveNormal,
@@ -191,7 +194,7 @@ namespace ThreadQueuing
 
     public void Start()
     {
-      if(thread.ThreadState.HasFlag(ThreadState.Unstarted)) thread.Start();
+      if (thread.ThreadState.HasFlag(ThreadState.Unstarted)) thread.Start();
     }
 
     EventWaitHandle TSuspend = new EventWaitHandle(false, EventResetMode.AutoReset);
@@ -201,14 +204,15 @@ namespace ThreadQueuing
     void Cycle()
     {
       OnThreadInit();
-      while(!TQueueExit) {
-        if(TQueue.Count > 0) {
+      while (!TQueueExit) {
+        if (TQueue.Count > 0) {
           ITransaction t;
-          lock(TQueue) { t = TQueue.Dequeue(); }
+          lock (TQueue) { t = TQueue.Dequeue(); }
           t.Invoke();
         } else {
           OnThreadIdle();
-          TSuspend.WaitOne(QueueIdleWait);
+          if (!TSuspend.WaitOne(QueueIdleWait))
+            OnThreadIdleTimeOut();
         }
       }
       OnThreadDispose();
@@ -216,14 +220,14 @@ namespace ThreadQueuing
 
     void Enqueue(ITransaction a)
     {
-      if(IsIdle) OnThreadExitIdle();
-      lock(TQueue) { TQueue.Enqueue(a); }
+      if (IsIdle) OnThreadExitIdle();
+      lock (TQueue) { TQueue.Enqueue(a); }
       TSuspend.Set();
     }
     void EnqueueUnique(ITransaction a)
     {
-      if(IsIdle) OnThreadExitIdle();
-      lock(TQueue) { if(!TQueue.Contains(a)) TQueue.Enqueue(a); }
+      if (IsIdle) OnThreadExitIdle();
+      lock (TQueue) { if (!TQueue.Contains(a)) TQueue.Enqueue(a); }
       TSuspend.Set();
     }
     public void Enqueue(Action a) => Enqueue(new TAction(a));
@@ -242,9 +246,9 @@ namespace ThreadQueuing
 
     protected void Dispose(bool disposing)
     {
-      if(disposed) return;
+      if (disposed) return;
 
-      if(disposing) {
+      if (disposing) {
         insts.Remove(Name);
         TQueueExit = true;
         TSuspend?.Set();
@@ -268,10 +272,10 @@ namespace ThreadQueuing
     static object local_lock = new object();
     public static EventWaitHandle GetHandle()
     {
-      lock(local_lock) {
-        if(handles.ContainsValue(false)) {
-          foreach(var ewh in handles.Keys) {
-            if(!handles[ewh]) {
+      lock (local_lock) {
+        if (handles.ContainsValue(false)) {
+          foreach (var ewh in handles.Keys) {
+            if (!handles[ewh]) {
               handles[ewh] = true;
               return ewh;
             }
@@ -286,7 +290,7 @@ namespace ThreadQueuing
     }
     public static void ReturnHandle(EventWaitHandle ewh)
     {
-      lock(local_lock) {
+      lock (local_lock) {
         ewh.Reset();
         handles[ewh] = false;
       }

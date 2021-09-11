@@ -1,5 +1,4 @@
 ﻿using SerialPorting;
-using UCCommands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -179,7 +178,7 @@ namespace Devices.StepMotoring
     {
       State = SMState.Disconnecting;
       try {
-        sPI.Reset();
+        sPI.PreDisconnectCommand();
       } catch { }
 
       try {

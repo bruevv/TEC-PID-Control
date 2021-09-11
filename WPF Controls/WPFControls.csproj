@@ -167,7 +167,7 @@
     <None Include="Testkey.snk" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CSUtils\CSUtils.csproj">
+    <ProjectReference Include="..\CSUtils\CSUtils.csproj">
       <Project>{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}</Project>
       <Name>CSUtils</Name>
     </ProjectReference>

@@ -4,6 +4,50 @@
              xmlns:local="clr-namespace:TEC_PID_Control"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
-    </Application.Resources>
+    <DrawingBrush x:Key="PowerIconO"
+                  Stretch="Uniform">
+      <DrawingBrush.Drawing>
+        <DrawingGroup>
+          <DrawingGroup.Children>
+            <GeometryDrawing Geometry="M29.715,16C29.715,23.574 23.574,29.715 16,29.715 8.426,29.715 2.285,23.574 2.285,16 2.285,10.58 5.438,5.909 10,3.682L10,7.676C7.414,9.544 5.715,12.565 5.715,16 5.715,21.68 10.32,26.285 16,26.285 21.684,26.285 26.285,21.68 26.285,16 26.285,12.565 24.586,9.544 22,7.676L22,3.682C26.566,5.909,29.715,10.58,29.715,16"
+                             Brush="Black" />
+            <GeometryDrawing Brush="#FFA8A8A8"
+                             Geometry="F1M18,2.285L14,2.285 14,18 18,18z" />
+          </DrawingGroup.Children>
+        </DrawingGroup>
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="PowerIconI"
+                  Stretch="Uniform">
+      <DrawingBrush.Drawing>
+        <DrawingGroup>
+          <DrawingGroup.Children>
+            <GeometryDrawing Brush="#FFA8A8A8"
+                             Geometry="M29.715,16C29.715,23.574 23.574,29.715 16,29.715 8.426,29.715 2.285,23.574 2.285,16 2.285,10.58 5.438,5.909 10,3.682L10,7.676C7.414,9.544 5.715,12.565 5.715,16 5.715,21.68 10.32,26.285 16,26.285 21.684,26.285 26.285,21.68 26.285,16 26.285,12.565 24.586,9.544 22,7.676L22,3.682C26.566,5.909,29.715,10.58,29.715,16" />
+            <GeometryDrawing Brush="Black"
+                             Geometry="F1M18,2.285L14,2.285 14,18 18,18z" />
+          </DrawingGroup.Children>
+        </DrawingGroup>
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <Style x:Key="RectangleOnOff"
+           TargetType="{x:Type Rectangle}">
+      <Setter Property="Fill"
+                      Value="{StaticResource ResourceKey=PowerIconO}" />
+      <Setter Property="Visibility"
+                          Value="Hidden" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsOn, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                             Value="True">
+          <Setter Property="Fill"
+                          Value="{StaticResource ResourceKey=PowerIconI}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding IsConnected, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"
+                             Value="True">
+          <Setter Property="Visibility"
+                          Value="Visible" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </Application.Resources>
 </Application>

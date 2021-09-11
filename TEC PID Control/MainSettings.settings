@@ -1,0 +1,63 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TEC_PID_Control" GeneratedClassName="MainSettings">
+  <Profiles />
+  <Settings>
+    <Setting Name="K2400LogExpanded" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="K2400OutputVoltage" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="K2400OutputCurrent" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.0001</Value>
+    </Setting>
+    <Setting Name="K2400Expanded" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="K2400Port" Type="System.String" Scope="User">
+      <Value Profile="(Default)">""</Value>
+    </Setting>
+    <Setting Name="GWPSLogExpanded" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="GWPSOutputVoltage" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="GWPSOutputCurrent" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.0001</Value>
+    </Setting>
+    <Setting Name="GWPSExpanded" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="GWPSPort" Type="System.String" Scope="User">
+      <Value Profile="(Default)">""</Value>
+    </Setting>
+    <Setting Name="K2400OCFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Current:uA</Value>
+    </Setting>
+    <Setting Name="K2400OVFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Voltage:V</Value>
+    </Setting>
+    <Setting Name="K2400MCFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Current:uA</Value>
+    </Setting>
+    <Setting Name="K2400MVFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Voltage:V</Value>
+    </Setting>
+    <Setting Name="GWPSOCFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Current:uA</Value>
+    </Setting>
+    <Setting Name="GWPSOVFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Voltage:V</Value>
+    </Setting>
+    <Setting Name="GWPSMCFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Current:uA</Value>
+    </Setting>
+    <Setting Name="GWPSMVFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Voltage:V</Value>
+    </Setting>
+    <Setting Name="K2400RFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Resistance:kOhm</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

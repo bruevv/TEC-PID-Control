@@ -1,5 +1,4 @@
 ﻿using CSUtils;
-using UCCommands;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,7 +39,8 @@ namespace SerialPorting
     protected virtual bool TrimDevCtrlCahrs => true;
 
     /// <summary> Default is BasicTimeout=100 </summary> 
-    public int ReadTimeOut {
+    public int ReadTimeOut
+    {
       get => SP.ReadTimeout;
       set => SP.ReadTimeout = value;
     }
@@ -53,26 +53,30 @@ namespace SerialPorting
 
     public static string[] GetPortNames() => SerialPort.GetPortNames();
 
-    protected UARTConnectionBase(WaitHandle abortWaitHandle, int idlewait = -1, string TQName = "COM") : base(abortWaitHandle, idlewait, TQName)
+    protected UARTConnectionBase(WaitHandle abortWaitHandle, int idlewait = -1, string TQName = "noname") : base(abortWaitHandle, idlewait, TQName)
     {
       TQ.ThreadDispose += () => SP?.Dispose();
       TQ.ThreadIdle += OnSPIdle;
+      TQ.ThreadIdleTimeOut += OnSPIdleTimeout;
       TQ.Start();/// TODO: check why TQ.Start() is before the next string: "if(...) SP=..."
-      if(TQ.Owner != this) SP = ((UARTConnectionBase)TQ.Owner).SP;
+      if (TQ.Owner != this) SP = ((UARTConnectionBase)TQ.Owner).SP;
     }
 
     public override void Connect(string port)
     {
-      if(IsConnected && SP.PortName == port)
+      if (IsConnected && SP.PortName == port)
         return;
 
-      if(IsConnected)
+      if (IsConnected)
         Disconnect();
 
-      try {
+      try
+      {
         SP.PortName = port;
         SP.Open();
-      } catch(Exception e) {
+      }
+      catch (Exception e)
+      {
         State = SState.Disconnected | SState.Error;
         OnDisconnected();
         throw new Exception($"Cannot connect to Serial Port {port}\n{e.Message}", e);
@@ -83,7 +87,7 @@ namespace SerialPorting
     }
     public override void Disconnect()
     {
-      if(SP.IsOpen)
+      if (SP.IsOpen)
         SP.Close();
       State = SState.Disconnected;
       OnDisconnected();
@@ -107,25 +111,28 @@ namespace SerialPorting
     enum TransferType { ASCII, Binary };
     static readonly TransferType TT = typeof(T) == typeof(string) ? TransferType.ASCII : TransferType.Binary;
 
-    protected UARTConnection(WaitHandle abortWaitHandle, int idlewait = -1, string TQName = "COM") : base(abortWaitHandle, idlewait, TQName) { }
+    protected UARTConnection(WaitHandle abortWaitHandle, int idlewait = -1, string TQName = "noname") : base(abortWaitHandle, idlewait, TQName) { }
 
     protected override void OnThreadInit()
     {
-      SP = new SerialPort {
+      SP = new SerialPort
+      {
         BaudRate = BaudRate,
         ReadTimeout = BasicTimeout,
         WriteTimeout = BasicTimeout
       };
-      if(NewLine is string s) SP.NewLine = s;
+      if (NewLine is string s) SP.NewLine = s;
     }
 
     public override string Iitialize()
     {
       string ret = null;
 
-      try {
+      try
+      {
         Flush();
-        switch(TT) {
+        switch (TT)
+        {
           case TransferType.ASCII:
             ret = Request(GenCommand(CCmd.Init), null, true);
             break;
@@ -135,25 +142,33 @@ namespace SerialPorting
             ret = Encoding.ASCII.GetString(ba);
             break;
         }
-      } catch(Exception e) {
+      }
+      catch (Exception e)
+      {
         State |= SState.Error;
         throw new IOException($"Initialization Failed\n{e.Message}", e);
       }
-      if(!ret.Contains(InitString))
+      if (!ret.Contains(InitString))
         throw new IOException($"Wrong Init string\n{ret}");
+      State |= SState.Initialized;
       return ret;
     }
     public override void Reset()
     {
-      if(!IsConnected)
+      if (!IsConnected)
         throw new Exception("Serial Port Disconnected");
 
       int rt = ReadTimeOut;
-      try {
+      try
+      {
         SP.ReadTimeout = BasicTimeout;
         Request(GenCommand(CCmd.Reset), null);
-      } catch(TimeoutException) {
-      } finally {
+      }
+      catch (TimeoutException)
+      {
+      }
+      finally
+      {
         ReadTimeOut = rt;
       }
 
@@ -161,15 +176,18 @@ namespace SerialPorting
     }
     public override void Abort()
     {
-      if(!IsConnected) throw new Exception("Serial Port Disconnected");
+      if (!IsConnected) throw new Exception("Serial Port Disconnected");
 
       int rt = ReadTimeOut;
-      try {
+      try
+      {
         SP.ReadTimeout = BasicTimeout;
         Request(GenCommand(CCmd.Abort), null);
 
         Flush();
-      } finally {
+      }
+      finally
+      {
         ReadTimeOut = rt;
       }
     }
@@ -177,24 +195,25 @@ namespace SerialPorting
     protected virtual string ArgSeparator => " ";
     string Request(string cmd, T args, bool NeedReturn = false)
     {
-      if(!IsConnected) throw new Exception("Serial Port Disconnected");
+      if (!IsConnected) throw new Exception("Serial Port Disconnected");
 
-      if(State.HasFlag(SState.Error)) Flush();
-      State |= SState.Busy;
+      if (State.HasFlag(SState.Error)) Flush();
 
-      if(Is9bit) {
+      if (Is9bit)
+      {
         SP.Parity = Parity.Mark;
         SP.Write(Address);
         SP.Parity = Parity.Space;
       }
 
-      switch(args) {
+      switch (args)
+      {
         case string str_args:
-          if(string.IsNullOrEmpty(cmd)) SP.Write(str_args);
+          if (string.IsNullOrEmpty(cmd)) SP.Write(str_args);
           else SP.Write(cmd + ArgSeparator + str_args);
           break;
         case byte[] ba_args:
-          if(!string.IsNullOrEmpty(cmd)) SP.Write(cmd + ArgSeparator);
+          if (!string.IsNullOrEmpty(cmd)) SP.Write(cmd + ArgSeparator);
           SP.Write(ba_args, 0, ba_args.Length);
           break;
         case null:
@@ -204,19 +223,23 @@ namespace SerialPorting
           throw new ArgumentException();
       }
 
-      if(EnableNewLine) SP.WriteLine("");
+      if (EnableNewLine) SP.WriteLine("");
 
-      if(NeedAck || NeedReturn) {
+      if (NeedAck || NeedReturn)
+      {
         string rl = SP.ReadLine();
         return TrimDevCtrlCahrs ? rl.Trim('\u0013', '\u0011') : rl;
-      } else {
+      }
+      else
+      {
         return null;
       }
     }
 
     static string AsString(T t)
     {
-      switch(t) {
+      switch (t)
+      {
         case string str:
           return str;
         case byte[] ba:
@@ -230,33 +253,41 @@ namespace SerialPorting
     {
       string ack;
 
-      try {
+      try
+      {
         ack = Request(GenCommand(c), null);
-      } catch(Exception e) {
+      }
+      catch (Exception e)
+      {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Failed\n{e.Message}", e);
       }
-      if(NeedAck && ack != ACK) {
+      if (NeedAck && ack != ACK)
+      {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Error String '{ack}'");
       }
 
-      State = SState.Connected;
+      State &= ~(SState.Error | SState.Busy);
     }
     public void Command(Enum c, T args)
     {
       string ack;
-      try {
+      try
+      {
         ack = Request(GenCommand(c), args);
-      } catch(Exception e) {
+      }
+      catch (Exception e)
+      {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Args '{AsString(args)}' Failed\n{e.Message}", e);
       }
-      if(NeedAck && ack != ACK) {
+      if (NeedAck && ack != ACK)
+      {
         State |= SState.Error;
         throw new IOException($"Command {c.GetType().Name}:{c} Args '{AsString(args)}' String '{ack}'");
       }
-      State = SState.Connected;
+      State &= ~(SState.Error | SState.Busy);
     }
 
     protected virtual string GenCommand(Enum c) => Coms[c];
@@ -270,28 +301,34 @@ namespace SerialPorting
 
       DateTime dtStart = DateTime.Now;
       TimeSpan timeout = TimeSpan.FromMilliseconds(WaitTimeout);
-      do {
+      do
+      {
         int count = SP.BytesToRead;
-        if(count > 0) {
-          if(received + count > BytesToReceive)
+        if (count > 0)
+        {
+          if (received + count > BytesToReceive)
             throw new IOException($"Too many bytes received per request.\n" +
                                   $"Requested {BytesToReceive}, Received {received + count}");
 
           received += SP.Read(buf, received, count);
 
-          if(received == BytesToReceive) {
+          if (received == BytesToReceive)
+          {
             Logger.Log("Waited " + (DateTime.Now - dtStart) +
                        "\nOf " + timeout, Logger.Mode.Debug, nameof(UARTConnection<T>));
             return;
           }
         }
-        if(WaitTimeout > 2 * BasicTimeout) {
-          if(AbortWaitHandle.WaitOne(SerialReadInterval))
+        if (WaitTimeout > 2 * BasicTimeout)
+        {
+          if (AbortWaitHandle.WaitOne(SerialReadInterval))
             throw new AbortException("Read Command Aborted");
-        } else {
+        }
+        else
+        {
           Thread.Sleep(SerialReadInterval);
         }
-      } while(DateTime.Now - dtStart < timeout);
+      } while (DateTime.Now - dtStart < timeout);
       throw new TimeoutException($"Failed to receive the reqested amount of binary data:\n" +
         $"Requested: {BytesToReceive}\nReceived: {received}\nTime Waited: {(DateTime.Now - dtStart).TotalSeconds}s");
     }
@@ -301,34 +338,42 @@ namespace SerialPorting
     {
       string ret;
       State |= SState.Busy;
-      try {
-        ret = Request($"{GenCommand(r)}{(AddQuestionMark ? "?" : "")}", args, true);
-      } catch(Exception e) {
+      try
+      {
+        ret = Request($"{GenCommand(r)}{(GenCommand(r) != "" && AddQuestionMark ? "?" : "")}", args, true);
+      }
+      catch (Exception e)
+      {
         State &= ~SState.Busy;
         State |= SState.Error;
         throw new IOException($"Request {r.GetType().Name}:{r} Failed\n{e.Message}", e);
       }
-      State = SState.Connected;
+      State &= ~(SState.Error | SState.Busy);
       return ret;
     }
 
     public void Request(Enum r, byte[] buf, int BytesToReceive = -1, int WaitTimeout = -1)
     {
-      if(BytesToReceive == -1) BytesToReceive = buf.Length;
-      if(WaitTimeout == -1) WaitTimeout = BasicTimeout;
+      if (BytesToReceive == -1) BytesToReceive = buf.Length;
+      if (WaitTimeout == -1) WaitTimeout = BasicTimeout;
       State |= SState.Busy;
-      try {
+      try
+      {
         Request($"{GenCommand(r)}", null);
         Read(buf, BytesToReceive, WaitTimeout);
-      } catch(AbortException) {
+      }
+      catch (AbortException)
+      {
         State &= ~SState.Busy;
         throw;
-      } catch(Exception e) {
+      }
+      catch (Exception e)
+      {
         State &= ~SState.Busy;
         State |= SState.Error;
         throw new IOException($"Request {r.GetType().Name}:{r} Failed\n{e.Message}", e);
       }
-      State = SState.Connected;
+      State &= ~(SState.Error | SState.Busy);
     }
   }
 }

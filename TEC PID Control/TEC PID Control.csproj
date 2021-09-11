@@ -19,7 +19,39 @@
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
     <ProjectReference Include="..\Devices\Devices.csproj" />
     <ProjectReference Include="..\WPF Controls\CustomWindows\CustomWindows.csproj" />
-    <ProjectReference Include="..\WPF Controls\Number Text Boxes\Number Text Boxes.csproj" />
+    <ProjectReference Include="..\WPFUtils\WPFUtils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\UsrCntrlGWPS.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Controls\UsrCntrlK2400.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="MainSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MainSettings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="MainSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>MainSettings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\UsrCntrlGWPS.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Controls\UsrCntrlK2400.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   
   

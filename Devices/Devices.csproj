@@ -6,11 +6,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Devices\StepMotor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Devices\StepMotor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
+    <ProjectReference Include="..\WPFUtils\WPFUtils.csproj" />
   </ItemGroup>
 
 </Project>

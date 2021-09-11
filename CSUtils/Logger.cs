@@ -14,17 +14,34 @@ namespace CSUtils
     public delegate void LeggerFeedback(string message, Mode mode);
 
     Dictionary<string, LeggerFeedback> AttachedLogs = new Dictionary<string, LeggerFeedback>();
+    Dictionary<LeggerFeedback, Mode> AttachedLogModes = new Dictionary<LeggerFeedback, Mode>();
 
-    public void AttachLog(string name, LeggerFeedback del)
+    public void AttachLog(string name, LeggerFeedback del, Mode? mode = null)
     {
-      if(AttachedLogs.ContainsKey(name))
-        AttachedLogs[name] += del;
-      else
-        AttachedLogs.Add(name, del);
-    }
-    public void DeattachLog(string name, LeggerFeedback del) => AttachedLogs[name] -= del;
+      if (AttachedLogModes.ContainsKey(del)) {
+        AttachedLogModes[del] = mode ?? LoggerMode;
+        return;
+      }
 
-    public enum Mode { None = 0, LogState = 9, Error = 10, Full = 20, Debug = 30 }
+      AttachedLogModes.Add(del, mode ?? LoggerMode);
+      if (AttachedLogs.ContainsKey(name)) {
+        AttachedLogs[name] += del;
+      } else {
+        AttachedLogs.Add(name, del);
+      }
+    }
+    public void DeattachLog(string name, LeggerFeedback del)
+    {
+      AttachedLogModes.Remove(del);
+      AttachedLogs[name] -= del;
+      if (AttachedLogs[name] == null) AttachedLogs.Remove(name);
+    }
+
+    public enum Mode
+    {
+      None = 0, LogState = 9, Error = 10, AppState = 14,
+      NoAutoPoll = 17, Full = 20, Debug = 30
+    }
 
     System.Timers.Timer FlushTimer;
     const int FLUSH_INTERVAL = 1000;  // ms
@@ -41,17 +58,17 @@ namespace CSUtils
 
     public Logger(string filename, Mode mode)
     {
-      if(def == null) def = this;
+      if (def == null) def = this;
       LoggerMode = mode;
-      if(mode == Mode.None) return;
+      if (mode == Mode.None) return;
 
       FileName = Path.GetFullPath(filename ?? DefaultFilename);
       bool newfile = false;
-      if(!File.Exists(FileName)) newfile = true;
+      if (!File.Exists(FileName)) newfile = true;
       var file = new FileStream(FileName, FileMode.Append, FileAccess.Write, FileShare.Read);
       logFile = new StreamWriter(file, Encoding);
       logFile.NewLine = "\n";
-      if(newfile) {
+      if (newfile) {
         logFile?.WriteLine("Log started");
         logFile?.WriteLine(Assembly.GetEntryAssembly().FullName);
         logFile?.WriteLine($"Current DateTime '{DateTime.Now:yyyy/MM/dd HH:mm:ss}'");
@@ -81,13 +98,15 @@ namespace CSUtils
 
     public void log(string logMessage, Mode mode, string source = null)
     {
-      if(mode == Mode.None) throw new ArgumentException("Message Mode cannot be 'None'");
-      UpdateAttachedLogs(logMessage, mode, source);
-      if(this == null || mode > LoggerMode) return;
+      if (mode == Mode.None) throw new ArgumentException("Message Mode cannot be 'None'");
 
-      lock(Lock) {
+      UpdateAttachedLogs(logMessage, mode, source);
+
+      if (this == null || mode > LoggerMode) return;
+
+      lock (Lock) {
         string line;
-        if(source == null)
+        if (source == null)
           line = $"[{DateTime.Now:yyyy/MM/dd HH:mm:ss}]{mode.ToString()[0]}\t\t{logMessage.Replace("\n", "\n->\t")}";
         else
           line = $"[{DateTime.Now:yyyy/MM/dd HH:mm:ss}]{mode.ToString()[0]}\t{source}:\t{logMessage.Replace("\n", "\n->\t")}";
@@ -95,37 +114,46 @@ namespace CSUtils
         try {
           logFile?.WriteLine(line);
           Unflushed = true;
-        } catch(Exception) { }
+        } catch (Exception) { }
       }
     }
     void UpdateAttachedLogs(string logMessage, Mode mode, string source)
     {
       try {
-        if(AttachedLogs.ContainsKey(source)) AttachedLogs[source].Invoke(logMessage, mode);
-      } catch(Exception) { }
+        if (AttachedLogs.ContainsKey(source)) {
+          foreach (LeggerFeedback del in AttachedLogs[source].GetInvocationList()) {
+            if (AttachedLogModes[del] >= mode)
+              del.Invoke(logMessage, mode);
+          }
+        }
+      } catch (Exception) { }
     }
 
     public void log(string logMessage, Exception e, Mode mode, string source = null) => Log(ref logMessage, e, mode, source);
     public void log(ref string logMessage, Exception e, Mode mode, string source = null)
     {
-      if(logMessage != null) {
-        if(e != null) {
-          log(logMessage + "\n" + e.Message + "\n" + e.FullStackTrace(), mode, source);
-          logMessage += "\n\n" + e.Message + "\n" + e.FullStackTrace();
+      string debug="";
+      if (e != null) {
+#if DEBUG
+        debug = "\n" + e.FullStackTrace();
+#endif
+        if (logMessage != null) {
+          log(logMessage + "\n" + e.Message + debug, mode, source);
+          logMessage += "\n\n" + e.Message + debug;
         } else {
-          log(logMessage, mode, source);
+          log(e.Message + debug, mode, source);
+          logMessage = e.Message + debug;
         }
       } else {
-        if(e != null) {
-          log(e.Message + "\n" + e.FullStackTrace(), mode, source);
-          logMessage = e.Message + "\n" + e.FullStackTrace();
+        if (logMessage != null) {
+          log(logMessage, mode, source);
         }
       }
     }
     void PeriodicFlush(object sender, EventArgs e)
     {
-      lock(Lock) {
-        if(Unflushed) {
+      lock (Lock) {
+        if (Unflushed) {
           logFile?.Flush();
           Unflushed = false;
         }
@@ -137,10 +165,10 @@ namespace CSUtils
 
     protected virtual void Dispose(bool disposing)
     {
-      if(!disposedValue) {
-        if(disposing) { }
+      if (!disposedValue) {
+        if (disposing) { }
 
-        if(logFile != null) {
+        if (logFile != null) {
           FlushTimer.Stop();
           FlushTimer.Dispose();
           logFile.Flush();
@@ -167,10 +195,10 @@ namespace CSUtils
     public static string FullStackTrace(this Exception e)
     {
       StringBuilder sb = new StringBuilder();
-      while(e != null) {
+      while (e != null) {
         sb.Append(e.StackTrace);
         e = e.InnerException;
-        if(e != null) sb.AppendLine();
+        if (e != null) sb.AppendLine();
       }
       return sb.ToString();
     }

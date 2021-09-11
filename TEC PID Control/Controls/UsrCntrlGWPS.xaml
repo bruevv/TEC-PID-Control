@@ -1,0 +1,201 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
+             xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
+             xmlns:prop="clr-namespace:TEC_PID_Control"
+             x:Class="TEC_PID_Control.Controls.UsrCntrlGWPS"
+             mc:Ignorable="d"
+             x:Name="usrCntrlGWPS"
+             Width="300"
+             Loaded="UsrCntrlGWPS_Loaded">
+  <UserControl.Resources>
+    <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
+    <Style TargetType="{x:Type TextBlock}">
+      <Setter Property="FontSize"
+              Value="14" />
+      <Setter Property="VerticalAlignment"
+              Value="Center" />
+      <Setter Property="TextAlignment"
+              Value="Right" />
+    </Style>
+    <Style TargetType="{x:Type Button}">
+      <Setter Property="Margin"
+              Value="2" />
+    </Style>
+    <Style TargetType="{x:Type Separator}">
+      <Setter Property="Margin"
+              Value="2" />
+    </Style>
+
+  </UserControl.Resources>
+  <w:AnimExpander Background="#FFC6F2FF"
+                  BorderBrush="Black"
+                  Width="300"
+                  VerticalAlignment="Stretch"
+                  IsExpanded="{Binding IsExpanded, FallbackValue=true}"
+                  DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}">
+    <Expander.Header>
+      <DockPanel x:Name="HeaderDock"
+                 Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type w:AnimExpander}}, Path=ActualWidth, Mode=OneWay}"
+                 LastChildFill="False">
+        <Ellipse x:Name="circle"
+                 Fill="LightGray"
+                 Stroke="Black"
+                 Width="14"
+                 Height="14"
+                 ToolTip="Disconnected"
+                 DockPanel.Dock="Right"
+                 Margin="5,0,31,0" />
+        <Rectangle Width="16"
+                   Height="16"
+                   DockPanel.Dock="Right"
+                   Style="{StaticResource RectangleOnOff}" />
+        <TextBlock Text="GWI Power Supply" />
+      </DockPanel>
+    </Expander.Header>
+    <Grid x:Name="grid"
+          Background="#FFDCF5FF">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="10*" />
+        <ColumnDefinition Width="15*" />
+        <ColumnDefinition Width="10*" />
+        <ColumnDefinition Width="15*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="Port:" />
+      <ComboBox x:Name="cbPort"
+                Grid.Column="1"
+                SelectedIndex="0"
+                SelectionChanged="cbPort_SelectionChanged"
+                IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"
+                DropDownOpened="cbPort_DropDownOpened"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Margin="2" />
+      <Button x:Name="bConnect"
+              Content="Connect"
+              Grid.Column="2"
+              Click="bConnect_Click"
+              IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}" />
+      <Button x:Name="bDisconnect"
+              Content="Disconnect"
+              Grid.Column="3"
+              Click="bDisconnect_Click"
+              IsEnabled="{Binding IsConnected}" />
+
+      <Grid Grid.Row="1"
+            Grid.ColumnSpan="5">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="10*" />
+          <ColumnDefinition Width="15*" />
+          <ColumnDefinition Width="10*" />
+          <ColumnDefinition Width="15*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Separator Grid.Row="1"
+                   Grid.ColumnSpan="5" />
+        <Button Content="Output"
+                Grid.Row="2"
+                Click="bOutput_Click" />
+        <Rectangle Width="18"
+                   Height="18"
+                   Grid.Row="2"
+                   Grid.Column="1"
+                   HorizontalAlignment="Left"
+                   Margin="5,0,0,0"
+                   Style="{StaticResource RectangleOnOff}"
+                   Visibility="Visible" />
+        <ToggleButton Content="Auto Poll"
+                      Grid.Row="2"
+                      Grid.Column="3"
+                      Margin="2"
+                      IsChecked="{Binding AutoPoll}"/>
+        <TextBlock Text="Voltage:"
+                   Grid.Row="3" />
+        <w:UnitTextBox x:Name="utbVoltage"
+                       Value="{Binding Voltage, Mode=OneWay}"
+                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSMVFormat}"
+                       ValueFormat="N5"
+                       IsReadOnly="True"
+                       Grid.Row="3"
+                       Grid.Column="1"
+                       NormalBackground="#FFEBEBEB" />
+        <TextBlock Text="Current:"
+                   Grid.Row="3"
+                   Grid.Column="2" />
+        <w:UnitTextBox x:Name="utbCurrent"
+                       Value="{Binding Current, Mode=OneWay}"
+                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSMCFormat}"
+                       ValueFormat="N5"
+                       IsReadOnly="True"
+                       Grid.Row="3"
+                       Grid.Column="3"
+                       NormalBackground="#FFEBEBEB" />
+
+        <Separator Grid.Row="4"
+                   Grid.ColumnSpan="4" />
+        <TextBlock Text="Source Setup"
+                   HorizontalAlignment="Left"
+                   Grid.Row="4"
+                   Grid.ColumnSpan="4"
+                   Margin="5,0,0,4"
+                   Background="{Binding Background, ElementName=grid}"
+                   Padding="3,2,3,0" />
+
+
+        <TextBlock Text="Voltage:"
+                   Grid.Row="5" />
+        <w:UnitTextBox x:Name="utbSetVoltage"
+                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSOVFormat}"
+                       ValueFormat="N5"
+                       Grid.Row="5"
+                       Grid.Column="1"
+                       Value="{Binding OutputVoltage}" />
+        <TextBlock Text="Current:"
+                   Grid.Row="5"
+                   Grid.Column="2" />
+        <w:UnitTextBox x:Name="utbSetCurrent"
+                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSOCFormat}"
+                       ValueFormat="N5"
+                       Grid.Row="5"
+                       Grid.Column="3"
+                       Value="{Binding OutputCurrent}" />
+        <Button Grid.Row="6"
+                Content="SetUp"
+                Click="bSetUp_Click" />
+
+      </Grid>
+      <w:AnimExpander Grid.ColumnSpan="4"
+                      Grid.Row="7"
+                      Header="Log"
+                      IsExpanded="{Binding IsLogExpanded}">
+        <TextBox x:Name="tbLog"
+                 Margin="2,0,2,2"
+                 MinHeight="100"
+                 MaxHeight="300"
+                 IsReadOnly="True"
+                 Background="#7FFFFFFF"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Visible"
+                 TextChanged="TbLog_TextChanged" />
+      </w:AnimExpander>
+    </Grid>
+  </w:AnimExpander>
+
+</UserControl>
