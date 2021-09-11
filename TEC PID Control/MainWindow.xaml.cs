@@ -26,12 +26,12 @@ namespace TEC_PID_Control
         (string msg, Logger.Mode lm) =>
         ConsoleOut.Dispatcher.Invoke(() => ConsoleOut.Text += $">{msg}\n"));
 
-      KD = new Keithley2400();
-      utbVoltage.DataContext = KD;
-      utbCurrent.DataContext = KD;
-      KD.Connect("COM4");
-      TC = new TempSensor(KD);
-      TC.LoadCalibration();
+      //KD = new Keithley2400();
+      //utbVoltage.DataContext = KD;
+      //utbCurrent.DataContext = KD;
+      //KD.Connect("COM4");
+      //TC = new TempSensor(KD);
+      //TC.LoadCalibration();
     }
 
 

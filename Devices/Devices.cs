@@ -3,8 +3,10 @@ using System.Threading;
 
 namespace Devices
 {
+  using System.Threading.Tasks;
   using CSUtils;
   using SerialPorting;
+  using ThreadQueuing;
   using static ThreadQueuing.Invoke;
 
   abstract public class Device : IDisposable
@@ -18,7 +20,15 @@ namespace Devices
       Disconnecting = 0x101
     }
 
-    public DevState DState { get; protected set; } = DevState.Disconnected;
+    private DevState dState = DevState.Disconnected;
+    public DevState DState {
+      get => dState;
+      protected set {
+        if(dState != value) {
+          dState = value;
+        }
+      }
+    }
     public string StatusStr { get; protected set; } = null;
 
     public bool IsConnected => (DState & DevState.Connected) == DevState.Connected;
@@ -60,6 +70,7 @@ namespace Devices
 
 
     bool isIdle = false;
+
     public bool IsIdle {
       get => isIdle;
       private set {
@@ -113,9 +124,12 @@ namespace Devices
     public string PortName => iCI.PortName;
 
     public event EventHandler ConnectedToDevice;
+    public event EventHandler DisconnectedFromDevice;
 
     virtual protected void OnConnectedToDevice(object o, EventArgs e)
       => InContextInvoke(this, ConnectedToDevice, e);
+    virtual protected void OnDisconnectedFromDevice(object o, EventArgs e)
+   => InContextInvoke(this, DisconnectedFromDevice, e);
     void DisconnectedEvent(object o, EventArgs e)
     {
       if((DState & DevState.Connected) == DevState.Connected)
@@ -135,8 +149,8 @@ namespace Devices
       iCI.TQ.ThreadIdle += OnIdle;
       iCI.TQ.ExitIdle += OnNotIdle;
     }
-
-    protected void Connect_AS(string port)
+    protected void Connect_AS(string port) => Connect_AS(port, null);
+    protected void Connect_AS(string port, EventWaitHandle ewh)
     {
       ChangeStatus($"Trying to Connect\nPort:{port}", DevState.Connecting);
       string initS = "";
@@ -151,22 +165,31 @@ namespace Devices
         if(disconnect)
           iCI.Disconnect();
         ChangeStatus($"Error connecting to device", DevState.Disconnected, e);
-        return;
+        goto finish;
       }
       ChangeStatus($"Connected succsefully. Init String:\n{initS}", DevState.Connected);
 
       OnConnectedToDevice(this, EventArgs.Empty);
+
+      finish:
+      ewh?.Set();
     }
-    protected void Disconnect_AS()
+    protected void Disconnect_AS() => Disconnect_AS(null);
+    protected void Disconnect_AS(EventWaitHandle ewh)
     {
       DState = DevState.Disconnecting;
-      try { iCI.Reset(); } catch { }
+      try { iCI.PreDisconnectCommand(); } catch { }
 
       try { iCI.Disconnect(); } catch(Exception e) {
         ChangeStatus($"Error disconnecting\n{e.Message}", DevState.Disconnected);
-        return;
+        goto finish;
       }
-      ChangeStatus("Disconnected\nController reset", DevState.Disconnected);
+      ChangeStatus("Disconnected", DevState.Disconnected);
+
+      OnDisconnectedFromDevice(this, EventArgs.Empty);
+
+      finish:
+      ewh?.Set();
     }
 
     public void Connect(string port)
@@ -174,10 +197,26 @@ namespace Devices
       if(IsConnected) return;
       iCI.TQ.EnqueueUnique(Connect_AS, port);
     }
+    public async Task Connect_AW(string port)
+    {
+      if(IsConnected) return;
+      var ewh = EventWaitHandlePool.GetHandle();
+      iCI.TQ.Enqueue(Connect_AS, port, ewh);
+      _ = await Task.Run(() => ewh.WaitOne());
+      EventWaitHandlePool.ReturnHandle(ewh);
+    }
     public void Disconnect()
     {
       if(!IsConnected) return;
       iCI.TQ.EnqueueUnique(Disconnect_AS);
+    }
+    public async Task Disconnect_AW()
+    {
+      if(!IsConnected) return;
+      var ewh = EventWaitHandlePool.GetHandle();
+      iCI.TQ.EnqueueUnique(Disconnect_AS, ewh);
+      _ = await Task.Run(() => ewh.WaitOne());
+      EventWaitHandlePool.ReturnHandle(ewh);
     }
 
     #region implementing Dispose

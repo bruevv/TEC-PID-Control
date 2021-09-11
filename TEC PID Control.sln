@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPFControls", "WPF Controls
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSUtils", "CSUtils\CSUtils.csproj", "{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Number Text Boxes", "WPF Controls\Number Text Boxes\Number Text Boxes.csproj", "{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomWindows", "WPF Controls\CustomWindows\CustomWindows.csproj", "{7C2E0B09-32ED-4AE7-8039-D711497D950B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Devices", "Devices\Devices.csproj", "{166F66B5-9880-4DE5-B2F7-558C5C309AE9}"
@@ -19,6 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Devices", "Devices\Devices.
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathParserTK", "MathParserTK\MathParserTK.csproj", "{C349510C-C794-477E-9B26-E1A4B91E3A88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPFUtils", "WPFUtils\WPFUtils.csproj", "{3FCE70AC-F210-46DE-A830-8C70E06704BE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D5710CC-62F4-4829-AB9B-BD9C778DBB2C}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,14 +57,6 @@ Global
 		{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}.Release|x86.ActiveCfg = Release|Any CPU
 		{8A5DAC9C-0C2A-40CF-B82E-F32ADB341208}.Release|x86.Build.0 = Release|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Debug|x86.Build.0 = Debug|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Release|x86.ActiveCfg = Release|Any CPU
-		{6C42AAF3-FA10-4E96-85F6-1AF6EBDFF321}.Release|x86.Build.0 = Release|Any CPU
 		{7C2E0B09-32ED-4AE7-8039-D711497D950B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7C2E0B09-32ED-4AE7-8039-D711497D950B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2E0B09-32ED-4AE7-8039-D711497D950B}.Debug|x86.ActiveCfg = Debug|Any CPU
@@ -84,6 +81,14 @@ Global
 		{C349510C-C794-477E-9B26-E1A4B91E3A88}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C349510C-C794-477E-9B26-E1A4B91E3A88}.Release|x86.ActiveCfg = Release|Any CPU
 		{C349510C-C794-477E-9B26-E1A4B91E3A88}.Release|x86.Build.0 = Release|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Debug|x86.Build.0 = Debug|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Release|x86.ActiveCfg = Release|Any CPU
+		{3FCE70AC-F210-46DE-A830-8C70E06704BE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -31,6 +31,7 @@ namespace Devices.Keithley
     RangeI,
     AutoRangeV,
     AutoRangeI,
+    Local,
   };
 
   class KeithleyDevCon : UARTConnection<string>
@@ -76,6 +77,7 @@ namespace Devices.Keithley
             {CK2400.AutoRangeI, "CURR:RANG:AUTO" },
             {CK2400.AutoRangeV, "VOLT:RANG:AUTO" },
             {CK2400.Output,     "OUTP" },
+            {CK2400.Local,      "SYST:KEY 23" },
        };
 
     public enum Mode
@@ -92,6 +94,11 @@ namespace Devices.Keithley
         coms.Add(keyValuePair.Key, keyValuePair.Value);
     }
     public Keithley2400Con(WaitHandle abortWaitHandle) : base(abortWaitHandle) { }
+    internal override void PreDisconnectCommand()
+    {
+      Command(CK2400.Output, "0");
+      Command(CK2400.Local);
+    }
   }
   public class KeithleyDevice : ASCIIDevice
   {

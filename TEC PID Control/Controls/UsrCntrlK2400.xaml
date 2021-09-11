@@ -1,0 +1,115 @@
+﻿<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
+             xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
+             x:Class="TEC_PID_Control.Controls.UsrCntrlK2400"
+             mc:Ignorable="d"
+             x:Name="usrCntrlK2400"
+             Width="300"
+             Loaded="usrCntrlK2400_Loaded">
+  <UserControl.Resources>
+    <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
+    <Style TargetType="{x:Type TextBlock}">
+      <Setter Property="FontSize"
+              Value="14" />
+      <Setter Property="VerticalAlignment"
+              Value="Center" />
+      <Setter Property="TextAlignment"
+              Value="Right" />
+    </Style>
+    <Style TargetType="{x:Type Button}">
+      <Setter Property="Margin"
+              Value="2" />
+    </Style>
+
+  </UserControl.Resources>
+  <w:AnimExpander x:Name="expander"
+                  Background="#FFFFC6C6"
+                  BorderBrush="Black"
+                  Width="300"
+                  VerticalAlignment="Stretch"
+                  IsExpanded="{Binding IsExpanded, ElementName=usrCntrlK2400, FallbackValue=true}">
+    <Expander.Header>
+      <DockPanel x:Name="HeaderDock"
+                 Width="{Binding ActualWidth,ElementName=expander, Mode=OneWay}"
+                 LastChildFill="False">
+        <Ellipse x:Name="circle"
+                 Fill="LightGray"
+                 Stroke="Black"
+                 Width="14"
+                 Height="14"
+                 ToolTip="Disconnected"
+                 DockPanel.Dock="Right"
+                 Margin="31,0" />
+        <TextBlock Text="Keithley 2400" />
+      </DockPanel>
+    </Expander.Header>
+    <Grid Background="#FFFFDCDC">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="10*" />
+        <ColumnDefinition Width="15*" />
+        <ColumnDefinition Width="10*" />
+        <ColumnDefinition Width="15*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="Port:"/>
+      <ComboBox x:Name="cbPort"
+                Grid.Column="1"
+                SelectedIndex="0"
+                SelectionChanged="cbPort_SelectionChanged"
+                IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}, ElementName=usrCntrlK2400}"
+                DropDownOpened="cbPort_DropDownOpened"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                Margin="2" />
+      <Button x:Name="bConnect"
+              Content="Connect"
+              Grid.Column="2"
+              Click="bConnect_Click"
+              IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}, ElementName=usrCntrlK2400}"
+              Margin="2,2,2,2" />
+      <Button x:Name="bDisconnect"
+              Content="Disconnect"
+              Grid.Column="3"
+              Click="bDisconnect_Click"
+              IsEnabled="{Binding IsConnected, ElementName=usrCntrlK2400}"
+              Margin="2,2,2,2" />
+      <Separator Grid.Row="1"
+                 Grid.ColumnSpan="5"
+                 Margin="0,2,0,2" />
+      <TextBlock Text="Voltage:"
+                 Grid.Row="2" />
+      <w:UnitTextBox x:Name="utbVoltage"
+                     Value="{Binding Voltage, Mode=OneWay}"
+                     Unit="Voltage:mV"
+                     ValueFormat="N5"
+                     IsReadOnly="True"
+                     Grid.Row="2"
+                     Grid.Column="1"
+                     Margin="2,2,2,2" />
+      <TextBlock Text="Current:"
+                 Grid.Row="2"
+                 Grid.Column="2" />
+      <w:UnitTextBox x:Name="utbCurrent"
+                     Value="{Binding Current, Mode=OneWay}"
+                     Unit="Current:uA"
+                     ValueFormat="N5"
+                     IsReadOnly="True"
+                     Grid.Row="2"
+                     Grid.Column="3"
+                     Margin="2,2,2,2" />
+      <Separator Grid.Row="3"
+                 Grid.ColumnSpan="5"
+                 Margin="0,2,0,2" />
+    </Grid>
+  </w:AnimExpander>
+
+</UserControl>

@@ -72,6 +72,7 @@ namespace Devices
 
     public abstract string Iitialize();
     public abstract void Reset();
+    internal virtual void PreDisconnectCommand() => Reset();
     public abstract void Abort();
     public abstract void Flush();
 

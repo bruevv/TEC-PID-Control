@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
+    <ProjectReference Include="..\WPFUtils\WPFUtils.csproj" />
   </ItemGroup>
 
 </Project>
