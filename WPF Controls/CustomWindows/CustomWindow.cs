@@ -37,22 +37,22 @@ namespace CustomWindows
     public override void OnApplyTemplate()
     {
       Button closeButton = GetTemplateChild("closeButton") as Button;
-      if(closeButton != null) closeButton.Click += CloseButton_Click;
+      if (closeButton != null) closeButton.Click += CloseButton_Click;
 
       Button minimizeButton = GetTemplateChild("minimizeButton") as Button;
-      if(minimizeButton != null) minimizeButton.Click += MinimizeButton_Click; ;
+      if (minimizeButton != null) minimizeButton.Click += MinimizeButton_Click; ;
 
       UIElement DragRectange = GetTemplateChild("DragRectange") as UIElement;
-      if(DragRectange != null) DragRectange.PreviewMouseDown += Drag_PreviewMouseDown;
+      if (DragRectange != null) DragRectange.PreviewMouseDown += Drag_PreviewMouseDown;
 
       UIElement TitleTextBlock = GetTemplateChild("TitleTextBlock") as UIElement;
-      if(TitleTextBlock != null) TitleTextBlock.PreviewMouseDown += Drag_PreviewMouseDown;
+      if (TitleTextBlock != null) TitleTextBlock.PreviewMouseDown += Drag_PreviewMouseDown;
       base.OnApplyTemplate();
     }
 
     private void Drag_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
-      if(Mouse.LeftButton == MouseButtonState.Pressed) {
+      if (Mouse.LeftButton == MouseButtonState.Pressed) {
 
         DragMove();
       }
@@ -62,9 +62,10 @@ namespace CustomWindows
 
     protected override void OnStateChanged(EventArgs e)
     {
-      if(WindowState == WindowState.Maximized) {
+      if (WindowState == WindowState.Maximized) {
         Top = 0; Left = 0;
-        Width = MaxWidth; Height = MaxHeight;
+        Width = Math.Min(MaxWidth, SystemParameters.WorkArea.Width);
+        Height = Math.Min(MaxHeight, SystemParameters.WorkArea.Height);
         WindowState = WindowState.Normal;
       } else {
         base.OnStateChanged(e);

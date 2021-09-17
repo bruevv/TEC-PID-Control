@@ -21,14 +21,15 @@ namespace TEC_PID_Control
     TempSensor TC;
     public MainWindow()
     {
-      var logger = new Logger(null, Logger.Mode.NoAutoPoll);
+      var logger = new Logger(null, Logger.Mode.Full);
 
       InitializeComponent();
 
       logger.AttachLog(
         nameof(Keithley2400),
         (string msg, Logger.Mode lm) =>
-        ConsoleOut.Dispatcher.Invoke(() => ConsoleOut.Text += $">{msg}\n"));
+        ConsoleOut.Dispatcher.Invoke(() => ConsoleOut.Text += $">{msg}\n"),
+        Logger.Mode.Error);
 
       KD = usrCntrlK2400.KD;
       GWPS = usrCntrlGWPS.GWPS;

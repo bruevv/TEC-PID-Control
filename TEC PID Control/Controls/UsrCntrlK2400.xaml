@@ -92,7 +92,8 @@
               IsEnabled="{Binding IsConnected}" />
 
       <Grid Grid.Row="1"
-            Grid.ColumnSpan="5">
+            Grid.ColumnSpan="5"
+            IsEnabled="{Binding IsConnected}">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="10*" />
           <ColumnDefinition Width="15*" />

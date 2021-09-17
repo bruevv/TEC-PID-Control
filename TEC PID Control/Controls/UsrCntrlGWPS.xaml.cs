@@ -102,7 +102,8 @@ namespace TEC_PID_Control.Controls
       utbCurrent.DataContext = GWPS;
 
       Logger.Default.AttachLog(nameof(GWPowerSupply), (string msg, Logger.Mode lm) =>
-                                tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"));
+                               tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
+                               Logger.Mode.Error);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(AutoPollProperty, new Binding("IdlePollEnable") { Source = GWPS, Mode = BindingMode.TwoWay });

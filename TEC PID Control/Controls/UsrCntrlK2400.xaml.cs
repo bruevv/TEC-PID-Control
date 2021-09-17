@@ -101,7 +101,8 @@ namespace TEC_PID_Control.Controls
       utbCurrent.DataContext = KD;
 
       Logger.Default.AttachLog(nameof(Keithley2400), (string msg, Logger.Mode lm) =>
-                                tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"));
+                               tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
+                               Logger.Mode.Error);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(AutoPollProperty, new Binding("IdlePollEnable") { Source = KD, Mode = BindingMode.TwoWay });
@@ -130,23 +131,23 @@ namespace TEC_PID_Control.Controls
       string oldport = SelectedPort;
       cbPort.Items.Clear();
 
-      foreach(string port in SerialPort.GetPortNames())
+      foreach (string port in SerialPort.GetPortNames())
         cbPort.Items.Add(port);
 
-      if(!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
+      if (!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
         cbPort.SelectedItem = oldport;
     }
     void cbPort_SelectionChanged(object s, EventArgs e)
     {
       string str = cbPort.SelectedItem as string;
-      if(!string.IsNullOrEmpty(str)) SelectedPort = str;
+      if (!string.IsNullOrEmpty(str)) SelectedPort = str;
     }
 
     void cbPort_DropDownOpened(object sender, EventArgs e) => UpdateComboBox();
 
     void bOutput_Click(object sender, RoutedEventArgs e)
     {
-      if(KD.Output)
+      if (KD.Output)
         KD.TurnOFF();
       else
         KD.TurnON();
