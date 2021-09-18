@@ -5,6 +5,8 @@
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
              xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
              xmlns:prop="clr-namespace:TEC_PID_Control"
+             xmlns:System="clr-namespace:System;assembly=System.Runtime"
+             xmlns:uc="clr-namespace:TEC_PID_Control.Controls"
              x:Class="TEC_PID_Control.Controls.UsrCntrlGWPS"
              mc:Ignorable="d"
              x:Name="usrCntrlGWPS"
@@ -13,6 +15,7 @@
   <UserControl.Resources>
     <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
+    <WPFUtils:PowerConverter x:Key="PowerConverter" />
     <Style TargetType="{x:Type TextBlock}">
       <Setter Property="FontSize"
               Value="14" />
@@ -36,10 +39,10 @@
                   Width="300"
                   VerticalAlignment="Stretch"
                   IsExpanded="{Binding IsExpanded, FallbackValue=true}"
-                  DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}">
-    <Expander.Header>
+                  DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type uc:UsrCntrlGWPS}}}">
+    <w:AnimExpander.Header>
       <DockPanel x:Name="HeaderDock"
-                 Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type w:AnimExpander}}, Path=ActualWidth, Mode=OneWay}"
+                 Width="{Binding ActualWidth, Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type w:AnimExpander}}}"
                  LastChildFill="False">
         <Ellipse x:Name="circle"
                  Fill="LightGray"
@@ -55,7 +58,7 @@
                    Style="{StaticResource RectangleOnOff}" />
         <TextBlock Text="GWI Power Supply" />
       </DockPanel>
-    </Expander.Header>
+    </w:AnimExpander.Header>
     <Grid x:Name="grid"
           Background="#FFDCF5FF">
       <Grid.ColumnDefinitions>
@@ -122,16 +125,28 @@
                    Margin="5,0,0,0"
                    Style="{StaticResource RectangleOnOff}"
                    Visibility="Visible" />
+        <TextBlock Grid.Row="2"
+                   Grid.Column="1"
+                   Text="Channel" />
+        <ComboBox Grid.Row="2"
+                  Grid.Column="2"
+                  Margin="2"
+                  ToolTip="1-Right, 2-Left"
+                  HorizontalAlignment="Left"
+                  SelectedItem="{Binding Channel, FallbackValue=1}">
+          <System:Int32>1</System:Int32>
+          <System:Int32>2</System:Int32>
+        </ComboBox>
         <ToggleButton Content="Auto Poll"
                       Grid.Row="2"
                       Grid.Column="3"
                       Margin="2"
-                      IsChecked="{Binding AutoPoll}"/>
+                      IsChecked="{Binding AutoPoll}" />
         <TextBlock Text="Voltage:"
                    Grid.Row="3" />
         <w:UnitTextBox x:Name="utbVoltage"
                        Value="{Binding Voltage, Mode=OneWay}"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSMVFormat}"
+                       Unit="{Binding GWPSMVFormat, Source={x:Static prop:MainSettings.Default}}"
                        ValueFormat="N5"
                        IsReadOnly="True"
                        Grid.Row="3"
@@ -142,18 +157,18 @@
                    Grid.Column="2" />
         <w:UnitTextBox x:Name="utbCurrent"
                        Value="{Binding Current, Mode=OneWay}"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSMCFormat}"
+                       Unit="{Binding GWPSMCFormat, Source={x:Static prop:MainSettings.Default}}"
                        ValueFormat="N5"
                        IsReadOnly="True"
                        Grid.Row="3"
                        Grid.Column="3"
                        NormalBackground="#FFEBEBEB" />
 
-        <Separator Grid.Row="4"
+        <Separator Grid.Row="5"
                    Grid.ColumnSpan="4" />
         <TextBlock Text="Source Setup"
                    HorizontalAlignment="Left"
-                   Grid.Row="4"
+                   Grid.Row="5"
                    Grid.ColumnSpan="4"
                    Margin="5,0,0,4"
                    Background="{Binding Background, ElementName=grid}"
@@ -161,26 +176,47 @@
 
 
         <TextBlock Text="Voltage:"
-                   Grid.Row="5" />
+                   Grid.Row="6" />
         <w:UnitTextBox x:Name="utbSetVoltage"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSOVFormat}"
+                       Unit="{Binding GWPSOVFormat, Source={x:Static prop:MainSettings.Default}}"
                        ValueFormat="N5"
-                       Grid.Row="5"
+                       Grid.Row="6"
                        Grid.Column="1"
-                       Value="{Binding OutputVoltage}" />
+                       Value="{Binding OutputVoltage}"
+                       MaxValue="32"
+                       MinValue="0" />
         <TextBlock Text="Current:"
-                   Grid.Row="5"
+                   Grid.Row="6"
                    Grid.Column="2" />
         <w:UnitTextBox x:Name="utbSetCurrent"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSOCFormat}"
+                       Unit="{Binding GWPSOCFormat, Source={x:Static prop:MainSettings.Default}}"
                        ValueFormat="N5"
-                       Grid.Row="5"
+                       Grid.Row="6"
                        Grid.Column="3"
-                       Value="{Binding OutputCurrent}" />
-        <Button Grid.Row="6"
+                       Value="{Binding OutputCurrent}"
+                       MaxValue="3.2"
+                       MinValue="0" />
+        <Button Grid.Row="7"
                 Content="SetUp"
                 Click="bSetUp_Click" />
-
+        <TextBlock Text="Power:"
+                   Grid.Row="4"
+                   Grid.Column="2" />
+        <w:UnitTextBox x:Name="utbPower"
+                       Unit="Power:W"
+                       ValueFormat="N5"
+                       IsReadOnly="True"
+                       Grid.Row="4"
+                       Grid.Column="3"
+                       NormalBackground="#FFEBEBEB">
+          <w:UnitTextBox.Value>
+            <MultiBinding Converter="{StaticResource PowerConverter}"
+                          Mode="OneWay">
+              <Binding Path="Voltage" />
+              <Binding Path="Current" />
+            </MultiBinding>
+          </w:UnitTextBox.Value>
+        </w:UnitTextBox>
       </Grid>
       <w:AnimExpander Grid.ColumnSpan="4"
                       Grid.Row="7"

@@ -25,12 +25,29 @@ namespace TEC_PID_Control.Controls
     public static readonly DependencyProperty SelectedPortProperty =
         DependencyProperty.Register("SelectedPort", typeof(string), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata("") { BindsTwoWayByDefault = true });
 
+
+    public static readonly DependencyProperty ChannelProperty =
+        DependencyProperty.Register("Channel", typeof(int), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1, ChannelChanged) { BindsTwoWayByDefault = true });
+
+    static readonly DependencyPropertyKey VoltageKey = DependencyProperty.RegisterReadOnly(nameof(Voltage), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
+    static readonly DependencyPropertyKey CurrentKey = DependencyProperty.RegisterReadOnly(nameof(Current), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty VoltageProperty = VoltageKey.DependencyProperty;
+    public static readonly DependencyProperty CurrentProperty = CurrentKey.DependencyProperty;
+
+    static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Voltage_PropChanged));
+    static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Current_PropChanged));
+
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
+    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
+    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.Channel = (int)e.NewValue;
+
     public static readonly DependencyProperty OutputVoltageProperty =
         DependencyProperty.Register("OutputVoltage", typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty OutputCurrentProperty =
     DependencyProperty.Register("OutputCurrent", typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty AutoPollProperty =
-        DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
+        DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
 
     static readonly DependencyPropertyKey IsConnectedKey =
        DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
@@ -64,6 +81,23 @@ namespace TEC_PID_Control.Controls
     }
 
     [Category("Device")]
+    public int Channel {
+      get { return (int)GetValue(ChannelProperty); }
+      set { SetValue(ChannelProperty, value); }
+    }
+
+    [Category("Device")]
+    public double Voltage {
+      get { return (double)GetValue(VoltageProperty); }
+      protected set { SetValue(VoltageKey, value); }
+    }
+    [Category("Device")]
+    public double Current {
+      get { return (double)GetValue(CurrentProperty); }
+      protected set { SetValue(CurrentKey, value); }
+    }
+
+    [Category("Device")]
     public double OutputVoltage {
       get { return (double)GetValue(OutputVoltageProperty); }
       set { SetValue(OutputVoltageProperty, value); }
@@ -88,6 +122,7 @@ namespace TEC_PID_Control.Controls
       get { return (bool)GetValue(AutoPollProperty); }
       set { SetValue(AutoPollProperty, value); }
     }
+    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
 
 
     public UsrCntrlGWPS()
@@ -98,15 +133,13 @@ namespace TEC_PID_Control.Controls
       GWPS.ConnectedToDevice += KD_ConnectedToDevice;
       GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
-      utbVoltage.DataContext = GWPS;
-      utbCurrent.DataContext = GWPS;
-
       Logger.Default.AttachLog(nameof(GWPowerSupply), (string msg, Logger.Mode lm) =>
                                tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
-                               Logger.Mode.Error);
+                               Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = GWPS, Mode = BindingMode.OneWay });
-      SetBinding(AutoPollProperty, new Binding("IdlePollEnable") { Source = GWPS, Mode = BindingMode.TwoWay });
+      SetBinding(Voltage_Prop, new Binding("Voltage") { Source = GWPS, Mode = BindingMode.OneWay });
+      SetBinding(Current_Prop, new Binding("Current") { Source = GWPS, Mode = BindingMode.OneWay });
     }
 
     private void KD_DisconnectedFromDevice(object sender, EventArgs e)

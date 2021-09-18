@@ -27,8 +27,10 @@ namespace Devices.Keithley
     SetMeasureI,
     SetMeasureC,
     Read,
-    RangeV,
-    RangeI,
+    RangeVO,
+    RangeIO,
+    RangeVM,
+    RangeIM,
     AutoRangeV,
     AutoRangeI,
     Local,
@@ -72,8 +74,10 @@ namespace Devices.Keithley
             {CK2400.SourceI,    "SOUR:CURR" },
             {CK2400.ILim,       "CURR:PROT" },
             {CK2400.VLim,       "VOLT:PROT" },
-            {CK2400.RangeI,     "SOUR:CURR:RANG" },
-            {CK2400.RangeV,     "SOUR:VOLT:RANG" },
+            {CK2400.RangeIO,     "SOUR:CURR:RANG" },
+            {CK2400.RangeVO,     "SOUR:VOLT:RANG" },
+            {CK2400.RangeIM,     "SENS:CURR:RANG" },
+            {CK2400.RangeVM,     "SENS:VOLT:RANG" },
             {CK2400.AutoRangeI, "CURR:RANG:AUTO" },
             {CK2400.AutoRangeV, "VOLT:RANG:AUTO" },
             {CK2400.Output,     "OUTP" },
@@ -403,7 +407,7 @@ namespace Devices.Keithley
       try
       {
         SetupSourceV(ILim);
-        iCI.Command(CK2400.RangeV, V.ToString("G6"));
+        iCI.Command(CK2400.RangeVO, V.ToString("G6"));
         iCI.Command(CK2400.SourceV, V.ToString("G6"));
       }
       catch (Exception e)
@@ -420,7 +424,7 @@ namespace Devices.Keithley
       try
       {
         SetupSourceI(VLim);
-        iCI.Command(CK2400.RangeI, I.ToString("G6"));
+        iCI.Command(CK2400.RangeIO, I.ToString("G6"));
         //   iCI.Command(CK2400.AutoRangeI, AutoRange ? "1" : "0");
         iCI.Command(CK2400.SourceI, I.ToString("G6"));
       }
@@ -445,7 +449,7 @@ namespace Devices.Keithley
       if (!double.IsNaN(VLim) && VLim != 0)
       {
         iCI.Command(CK2400.VLim, VLim.ToString("G6"));
-        iCI.Command(CK2400.RangeV, VLim.ToString("G6"));
+        iCI.Command(CK2400.RangeVM, VLim.ToString("G6"));
         iCI.Command(CK2400.AutoRangeV, AutoRange ? "1" : "0");
       }
     }
@@ -459,7 +463,7 @@ namespace Devices.Keithley
       if (!double.IsNaN(ILim) && ILim != 0)
       {
         iCI.Command(CK2400.ILim, ILim.ToString("G6"));
-        iCI.Command(CK2400.RangeI, ILim.ToString("G6"));
+        iCI.Command(CK2400.RangeIM, ILim.ToString("G6"));
         iCI.Command(CK2400.AutoRangeI, AutoRange ? "1" : "0");
       }
     }

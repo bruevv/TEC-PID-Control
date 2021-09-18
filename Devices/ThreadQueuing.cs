@@ -128,7 +128,19 @@ namespace ThreadQueuing
 
     protected void OnThreadInit() => ThreadInit?.Invoke();
     protected void OnThreadIdle() { IsIdle = true; ThreadIdle?.Invoke(); }
-    protected void OnThreadIdleTimeOut() { ThreadIdleTimeOut?.Invoke(); }
+    int invocationIterator = 0;
+    protected void OnThreadIdleTimeOut()
+    {
+      //Iterate if several
+      Delegate[] dels = ThreadIdleTimeOut?.GetInvocationList();
+      if ((dels?.Length ?? 0) > 1) {
+        if (++invocationIterator >= dels.Length)
+          invocationIterator = 0;
+        ((Action)dels[invocationIterator]).Invoke();
+      } else {
+        ThreadIdleTimeOut?.Invoke();
+      }
+    }
     protected void OnThreadExitIdle() { IsIdle = false; ExitIdle?.Invoke(); }
     protected void OnThreadDispose() => ThreadDispose?.Invoke();
 

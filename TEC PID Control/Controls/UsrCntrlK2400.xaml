@@ -13,6 +13,7 @@
   <UserControl.Resources>
     <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
+    <WPFUtils:ResistanceConverter x:Key="ResistanceConverter" />
     <Style TargetType="{x:Type TextBlock}">
       <Setter Property="FontSize"
               Value="14" />
@@ -192,7 +193,15 @@
                        IsReadOnly="True"
                        Grid.Row="6"
                        Grid.Column="3"
-                       NormalBackground="#FFEBEBEB" />
+                       NormalBackground="#FFEBEBEB">
+          <w:UnitTextBox.Value>
+            <MultiBinding Converter="{StaticResource ResistanceConverter}"
+                          Mode="OneWay">
+              <Binding Path="Voltage"/>
+              <Binding Path="Current" />
+            </MultiBinding>
+          </w:UnitTextBox.Value>
+        </w:UnitTextBox>
 
       </Grid>
       <w:AnimExpander Grid.ColumnSpan="4"

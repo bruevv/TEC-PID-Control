@@ -31,6 +31,7 @@ namespace Devices
     public SState State { get; set; } = SState.Disconnected;
 
     public bool IsConnected => (State & SState.Connected) == SState.Connected;
+    public bool IsInitialized => (State & SState.Initialized) == SState.Initialized;
 
     public event EventHandler Connected;
     public event EventHandler Disconnected;

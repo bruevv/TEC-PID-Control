@@ -133,6 +133,54 @@ namespace TEC_PID_Control {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool GWPSLogExpanded2 {
+            get {
+                return ((bool)(this["GWPSLogExpanded2"]));
+            }
+            set {
+                this["GWPSLogExpanded2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double GWPSOutputVoltage2 {
+            get {
+                return ((double)(this["GWPSOutputVoltage2"]));
+            }
+            set {
+                this["GWPSOutputVoltage2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.0001")]
+        public double GWPSOutputCurrent2 {
+            get {
+                return ((double)(this["GWPSOutputCurrent2"]));
+            }
+            set {
+                this["GWPSOutputCurrent2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GWPSExpanded2 {
+            get {
+                return ((bool)(this["GWPSExpanded2"]));
+            }
+            set {
+                this["GWPSExpanded2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("\"\"")]
         public string GWPSPort {
             get {
@@ -248,6 +296,66 @@ namespace TEC_PID_Control {
             }
             set {
                 this["K2400RFormat"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int GWPSChannel1 {
+            get {
+                return ((int)(this["GWPSChannel1"]));
+            }
+            set {
+                this["GWPSChannel1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public string GWPSChannel2 {
+            get {
+                return ((string)(this["GWPSChannel2"]));
+            }
+            set {
+                this["GWPSChannel2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GWPSAutoPoll1 {
+            get {
+                return ((bool)(this["GWPSAutoPoll1"]));
+            }
+            set {
+                this["GWPSAutoPoll1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GWPSAutoPoll2 {
+            get {
+                return ((bool)(this["GWPSAutoPoll2"]));
+            }
+            set {
+                this["GWPSAutoPoll2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool K2400AutoPoll {
+            get {
+                return ((bool)(this["K2400AutoPoll"]));
+            }
+            set {
+                this["K2400AutoPoll"] = value;
             }
         }
     }

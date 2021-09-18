@@ -31,14 +31,26 @@
                        OutputVoltage="{Binding K2400OutputVoltage}"
                        IsLogExpanded="{Binding K2400LogExpanded}"
                        SelectedPort="{Binding K2400Port}"
-                       IsExpanded="{Binding K2400Expanded}" />
+                       IsExpanded="{Binding K2400Expanded}"
+                       AutoPoll="{Binding K2400AutoPoll}" />
       <c:UsrCntrlGWPS x:Name="usrCntrlGWPS"
                       DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
                       OutputCurrent="{Binding GWPSOutputCurrent}"
                       OutputVoltage="{Binding GWPSOutputVoltage}"
                       IsLogExpanded="{Binding GWPSLogExpanded}"
                       SelectedPort="{Binding GWPSPort}"
-                      IsExpanded="{Binding GWPSExpanded}"/>
+                      IsExpanded="{Binding GWPSExpanded}"
+                      Channel="{Binding GWPSChannel1}"
+                      AutoPoll="{Binding GWPSAutoPoll1}" />
+      <c:UsrCntrlGWPS x:Name="usrCntrlGWPS2"
+                      DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
+                      OutputCurrent="{Binding GWPSOutputCurrent2}"
+                      OutputVoltage="{Binding GWPSOutputVoltage2}"
+                      IsLogExpanded="{Binding GWPSLogExpanded2}"
+                      SelectedPort="{Binding GWPSPort}"
+                      IsExpanded="{Binding GWPSExpanded2}"
+                      Channel="{Binding GWPSChannel2}"
+                      AutoPoll="{Binding GWPSAutoPoll2}"/>
     </StackPanel>
 
     <TextBox x:Name="ConsoleOut"

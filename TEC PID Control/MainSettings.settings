@@ -29,6 +29,18 @@
     <Setting Name="GWPSExpanded" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="GWPSLogExpanded2" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="GWPSOutputVoltage2" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="GWPSOutputCurrent2" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.0001</Value>
+    </Setting>
+    <Setting Name="GWPSExpanded2" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
     <Setting Name="GWPSPort" Type="System.String" Scope="User">
       <Value Profile="(Default)">""</Value>
     </Setting>
@@ -58,6 +70,21 @@
     </Setting>
     <Setting Name="K2400RFormat" Type="System.String" Scope="User">
       <Value Profile="(Default)">Resistance:kOhm</Value>
+    </Setting>
+    <Setting Name="GWPSChannel1" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="GWPSChannel2" Type="System.String" Scope="User">
+      <Value Profile="(Default)">2</Value>
+    </Setting>
+    <Setting Name="GWPSAutoPoll1" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="GWPSAutoPoll2" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="K2400AutoPoll" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

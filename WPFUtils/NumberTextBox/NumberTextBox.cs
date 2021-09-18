@@ -428,7 +428,7 @@ namespace WPFControls
     public static DependencyProperty ValueProperty
          = DependencyProperty.Register("Value",
          typeof(int),
-         typeof(NumberTextBox<int>),
+         typeof(IntTextBox),
          new FrameworkPropertyMetadata(new int(), propertyChanged) { BindsTwoWayByDefault = true });
 
     [EditorBrowsable(EditorBrowsableState.Always)]

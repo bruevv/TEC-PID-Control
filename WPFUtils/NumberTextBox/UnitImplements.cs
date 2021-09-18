@@ -237,4 +237,26 @@ namespace WPFControls
     protected override string Invariant => "K";
     protected override Dictionary<string, double> dic => s_dic;
   }
+  [Designators("Power", "PWR", "Watts")]
+  public class UnitPower : Unit
+  {
+    static Dictionary<string, double> s_dic = new Dictionary<string, double>{
+           {"MW", 1e6},
+           {"kW", 1e3},
+           {"W", 1},
+           {"Watt", 1},
+           {"mW", 1e-3},
+           {"µW", 1e-6},
+           {"uW", 1e-6},
+           {"nW", 1e-9},
+      };
+
+    public static readonly UnitResistance Default = new UnitResistance();
+
+    public UnitPower() : base() { }
+    public UnitPower(string def) : base(def) { }
+
+    protected override string Invariant => "W";
+    protected override Dictionary<string, double> dic => s_dic;
+  }
 }

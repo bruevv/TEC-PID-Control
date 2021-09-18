@@ -53,7 +53,7 @@ namespace Devices.GWI
     new private protected GWPowerSupplyConnection iCI => (GWPowerSupplyConnection)base.iCI;
     private protected override ConnectionBase InitSPI(string name) => new GWPowerSupplyConnection(EventAbort, name);
 
-    public GWPowerSupply(string name = "noname") : base(name)
+    public GWPowerSupply(string name = "GWPowerSupply") : base(name)
     {
       iCI.IdleTimeout += OnIdleTimeout;
     }

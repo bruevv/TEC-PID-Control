@@ -25,7 +25,7 @@ namespace Devices
     const SState ModifiableState = SState.Error;
     public string StatusStr { get; protected set; } = null;
 
-    public bool IsConnected => (State & SState.Connected) == SState.Connected;
+    public bool IsConnected => (State & SState.Ready) == SState.Ready;
     public bool HasError => (State & SState.Error) == SState.Error;
     protected bool IsAutopollingNow => (State & SState.AutoPolling) == SState.AutoPolling;
 
@@ -133,13 +133,19 @@ namespace Devices
    => InContextInvoke(this, DisconnectedFromDevice, e);
     void DisconnectedEvent(object o, EventArgs e)
     {
-      if (IsConnected) ChangeStatus("Disconnected");
+      iCI.State &= ~SState.Initialized;
+      OnDisconnectedFromDevice(this, EventArgs.Empty);
+    }
+    bool connecting = false;
+    void СonnectedEvent(object o, EventArgs e)
+    {
+      if (!connecting && !iCI.IsInitialized) iCI.TQ.EnqueueUnique(Connect_AS, iCI.PortName);
     }
 
     protected TDevice(string name) : base(name)
     {
       iCI.Disconnected += DisconnectedEvent;
-      /// it was like that, now only after initialize      sPI.Connected += OnConnectedToCOM;
+      iCI.Connected += СonnectedEvent;
 
       iCI.TQ.ThreadIdle += OnIdle;
       iCI.TQ.ExitIdle += OnNotIdle;
@@ -150,12 +156,14 @@ namespace Devices
       ChangeStatus($"Trying to Connect\nPort:{port}");
       string initS = "";
       bool disconnect = false;
+      connecting = true;
       try {
         if (!iCI.IsConnected || !iCI.PortName.Equals(port)) {
           disconnect = true;
           iCI.Connect(port);
         }
-        initS = iCI.Iitialize();
+  //      if(!iCI.IsInitialized)
+          initS = iCI.Iitialize();
       } catch (Exception e) {
         if (disconnect)
           iCI.Disconnect();
@@ -167,11 +175,14 @@ namespace Devices
       OnConnectedToDevice(this, EventArgs.Empty);
 
     finish:
+      connecting = false;
       ewh?.Set();
     }
     protected void Disconnect_AS() => Disconnect_AS(null);
     protected void Disconnect_AS(EventWaitHandle ewh)
     {
+      iCI.State &= ~SState.Initialized;
+
       try { iCI.PreDisconnectCommand(); } catch { }
 
       try { iCI.Disconnect(); } catch (Exception e) {
@@ -188,12 +199,18 @@ namespace Devices
 
     public void Connect(string port)
     {
-      if (IsConnected) return;
+      if (IsConnected) {
+        OnConnectedToDevice(this, EventArgs.Empty);
+        return;
+      }
       iCI.TQ.EnqueueUnique(Connect_AS, port);
     }
     public async Task Connect_AW(string port)
     {
-      if (IsConnected) return;
+      if (IsConnected) {
+        OnConnectedToDevice(this, EventArgs.Empty);
+        return;
+      }
       var ewh = EventWaitHandlePool.GetHandle();
       iCI.TQ.Enqueue(Connect_AS, port, ewh);
       _ = await Task.Run(() => ewh.WaitOne());

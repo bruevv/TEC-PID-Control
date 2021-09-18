@@ -69,6 +69,11 @@ namespace TEC_PID_Control
       ((TextBox)sender).ScrollToEnd();
     }
 
+    private void Button_Click(object sender, RoutedEventArgs e)
+    {
+      usrCntrlGWPS.AutoPoll = false;
+    }
+
 
 
 

@@ -25,13 +25,24 @@ namespace TEC_PID_Control.Controls
     public static readonly DependencyProperty SelectedPortProperty =
         DependencyProperty.Register("SelectedPort", typeof(string), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata("") { BindsTwoWayByDefault = true });
 
+    static readonly DependencyPropertyKey VoltageKey = DependencyProperty.RegisterReadOnly(nameof(Voltage), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN));
+    static readonly DependencyPropertyKey CurrentKey = DependencyProperty.RegisterReadOnly(nameof(Current), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty VoltageProperty = VoltageKey.DependencyProperty;
+    public static readonly DependencyProperty CurrentProperty = CurrentKey.DependencyProperty;
+
+    static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Voltage_PropChanged));
+    static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Current_PropChanged));
+
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Voltage = (double)e.NewValue; 
+    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Current = (double)e.NewValue;
+
     public static readonly DependencyProperty OutputVoltageProperty =
         DependencyProperty.Register("OutputVoltage", typeof(double), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty OutputCurrentProperty =
     DependencyProperty.Register("OutputCurrent", typeof(double), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty AutoPollProperty =
-    DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
-
+    DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
     static readonly DependencyPropertyKey IsConnectedKey =
        DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
     public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
@@ -39,6 +50,7 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyProperty IsOn_Prop =
       DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false, IsOn_PropChanged));
     static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).IsOn = (bool)e.NewValue;
+
     static readonly DependencyPropertyKey IsOnKey =
        DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
@@ -61,6 +73,17 @@ namespace TEC_PID_Control.Controls
     public string SelectedPort {
       get { return (string)GetValue(SelectedPortProperty); }
       set { SetValue(SelectedPortProperty, value); }
+    }
+
+    [Category("Device")]
+    public double Voltage {
+      get { return (double)GetValue(VoltageProperty); }
+      protected set { SetValue(VoltageKey, value); }
+    }
+    [Category("Device")]
+    public double Current {
+      get { return (double)GetValue(CurrentProperty); }
+      protected set { SetValue(CurrentKey, value); }
     }
 
     [Category("Device")]
@@ -88,6 +111,7 @@ namespace TEC_PID_Control.Controls
       get { return (bool)GetValue(AutoPollProperty); }
       set { SetValue(AutoPollProperty, value); }
     }
+    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).KD.IdlePollEnable = (bool)e.NewValue;
 
     public UsrCntrlK2400()
     {
@@ -97,15 +121,15 @@ namespace TEC_PID_Control.Controls
       KD.ConnectedToDevice += KD_ConnectedToDevice;
       KD.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
-      utbVoltage.DataContext = KD;
-      utbCurrent.DataContext = KD;
+      utbResistance.DataContext = KD;
 
       Logger.Default.AttachLog(nameof(Keithley2400), (string msg, Logger.Mode lm) =>
                                tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
-                               Logger.Mode.Error);
+                               Logger.Mode.Full);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
-      SetBinding(AutoPollProperty, new Binding("IdlePollEnable") { Source = KD, Mode = BindingMode.TwoWay });
+      SetBinding(Voltage_Prop, new Binding("Voltage") { Source = KD, Mode = BindingMode.OneWay });
+      SetBinding(Current_Prop, new Binding("Current") { Source = KD, Mode = BindingMode.OneWay });
     }
 
     private void KD_DisconnectedFromDevice(object sender, EventArgs e)
@@ -157,8 +181,7 @@ namespace TEC_PID_Control.Controls
 
     async void bMesRes_Click(object sender, RoutedEventArgs e)
     {
-      double r = await KD.MeasureR_AW(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
-      utbResistance.Value = r;
+      _ = await KD.MeasureR_AW(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
     }
 
     void tbLog_TextChanged(object sender, TextChangedEventArgs e)
