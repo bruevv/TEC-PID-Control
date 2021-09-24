@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
              xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
-             xmlns:prop="clr-namespace:TEC_PID_Control"
+             xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
              x:Class="TEC_PID_Control.Controls.UsrCntrlK2400"
              mc:Ignorable="d"
              x:Name="usrCntrlK2400"
@@ -180,8 +180,11 @@
                        Grid.Column="3"
                        Value="{Binding OutputCurrent}" />
         <Button Grid.Row="6"
-                Content="SetUp"
-                Click="bSetUp_Click" />
+                Content="SetUp I"
+                Click="bSetUpI_Click"
+                        Height="21"
+                        Margin="2,2,2,0"
+                        VerticalAlignment="Top" />
         <Button Grid.Row="6"
                 Content="Measure Resistance"
                 Grid.Column="1"

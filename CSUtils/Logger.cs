@@ -11,12 +11,25 @@ namespace CSUtils
   {
     protected readonly Encoding Encoding = Encoding.UTF8;
 
-    public delegate void LeggerFeedback(string message, Mode mode);
+    public class LogFeedBEA : EventArgs
+    {
+      public LogFeedBEA(string logMessage, Mode mode)
+      {
+        Message = logMessage;
+        Mode = mode;
+      }
 
-    Dictionary<string, LeggerFeedback> AttachedLogs = new Dictionary<string, LeggerFeedback>();
-    Dictionary<LeggerFeedback, Mode> AttachedLogModes = new Dictionary<LeggerFeedback, Mode>();
+      public string Message { get; private set; }
+      public Mode Mode { get; private set; }
+    }
 
-    public void AttachLog(string name, LeggerFeedback del, Mode? mode = null)
+    //   public delegate void LeggerFeedback(string message, Mode mode);
+
+    Dictionary<string, EventHandler<LogFeedBEA>> AttachedLogs = new Dictionary<string, EventHandler<LogFeedBEA>>();
+
+    Dictionary<EventHandler<LogFeedBEA>, Mode> AttachedLogModes = new Dictionary<EventHandler<LogFeedBEA>, Mode>();
+
+    public void AttachLog(string name, EventHandler<LogFeedBEA> del, Mode? mode = null)
     {
       if (AttachedLogModes.ContainsKey(del)) {
         AttachedLogModes[del] = mode ?? LoggerMode;
@@ -30,7 +43,7 @@ namespace CSUtils
         AttachedLogs.Add(name, del);
       }
     }
-    public void DeattachLog(string name, LeggerFeedback del)
+    public void DeattachLog(string name, EventHandler<LogFeedBEA> del)
     {
       AttachedLogModes.Remove(del);
       AttachedLogs[name] -= del;
@@ -100,11 +113,11 @@ namespace CSUtils
     {
       if (mode == Mode.None) throw new ArgumentException("Message Mode cannot be 'None'");
 
-      UpdateAttachedLogs(logMessage, mode, source);
-
-      if (this == null || mode > LoggerMode) return;
-
       lock (Lock) {
+        UpdateAttachedLogs(logMessage, mode, source);
+
+        if (this == null || mode > LoggerMode) return;
+
         string line;
         if (source == null)
           line = $"[{DateTime.Now:yyyy/MM/dd HH:mm:ss}]{mode.ToString()[0]}\t\t{logMessage.Replace("\n", "\n->\t")}";
@@ -121,9 +134,9 @@ namespace CSUtils
     {
       try {
         if (AttachedLogs.ContainsKey(source)) {
-          foreach (LeggerFeedback del in AttachedLogs[source].GetInvocationList()) {
+          foreach (EventHandler<LogFeedBEA> del in AttachedLogs[source].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
-              del.Invoke(logMessage, mode);
+              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode)); 
           }
         }
       } catch (Exception) { }
@@ -132,7 +145,7 @@ namespace CSUtils
     public void log(string logMessage, Exception e, Mode mode, string source = null) => Log(ref logMessage, e, mode, source);
     public void log(ref string logMessage, Exception e, Mode mode, string source = null)
     {
-      string debug="";
+      string debug = "";
       if (e != null) {
 #if DEBUG
         debug = "\n" + e.FullStackTrace();

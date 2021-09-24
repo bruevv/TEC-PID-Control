@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TEC_PID_Control" GeneratedClassName="MainSettings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TEC_PID_Control.Properties" GeneratedClassName="MainSettings">
   <Profiles />
   <Settings>
     <Setting Name="K2400LogExpanded" Type="System.Boolean" Scope="User">
@@ -85,6 +85,12 @@
     </Setting>
     <Setting Name="K2400AutoPoll" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="LogFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">debug.log</Value>
+    </Setting>
+    <Setting Name="LogMode" Type="CSUtils.Logger.Mode" Scope="User">
+      <Value Profile="(Default)">Error</Value>
     </Setting>
   </Settings>
 </SettingsFile>

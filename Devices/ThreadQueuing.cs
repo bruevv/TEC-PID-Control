@@ -5,34 +5,6 @@ using System.Windows.Threading;
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override 
 namespace ThreadQueuing
 {
-  public static class Invoke
-  {
-    public static void InContextInvoke<TEventArgs>(object caller, EventHandler<TEventArgs> EH, TEventArgs EA)
-    {
-      if (EH == null) return;
-
-      foreach (EventHandler<TEventArgs> del in EH.GetInvocationList()) {
-        if (del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
-          DO.Dispatcher.BeginInvoke(del, caller, EA);
-        } else {
-          del(caller, EA);
-        }
-      }
-    }
-    public static void InContextInvoke(object caller, EventHandler EH, EventArgs EA)
-    {
-      if (EH == null) return;
-
-      foreach (EventHandler del in EH.GetInvocationList()) {
-        if (del.Target is DispatcherObject DO && Dispatcher.CurrentDispatcher != DO.Dispatcher) {
-          DO.Dispatcher.BeginInvoke(EH, caller, EA);
-        } else {
-          del(caller, EA);
-        }
-      }
-    }
-  }
-
   public class ThreadQueue : IDisposable
   {
     interface ITransaction
@@ -308,4 +280,5 @@ namespace ThreadQueuing
       }
     }
   }
+
 }

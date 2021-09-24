@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Windows.Threading;
 
 namespace CSUtils
 {
@@ -19,17 +21,17 @@ namespace CSUtils
   {
     public static T Bound<T>(T val, T min, T max) where T : IComparable<T>
     {
-      if(val.CompareTo(min) < 0)
+      if (val.CompareTo(min) < 0)
         return min;
-      if(val.CompareTo(max) > 0)
+      if (val.CompareTo(max) > 0)
         return max;
       return val;
     }
     public static T Bound<T>(ref T val, T min, T max) where T : IComparable<T>
     {
-      if(val.CompareTo(min) < 0)
+      if (val.CompareTo(min) < 0)
         return val = min;
-      if(val.CompareTo(max) > 0)
+      if (val.CompareTo(max) > 0)
         return val = max;
       return val;
     }
@@ -40,7 +42,7 @@ namespace CSUtils
     {
       str = str.Replace(':', '.');
       char[] ipc = System.IO.Path.GetInvalidPathChars();
-      foreach(char c in ipc) {
+      foreach (char c in ipc) {
         str = str.Replace(c, '_');
       }
       return str;
@@ -50,7 +52,7 @@ namespace CSUtils
     {
       str = str.Replace(':', '.');
       char[] ipc = System.IO.Path.GetInvalidPathChars();
-      foreach(char c in ipc) {
+      foreach (char c in ipc) {
         str = str.Replace(c, '_');
       }
     }
@@ -60,15 +62,15 @@ namespace CSUtils
 
     public static string GenerateUniqueName(Predicate<string> isunique, string original = "sample")
     {
-      if(original == null) original = "sample";
+      if (original == null) original = "sample";
 
       string name = original;
       string leftname = null;
       int i = 0;
-      while(!isunique(name)) {
-        if(leftname == null) {
+      while (!isunique(name)) {
+        if (leftname == null) {
           leftname = Regex.Match(name, @"(.+)(\s*\d*)$", RegexOptions.RightToLeft).Groups[1]?.Value ?? "series";
-          if(leftname == "") leftname = "X";
+          if (leftname == "") leftname = "X";
         }
         name = leftname + (i == 0 ? "" : " " + i);
         i++;
@@ -86,7 +88,7 @@ namespace CSUtils
       I += Y[0];
       I += Y[N - 1];
       I /= 2;
-      for(int i = 1; i < N - 1; i++)
+      for (int i = 1; i < N - 1; i++)
         I += Y[i];
       return I * dx;
     }
@@ -104,7 +106,7 @@ namespace CSUtils
       CosI += Y[0] * COS[0];
       CosI += Y[N - 1] * COS[(N - 1) % N2];
       SinI /= 2; CosI /= 2;
-      for(int i = 1; i < N - 1; i++) {
+      for (int i = 1; i < N - 1; i++) {
         SinI += Y[i] * SIN[i % N2];
         CosI += Y[i] * COS[i % N2];
       }
@@ -114,10 +116,19 @@ namespace CSUtils
     public static double Average(params double[] DATA)
     {
       double res = 0.0;
-      for(int i = 0; i < DATA.Length; i++)
+      for (int i = 0; i < DATA.Length; i++)
         res += DATA[i];
       return res / DATA.Length;
     }
+  }
+
+  public static class Atomic
+  {
+    public static double Read(ref double s) => Interlocked.CompareExchange(ref s, 0.0, 0.0);
+    public static void Write(ref double d, double val) => Interlocked.Exchange(ref d, val);
+
+    public static int Read(ref int s) => Interlocked.CompareExchange(ref s, 0, 0);
+    public static void Write(ref int d, int val) => Interlocked.Exchange(ref d, val);
   }
 
   public class MovingAverage
@@ -134,8 +145,8 @@ namespace CSUtils
     public uint Length {
       get => length;
       set {
-        if(value == 0) throw new ArgumentException("Cannot be zero");
-        if(length != value) {
+        if (value == 0) throw new ArgumentException("Cannot be zero");
+        if (length != value) {
           length = value;
           values = new double[length];
           squares = new double[length];
@@ -157,7 +168,7 @@ namespace CSUtils
 
     public double Next(double val)
     {
-      if(++cur_index >= length) cur_index = 0;
+      if (++cur_index >= length) cur_index = 0;
       double square = val * val;
 
       sum += val;
@@ -167,14 +178,14 @@ namespace CSUtils
       values[cur_index] = val;
       squares[cur_index] = square;
 
-      if(++fill_len > length) fill_len = length;
+      if (++fill_len > length) fill_len = length;
 
       return Average;
     }
 
     public void Initialize()
     {
-      for(int i = 0; i < values.Length; i++) {
+      for (int i = 0; i < values.Length; i++) {
         values[i] = 0;
         squares[i] = 0;
       }
@@ -204,7 +215,7 @@ namespace CSUtils
     /// <summary> LSB - 3 </summary>
     public static byte Byte(this int us, byte num)
     {
-      switch(num) {
+      switch (num) {
         case 0:
           return (byte)(us >> 24);
         case 1:
@@ -221,7 +232,7 @@ namespace CSUtils
     /// <summary> LSB - 3 </summary>
     public static byte Byte(this uint us, byte num)
     {
-      switch(num) {
+      switch (num) {
         case 0:
           return (byte)(us >> 24);
         case 1:
@@ -251,6 +262,86 @@ namespace CSUtils
       return Abs(d2 - d1) <= eps;
     }
   }
+
+  public static class Invoke
+  {
+    public static void InContextInvoke<TEventArgs>(object caller, EventHandler<TEventArgs> EH, TEventArgs EA)
+    {
+      if (EH == null) return;
+
+      foreach (EventHandler<TEventArgs> del in EH.GetInvocationList()) {
+        if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+          DO.Dispatcher.BeginInvoke(del, caller, EA);
+        } else {
+          del(caller, EA);
+        }
+      }
+    }
+    public static void InContextInvoke(object caller, EventHandler EH, EventArgs EA)
+    {
+      if (EH == null) return;
+
+      foreach (EventHandler del in EH.GetInvocationList()) {
+        if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+          DO.Dispatcher.BeginInvoke(EH, caller, EA);
+        } else {
+          del(caller, EA);
+        }
+      }
+    }
+
+    public static void InContextInvoke(Action del)
+    {
+      if (del == null) return;
+
+      if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+        DO.Dispatcher.BeginInvoke(del);
+      } else {
+        del();
+      }
+    }
+    public static void InContextInvoke<T1>(Action<T1> del, T1 t1)
+    {
+      if (del == null) return;
+
+      if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+        DO.Dispatcher.BeginInvoke(del, t1);
+      } else {
+        del(t1);
+      }
+    }
+    public static void InContextInvoke<T1, T2>(Action<T1, T2> del, T1 t1, T2 t2)
+    {
+      if (del == null) return;
+
+      if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+        DO.Dispatcher.BeginInvoke(del, t1, t2);
+      } else {
+        del(t1, t2);
+      }
+    }
+    public static void InContextInvoke<T1, T2, T3>(Action<T1, T2, T3> del, T1 t1, T2 t2, T3 t3)
+    {
+      if (del == null) return;
+
+      if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+        DO.Dispatcher.BeginInvoke(del, t1, t2, t3);
+      } else {
+        del(t1, t2, t3);
+      }
+    }
+    public static void InContextInvokeD(Delegate del, params object[] args)
+    {
+      if (del == null) return;
+
+      if (del.Target is DispatcherObject DO && Dispatcher.FromThread(Thread.CurrentThread) != DO.Dispatcher) {
+        DO.Dispatcher.BeginInvoke(del, args);
+      } else {
+        del.DynamicInvoke(args);
+      }
+    }
+  }
+
   #region old crap
   public struct Complex
   {
@@ -291,14 +382,14 @@ namespace CSUtils
 
     public override string ToString()
     {
-      if(real == 0 && imaginary == 0)
+      if (real == 0 && imaginary == 0)
         return "0";
-      if(imaginary == 0) return real.ToString();
-      if(imaginary > 0) {
-        if(real == 0) return $"i{imaginary}";
+      if (imaginary == 0) return real.ToString();
+      if (imaginary > 0) {
+        if (real == 0) return $"i{imaginary}";
         else return $"{real} + i{imaginary}";
       } else {
-        if(real == 0) return $"-i{-imaginary}";
+        if (real == 0) return $"-i{-imaginary}";
         else return $"{real} - i{-imaginary}";
       }
     }

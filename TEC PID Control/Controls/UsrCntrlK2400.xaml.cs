@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using ThreadQueuing;
 
 namespace TEC_PID_Control.Controls
 {
@@ -34,7 +35,7 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Voltage_PropChanged));
     static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Current_PropChanged));
 
-    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Voltage = (double)e.NewValue; 
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Voltage = (double)e.NewValue;
     static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Current = (double)e.NewValue;
 
     public static readonly DependencyProperty OutputVoltageProperty =
@@ -54,9 +55,7 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyPropertyKey IsOnKey =
        DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
-
     #endregion Binding
-
 
     [Category("Appearance")]
     public bool IsExpanded {
@@ -123,14 +122,19 @@ namespace TEC_PID_Control.Controls
 
       utbResistance.DataContext = KD;
 
-      Logger.Default.AttachLog(nameof(Keithley2400), (string msg, Logger.Mode lm) =>
-                               tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
-                               Logger.Mode.Full);
+      Logger.Default.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = KD, Mode = BindingMode.OneWay });
+
+      Action xxx = delegate { tbLog.Text += $">\n"; };
+      Delegate d = xxx;
     }
+
+    void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
+
+    delegate void f();
 
     private void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
@@ -147,8 +151,7 @@ namespace TEC_PID_Control.Controls
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => KD.Disconnect();
-    void bConnect_Click(object sender, RoutedEventArgs e) => KD.Connect(SelectedPort);
-
+    void bConnect_Click(object sender, RoutedEventArgs e) => ConnectCommand();
     void usrCntrlK2400_Loaded(object sender, RoutedEventArgs e) => UpdateComboBox();
     void UpdateComboBox()
     {
@@ -172,16 +175,16 @@ namespace TEC_PID_Control.Controls
     void bOutput_Click(object sender, RoutedEventArgs e)
     {
       if (KD.Output)
-        KD.TurnOFF();
+        KD.ScheduleTurnOFF();
       else
-        KD.TurnON();
+        KD.ScheduleTurnON();
     }
 
-    void bSetUp_Click(object s, RoutedEventArgs e) => KD.SourceI(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
+    void bSetUpI_Click(object s, RoutedEventArgs e) => SetUpICommand();
 
     async void bMesRes_Click(object sender, RoutedEventArgs e)
     {
-      _ = await KD.MeasureR_AW(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
+      _ = await KD.MeasureRAsync(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
     }
 
     void tbLog_TextChanged(object sender, TextChangedEventArgs e)
@@ -191,5 +194,8 @@ namespace TEC_PID_Control.Controls
         tb.Text = "<Log trimmed>" + tb.Text.Substring(tb.Text.IndexOf('\n', 1000));
       tb.ScrollToEnd();
     }
+
+    public void SetUpICommand() => KD.SourceI(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
+    public void ConnectCommand() => KD.Connect(SelectedPort);
   }
 }

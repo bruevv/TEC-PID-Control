@@ -133,16 +133,16 @@ namespace TEC_PID_Control.Controls
       GWPS.ConnectedToDevice += KD_ConnectedToDevice;
       GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
-      Logger.Default.AttachLog(nameof(GWPowerSupply), (string msg, Logger.Mode lm) =>
-                               tbLog.Dispatcher.Invoke(() => tbLog.Text += $">{msg}\n"),
-                               Logger.Mode.NoAutoPoll);
+      Logger.Default.AttachLog(nameof(GWPowerSupply), AddToLog, Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = GWPS, Mode = BindingMode.OneWay });
     }
 
-    private void KD_DisconnectedFromDevice(object sender, EventArgs e)
+    void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += $">{e.Message}\n";
+
+    void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
       IsConnected = false;
       circle.Fill = Brushes.LightGray;
@@ -182,15 +182,17 @@ namespace TEC_PID_Control.Controls
     void bOutput_Click(object sender, RoutedEventArgs e)
     {
       if (GWPS.Output)
-        GWPS.TurnOff();
+        GWPS.ScheduleTurnOff();
       else
-        GWPS.TurnOn();
+        GWPS.ScheduleTurnOn();
     }
 
-    void bSetUp_Click(object s, RoutedEventArgs e)
+    void bSetUp_Click(object s, RoutedEventArgs e) => SetUpCommand();
+
+    public void SetUpCommand()
     {
-      GWPS.SetV(OutputVoltage);
-      GWPS.SetI(OutputCurrent);
+      GWPS.ScheduleSetV(OutputVoltage);
+      GWPS.ScheduleSetI(OutputCurrent);
     }
 
     void TbLog_TextChanged(object sender, TextChangedEventArgs e)
@@ -199,6 +201,11 @@ namespace TEC_PID_Control.Controls
       if (tb.Text.Length > 5000)
         tb.Text = "<Log trimmed>" + tb.Text.Substring(tb.Text.IndexOf('\n', 1000));
       tb.ScrollToEnd();
+    }
+
+    void cbChannel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      title.Text = $"GWI Power Supply (Channel {Channel})";
     }
   }
 }

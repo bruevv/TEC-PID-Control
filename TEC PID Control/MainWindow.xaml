@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:my="clr-namespace:WPFControls;assembly=WPFUtils"
                  xmlns:c="clr-namespace:TEC_PID_Control.Controls"
-                 xmlns:prop="clr-namespace:TEC_PID_Control"
+                 xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
                  x:Name="customWindow"
                  x:Class="TEC_PID_Control.MainWindow"
                  Title="Main Window"
@@ -18,40 +18,61 @@
       <ColumnDefinition Width="Auto" />
       <ColumnDefinition Width="296*" />
     </Grid.ColumnDefinitions>
-    <StackPanel Grid.RowSpan="2"
-                Margin="2">
-      <my:UnitTextBox x:Name="utbTemp"
-                      Width="100"
-                      Unit="TemperatureC:°C"
-                      ValueFormat="N6"
-                      IsReadOnly="True" />
-      <c:UsrCntrlK2400 x:Name="usrCntrlK2400"
-                       DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                       OutputCurrent="{Binding K2400OutputCurrent}"
-                       OutputVoltage="{Binding K2400OutputVoltage}"
-                       IsLogExpanded="{Binding K2400LogExpanded}"
-                       SelectedPort="{Binding K2400Port}"
-                       IsExpanded="{Binding K2400Expanded}"
-                       AutoPoll="{Binding K2400AutoPoll}" />
-      <c:UsrCntrlGWPS x:Name="usrCntrlGWPS"
-                      DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                      OutputCurrent="{Binding GWPSOutputCurrent}"
-                      OutputVoltage="{Binding GWPSOutputVoltage}"
-                      IsLogExpanded="{Binding GWPSLogExpanded}"
-                      SelectedPort="{Binding GWPSPort}"
-                      IsExpanded="{Binding GWPSExpanded}"
-                      Channel="{Binding GWPSChannel1}"
-                      AutoPoll="{Binding GWPSAutoPoll1}" />
-      <c:UsrCntrlGWPS x:Name="usrCntrlGWPS2"
-                      DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                      OutputCurrent="{Binding GWPSOutputCurrent2}"
-                      OutputVoltage="{Binding GWPSOutputVoltage2}"
-                      IsLogExpanded="{Binding GWPSLogExpanded2}"
-                      SelectedPort="{Binding GWPSPort}"
-                      IsExpanded="{Binding GWPSExpanded2}"
-                      Channel="{Binding GWPSChannel2}"
-                      AutoPoll="{Binding GWPSAutoPoll2}"/>
-    </StackPanel>
+    <ScrollViewer Margin="2"
+                  Grid.RowSpan="2">
+
+      <StackPanel >
+        <StackPanel Orientation="Horizontal">
+          <Button Content="Measure T"
+                  Margin="5,2"
+                  Padding="5,0"
+                  Click="bMeatureT_Click" />
+          <my:UnitTextBox x:Name="utbTemp"
+                          Width="100"
+                          Unit="TemperatureC:°C"
+                          ValueFormat="N6"
+                          IsReadOnly="True" />
+        </StackPanel>
+        <c:UsrCntrlK2400 x:Name="usrCntrlK2400"
+                         DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
+                         OutputCurrent="{Binding K2400OutputCurrent}"
+                         OutputVoltage="{Binding K2400OutputVoltage}"
+                         IsLogExpanded="{Binding K2400LogExpanded}"
+                         SelectedPort="{Binding K2400Port}"
+                         IsExpanded="{Binding K2400Expanded}"
+                         AutoPoll="{Binding K2400AutoPoll}" />
+        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS"
+                        DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
+                        OutputCurrent="{Binding GWPSOutputCurrent}"
+                        OutputVoltage="{Binding GWPSOutputVoltage}"
+                        IsLogExpanded="{Binding GWPSLogExpanded}"
+                        SelectedPort="{Binding GWPSPort}"
+                        IsExpanded="{Binding GWPSExpanded}"
+                        Channel="{Binding GWPSChannel1}"
+                        AutoPoll="{Binding GWPSAutoPoll1}" />
+        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS2"
+                        DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
+                        OutputCurrent="{Binding GWPSOutputCurrent2}"
+                        OutputVoltage="{Binding GWPSOutputVoltage2}"
+                        IsLogExpanded="{Binding GWPSLogExpanded2}"
+                        SelectedPort="{Binding GWPSPort}"
+                        IsExpanded="{Binding GWPSExpanded2}"
+                        Channel="{Binding GWPSChannel2}"
+                        AutoPoll="{Binding GWPSAutoPoll2}" />
+        <c:UsrCntrlPID x:Name="usrCntrlPID"
+                       DataContext="{Binding Source={x:Static prop:PIDSettings.Default}}"
+                       CtrlP="{Binding CtrlP}"
+                       CtrlI="{Binding CtrlI}"
+                       CtrlD="{Binding CtrlD}"
+                       GlobalGain="{Binding GlobalGain}"
+                       TimeConstant="{Binding TimeConstant}"
+                       MinCtrlPar="{Binding MinCtrlPar}"
+                       MaxCtrlPar="{Binding MaxCtrlPar}"
+                       MaxIntegralError="{Binding MaxIntegralError}"/>
+        <Button Content="measure"
+                Click="Button_Click" />
+      </StackPanel>
+    </ScrollViewer>
 
     <TextBox x:Name="ConsoleOut"
              Grid.Column="1"

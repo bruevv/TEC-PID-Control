@@ -6,7 +6,7 @@ namespace Devices
   using System.Threading.Tasks;
   using CSUtils;
   using ThreadQueuing;
-  using static ThreadQueuing.Invoke;
+  using static CSUtils.Invoke;
 
   abstract public class Device : IDisposable
   {

@@ -214,39 +214,39 @@ namespace Devices.GWI
     finish:
       ewh?.Set();
     }
-    public void SetV(double V)
+    public void ScheduleSetV(double V)
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(SetV_AS, V);
     }
-    public void SetI(double I)
+    public void ScheduleSetI(double I)
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(SetI_AS, I);
     }
-    public void TurnOn()
+    public void ScheduleTurnOn()
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(Out_AS, true);
     }
-    public void TurnOff()
+    public void ScheduleTurnOff()
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(Out_AS, false);
     }
 
-    public void UpdateI()
+    public void ScheduleUpdateI()
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(GetI_AS);
     }
-    public void UpdateV()
+    public void ScheduleUpdateV()
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(GetV_AS);
     }
 
-    public async Task<double> GetI_AW()
+    public async Task<double> GetIAsync()
     {
       if (!IsConnected) return double.NaN;
       EventWaitHandle ewh = EventWaitHandlePool.GetHandle();
@@ -255,7 +255,7 @@ namespace Devices.GWI
       EventWaitHandlePool.ReturnHandle(ewh);
       return Current;
     }
-    public async Task<double> GetV_AW()
+    public async Task<double> GetVAsync()
     {
       if (!IsConnected) return double.NaN;
       EventWaitHandle ewh = EventWaitHandlePool.GetHandle();

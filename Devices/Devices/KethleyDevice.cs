@@ -4,13 +4,20 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CSUtils;
 using SerialPorting;
 using ThreadQueuing;
 
 namespace Devices.Keithley
 {
   using SG = System.Globalization;
-
+  public enum Mode
+  {
+    CURR,
+    VOLT,
+    BOTH,
+    unknown,
+  }
   public enum CK2400
   {
     Fetch = 0x11,
@@ -48,7 +55,7 @@ namespace Devices.Keithley
         };
 
     public KeithleyDevCon(WaitHandle abortWaitHandle, int idlewait = 30, string name = "noname") : base(abortWaitHandle, idlewait: 30, name) { }
-    protected override int BaudRate => 9600;
+    protected override int BaudRate => 57600;
     public override int BasicTimeout => 1000;
     protected override string ACK => null;
     public override bool AddQuestionMark => true;
@@ -84,13 +91,6 @@ namespace Devices.Keithley
             {CK2400.Local,      "SYST:KEY 23" },
        };
 
-    public enum Mode
-    {
-      CURR,
-      VOLT,
-      BOTH,
-      unknown,
-    }
     // public override bool AddQuestionMark => true;
     static Keithley2400Con()
     {
@@ -114,16 +114,13 @@ namespace Devices.Keithley
     void CustomCommand_AS(string command)
     {
       string res = "";
-      try
-      {
+      try {
         string cmd = command.Trim();
         if (cmd.EndsWith('?'))
           res = iCI.Request(CCmd.Custom, cmd);
         else
           iCI.Command(CCmd.Custom, command);
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in CustomCommand\n{e.Message}",
                   State | SState.Error);
         return;
@@ -150,62 +147,50 @@ namespace Devices.Keithley
     double current = double.NaN;
     double time = 0;
     int status = 0;
-    public double Voltage
-    {
-      get => voltage;
-      protected set
-      {
-        if (voltage != value)
-        {
-          voltage = value;
+    Mode sourceMode = Mode.unknown;
+    Mode measureMode = Mode.unknown;
+
+    public double Voltage {
+      get => Atomic.Read(ref voltage);
+      protected set {
+        if (voltage != value) {
+          Atomic.Write(ref voltage, value);
           OnPropertyChanged();
         }
       }
     }
-    public double Current
-    {
-      get => current;
-      protected set
-      {
-        if (current != value)
-        {
-          current = value;
+    public double Current {
+      get => Atomic.Read(ref current);
+      protected set {
+        if (current != value) {
+          Atomic.Write(ref current, value);
           OnPropertyChanged();
         }
       }
     }
-    public double Time
-    {
-      get => time;
-      protected set
-      {
-        if (time != value)
-        {
-          time = value;
+    public double Time {
+      get => Atomic.Read(ref time);
+      protected set {
+        if (time != value) {
+          Atomic.Write(ref time, value);
           OnPropertyChanged();
         }
       }
     }
-    public int Status
-    {
-      get => status;
-      protected set
-      {
-        if (status != value)
-        {
-          status = value;
+    public int Status {
+      get => Atomic.Read(ref status);
+      protected set {
+        if (status != value) {
+          Atomic.Write(ref status, value);
           OnPropertyChanged();
         }
       }
     }
     bool output;
-    public bool Output
-    {
+    public bool Output {
       get => output;
-      protected set
-      {
-        if (output != value)
-        {
+      protected set {
+        if (output != value) {
           output = value;
           OnPropertyChanged();
         }
@@ -224,9 +209,36 @@ namespace Devices.Keithley
       }
     }
 
-    Keithley2400Con.Mode SourceMode = Keithley2400Con.Mode.unknown;
-    Keithley2400Con.Mode MeasureMode = Keithley2400Con.Mode.unknown;
+    bool isReset = false;
+    public bool IsReset {
+      get => isReset;
+      private set {
+        if (isReset != value) {
+          isReset = value;
+          OnPropertyChanged();
+        }
+      }
+    }
 
+
+    public Mode SourceMode {
+      get => sourceMode;
+      private set {
+        if (sourceMode != value) {
+          sourceMode = value;
+          OnPropertyChanged();
+        }
+      }
+    }
+    public Mode MeasureMode {
+      get => measureMode;
+      private set {
+        if (measureMode != value) {
+          measureMode = value;
+          OnPropertyChanged();
+        }
+      }
+    }
     private protected override Keithley2400Con InitSPI(string name) => new Keithley2400Con(EventAbort, name);
     public Keithley2400(string name = "noname") : base(name)
     {
@@ -241,20 +253,18 @@ namespace Devices.Keithley
 
     void Reset_AS()
     {
-      try
-      {
+      try {
         iCI.Command(CCmd.Reset);
-        SourceMode = Keithley2400Con.Mode.VOLT;
-        MeasureMode = Keithley2400Con.Mode.unknown;
-      }
-      catch (Exception e)
-      {
+        SourceMode = Mode.VOLT;
+        MeasureMode = Mode.unknown;
+      } catch (Exception e) {
         ChangeStatus($"Error in Reset\n{e.Message}",
                   State | SState.Error);
         goto finish;
       }
       ChangeStatus($"K2400 Reset to Default state", State & ~SState.Error);
       Output = false;
+      IsReset = true;
 
     finish:
       return;
@@ -263,25 +273,19 @@ namespace Devices.Keithley
     void MeasureI_AS(EventWaitHandle ewh)
     {
       string res;
-      try
-      {
-        SetupMeasureI();
+      try {
+        ScheduleSetupMeasureI();
 
         res = iCI.Request(CK2400.MeasureI);
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in MeasureI\n{e.Message}",
                   State | SState.Error);
         goto finish;
       }
-      if (double.TryParse(res, SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val))
-      {
+      if (double.TryParse(res, SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val)) {
         Current = val;
         ChangeStatus($"Measure Current:{Current}A", State & ~SState.Error);
-      }
-      else
-      {
+      } else {
         ChangeStatus($"Measure Current Parse Failed", State & ~SState.Error);
       }
       Output = true;
@@ -294,24 +298,18 @@ namespace Devices.Keithley
     void MeasureV_AS(EventWaitHandle ewh)
     {
       string res;
-      try
-      {
-        SetupMeasureV();
+      try {
+        ScheduleSetupMeasureV();
         res = iCI.Request(CK2400.MeasureV);
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in MeasureV\n{e.Message}",
                   State | SState.Error);
         goto finish;
       }
-      if (double.TryParse(res, SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val))
-      {
+      if (double.TryParse(res, SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val)) {
         Voltage = val;
         ChangeStatus($"Measure Voltage:{Voltage}V", State & ~SState.Error);
-      }
-      else
-      {
+      } else {
         ChangeStatus($"Measure Voltage Parse Failed", State & ~SState.Error);
       }
       Output = true;
@@ -323,12 +321,9 @@ namespace Devices.Keithley
     void TurnOutput_AS(bool b) => TurnOutput_AS(b, null);
     void TurnOutput_AS(bool b, EventWaitHandle ewh)
     {
-      try
-      {
+      try {
         iCI.Command(CK2400.Output, b ? "1" : "0");
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in TurnOutput\n{e.Message}",
                   State | SState.Error);
         goto finish;
@@ -345,30 +340,24 @@ namespace Devices.Keithley
     void MeasureConc_AS(EventWaitHandle ewh)
     {
       string res;
-      try
-      {
-        SetupMeasureConcurent();
+      try {
+        ScheduleSetupMeasureConcurent();
 
         iCI.Command(CK2400.Output, "1");
         res = iCI.Request(CK2400.Read);
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in MeasureI\n{e.Message}",
                   State | SState.Error);
         goto finish;
       }
       string[] spl = res.Split(',');
-      try
-      {
+      try {
         Voltage = double.Parse(spl[0], SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture);
         Current = double.Parse(spl[1], SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture);
         Time = double.Parse(spl[2], SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture);
         Status = (int)(double.Parse(spl[3], SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture) + 0.5);
         ChangeStatus($"Measure:{Voltage}V,{Current}A", State & ~SState.Error);
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Measure Parse Failed\n{e.Message}", State & ~SState.Error);
       }
       Output = true;
@@ -377,41 +366,35 @@ namespace Devices.Keithley
       ewh?.Set();
     }
 
-    void SetupMeasureI()
+    void ScheduleSetupMeasureI()
     {
-      if (MeasureMode != Keithley2400Con.Mode.CURR)
-      {
+      if (MeasureMode != Mode.CURR) {
         iCI.Command(CK2400.SetMeasureI);
-        MeasureMode = Keithley2400Con.Mode.CURR;
+        MeasureMode = Mode.CURR;
       }
     }
-    void SetupMeasureV()
+    void ScheduleSetupMeasureV()
     {
-      if (MeasureMode != Keithley2400Con.Mode.VOLT)
-      {
+      if (MeasureMode != Mode.VOLT) {
         iCI.Command(CK2400.SetMeasureV);
-        MeasureMode = Keithley2400Con.Mode.VOLT;
+        MeasureMode = Mode.VOLT;
       }
     }
-    void SetupMeasureConcurent()
+    void ScheduleSetupMeasureConcurent()
     {
-      if (MeasureMode != Keithley2400Con.Mode.BOTH)
-      {
+      if (MeasureMode != Mode.BOTH) {
         iCI.Command(CK2400.SetMeasureC);
-        MeasureMode = Keithley2400Con.Mode.BOTH;
+        MeasureMode = Mode.BOTH;
       }
     }
 
     void SourceV_AS(double V, double ILim)
     {
-      try
-      {
+      try {
         SetupSourceV(ILim);
         iCI.Command(CK2400.RangeVO, V.ToString("G6"));
         iCI.Command(CK2400.SourceV, V.ToString("G6"));
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in SourceV\n{e.Message}",
                   State | SState.Error);
         return;
@@ -421,15 +404,12 @@ namespace Devices.Keithley
     }
     void SourceI_AS(double I, double VLim)
     {
-      try
-      {
+      try {
         SetupSourceI(VLim);
         iCI.Command(CK2400.RangeIO, I.ToString("G6"));
         //   iCI.Command(CK2400.AutoRangeI, AutoRange ? "1" : "0");
         iCI.Command(CK2400.SourceI, I.ToString("G6"));
-      }
-      catch (Exception e)
-      {
+      } catch (Exception e) {
         ChangeStatus($"Error in SourceI\n{e.Message}",
                   State | SState.Error);
         return;
@@ -441,13 +421,11 @@ namespace Devices.Keithley
 
     void SetupSourceI(double VLim)
     {
-      if (SourceMode != Keithley2400Con.Mode.CURR)
-      {
+      if (SourceMode != Mode.CURR) {
         iCI.Command(CK2400.SetSourceI);
-        SourceMode = Keithley2400Con.Mode.CURR;
+        SourceMode = Mode.CURR;
       }
-      if (!double.IsNaN(VLim) && VLim != 0)
-      {
+      if (!double.IsNaN(VLim) && VLim != 0) {
         iCI.Command(CK2400.VLim, VLim.ToString("G6"));
         iCI.Command(CK2400.RangeVM, VLim.ToString("G6"));
         iCI.Command(CK2400.AutoRangeV, AutoRange ? "1" : "0");
@@ -455,68 +433,128 @@ namespace Devices.Keithley
     }
     void SetupSourceV(double ILim)
     {
-      if (SourceMode != Keithley2400Con.Mode.VOLT)
-      {
+      if (SourceMode != Mode.VOLT) {
         iCI.Command(CK2400.SetSourceV);
-        SourceMode = Keithley2400Con.Mode.VOLT;
+        SourceMode = Mode.VOLT;
       }
-      if (!double.IsNaN(ILim) && ILim != 0)
-      {
+      if (!double.IsNaN(ILim) && ILim != 0) {
         iCI.Command(CK2400.ILim, ILim.ToString("G6"));
         iCI.Command(CK2400.RangeIM, ILim.ToString("G6"));
         iCI.Command(CK2400.AutoRangeI, AutoRange ? "1" : "0");
       }
     }
 
-    public void MeasureI()
+    public void ScheduleMeasureI(EventWaitHandle CompletedEvent = null)
     {
       if (!IsConnected) return;
-      iCI.TQ.EnqueueUnique(MeasureI_AS);
+      if (CompletedEvent != null)
+        iCI.TQ.EnqueueUnique(MeasureI_AS, CompletedEvent);
+      else
+        iCI.TQ.EnqueueUnique(MeasureV_AS);
     }
-    public void MeasureV()
+    public void ScheduleMeasureV(EventWaitHandle CompletedEvent = null)
     {
       if (!IsConnected) return;
-      iCI.TQ.EnqueueUnique(MeasureV_AS);
+      if (CompletedEvent != null)
+        iCI.TQ.EnqueueUnique(MeasureV_AS, CompletedEvent);
+      else
+        iCI.TQ.EnqueueUnique(MeasureV_AS);
     }
-    public void Measure()
+    public void ScheduleMeasure(EventWaitHandle CompletedEvent = null)
     {
       if (!IsConnected) return;
-      iCI.TQ.Enqueue(MeasureConc_AS);
+      if (CompletedEvent != null)
+        iCI.TQ.Enqueue(MeasureConc_AS, CompletedEvent);
+      else
+        iCI.TQ.Enqueue(MeasureConc_AS);
+
     }
-    public async Task<double> MeasureI_AW()
+
+    public async Task<double> MeasureIAsync()
     {
       if (!IsConnected) return double.NaN;
       var ewh = EventWaitHandlePool.GetHandle();
-      iCI.TQ.Enqueue(MeasureI_AS, ewh);
+      ScheduleMeasureI(ewh);
       _ = await Task.Run(() => ewh.WaitOne());
       EventWaitHandlePool.ReturnHandle(ewh);
       return Current;
     }
-    public async Task<double> MeasureV_AW()
+    public async Task<double> MeasureVAsync()
     {
       if (!IsConnected) return double.NaN;
       var ewh = EventWaitHandlePool.GetHandle();
-      iCI.TQ.Enqueue(MeasureV_AS, ewh);
+      ScheduleMeasureV(ewh);
       _ = await Task.Run(() => ewh.WaitOne());
       EventWaitHandlePool.ReturnHandle(ewh);
       return Voltage;
     }
-    public async Task<double> MeasureR_AW(double I, double VLim = 2.0/*V*/)
+    public async Task<double> MeasureRAsync()
     {
       if (!IsConnected) return double.NaN;
-      SourceI(I, VLim);
+
       var ewh = EventWaitHandlePool.GetHandle();
-      iCI.TQ.Enqueue(MeasureConc_AS, ewh);
+      ScheduleMeasure(ewh);
       _ = await Task.Run(() => ewh.WaitOne());
       EventWaitHandlePool.ReturnHandle(ewh);
       return Voltage / Current;
     }
-    public async Task<(double Voltage, double Current, double Time, int Status)> Measure_AW()
+    public async Task<double> MeasureRAsync(double I, double VLim)
+    {
+      if (!IsConnected) return double.NaN;
+
+      SourceI(I, VLim);
+
+      return await MeasureRAsync();
+    }
+    public async Task<(double Voltage, double Current, double Time, int Status)> MeasureAsync()
     {
       if (!IsConnected) return (double.NaN, double.NaN, 0, 0);
       var ewh = EventWaitHandlePool.GetHandle();
-      iCI.TQ.Enqueue(MeasureConc_AS, ewh);
+      ScheduleMeasure(ewh);
       _ = await Task.Run(() => ewh.WaitOne());
+      EventWaitHandlePool.ReturnHandle(ewh);
+      return (Voltage, Current, Time, Status);
+    }
+
+    public double MeasureI()
+    {
+      if (!IsConnected) return double.NaN;
+      var ewh = EventWaitHandlePool.GetHandle();
+      ScheduleMeasureI(ewh);
+      ewh.WaitOne();
+      EventWaitHandlePool.ReturnHandle(ewh);
+      return Current;
+    }
+    public double MeasureV()
+    {
+      if (!IsConnected) return double.NaN;
+      var ewh = EventWaitHandlePool.GetHandle();
+      ScheduleMeasureV(ewh);
+      ewh.WaitOne();
+      EventWaitHandlePool.ReturnHandle(ewh);
+      return Voltage;
+    }
+    public double MeasureR()
+    {
+      if (!IsConnected) return double.NaN;
+      var ewh = EventWaitHandlePool.GetHandle();
+      ScheduleMeasure(ewh);
+      ewh.WaitOne();
+      EventWaitHandlePool.ReturnHandle(ewh);
+      return Voltage / Current;
+    }
+    public double MeasureR(double I, double VLim)
+    {
+      if (!IsConnected) return double.NaN;
+      SourceI(I, VLim);
+      return MeasureR();
+    }
+    public (double Voltage, double Current, double Time, int Status) Measure()
+    {
+      if (!IsConnected) return (double.NaN, double.NaN, 0, 0);
+      var ewh = EventWaitHandlePool.GetHandle();
+      ScheduleMeasure(ewh);
+      ewh.WaitOne();
       EventWaitHandlePool.ReturnHandle(ewh);
       return (Voltage, Current, Time, Status);
     }
@@ -537,17 +575,39 @@ namespace Devices.Keithley
       iCI.TQ.Enqueue(SourceI_AS, I, VLim);
     }
 
+    public void ScheduleTurnOFF(EventWaitHandle CompletedEvent = null)
+    {
+      if (!IsConnected) return;
+      if (CompletedEvent != null)
+        iCI.TQ.EnqueueUnique(TurnOutput_AS, false, CompletedEvent);
+      else
+        iCI.TQ.EnqueueUnique(TurnOutput_AS, false);
+    }
+    public void ScheduleTurnON(EventWaitHandle CompletedEvent = null)
+    {
+      if (!IsConnected) return;
+      if (CompletedEvent != null)
+        iCI.TQ.EnqueueUnique(TurnOutput_AS, true, CompletedEvent);
+      else
+        iCI.TQ.EnqueueUnique(TurnOutput_AS, true);
+    }
     public void TurnOFF()
     {
       if (!IsConnected) return;
-      iCI.TQ.Enqueue(TurnOutput_AS, false);
+      var ewh = EventWaitHandlePool.GetHandle();
+      iCI.TQ.Enqueue(TurnOutput_AS, false, ewh);
+      ewh.WaitOne();
+      EventWaitHandlePool.ReturnHandle(ewh);
     }
-    public void TurnON()
+    public void TurnOn()
     {
       if (!IsConnected) return;
-      iCI.TQ.Enqueue(TurnOutput_AS, true);
+      var ewh = EventWaitHandlePool.GetHandle();
+      iCI.TQ.Enqueue(TurnOutput_AS, true, ewh);
+      ewh.WaitOne();
+      EventWaitHandlePool.ReturnHandle(ewh);
     }
-    public async Task TurnOFF_AW()
+    public async Task TurnOFFAsync()
     {
       if (!IsConnected) return;
       var ewh = EventWaitHandlePool.GetHandle();
@@ -555,7 +615,7 @@ namespace Devices.Keithley
       _ = await Task.Run(() => ewh.WaitOne());
       EventWaitHandlePool.ReturnHandle(ewh);
     }
-    public async Task TurnOn_AW()
+    public async Task TurnOnAsync()
     {
       if (!IsConnected) return;
       var ewh = EventWaitHandlePool.GetHandle();

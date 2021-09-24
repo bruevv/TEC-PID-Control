@@ -210,7 +210,7 @@ namespace WPFControls
            {"C", 1},
         };
 
-    public static readonly UnitResistance Default = new UnitResistance();
+    public static readonly UnitTemperatureC Default = new UnitTemperatureC();
 
     public UnitTemperatureC() : base() { }
     public UnitTemperatureC(string def) : base(def) { }
@@ -229,7 +229,7 @@ namespace WPFControls
            {"uK", 1e-6},
       };
 
-    public static readonly UnitResistance Default = new UnitResistance();
+    public static readonly UnitTemperatureK Default = new UnitTemperatureK();
 
     public UnitTemperatureK() : base() { }
     public UnitTemperatureK(string def) : base(def) { }
@@ -251,7 +251,7 @@ namespace WPFControls
            {"nW", 1e-9},
       };
 
-    public static readonly UnitResistance Default = new UnitResistance();
+    public static readonly UnitPower Default = new UnitPower();
 
     public UnitPower() : base() { }
     public UnitPower(string def) : base(def) { }
@@ -259,4 +259,51 @@ namespace WPFControls
     protected override string Invariant => "W";
     protected override Dictionary<string, double> dic => s_dic;
   }
+
+  [Designators("TemperatureCPerS")]
+  public class UnitBandTempCperS : Unit
+  {
+    static Dictionary<string, double> s_dic = new Dictionary<string, double>{
+           {"°C/s", 1.0},
+           {"C/s", 1.0},
+           {"C", 1.0},
+           {"°C/m",1.0/60},
+           {"C/m",1.0/60},
+           {"°C/h",1.0/3600},
+           {"C/h",1.0/3600},
+    };
+
+    public static readonly UnitBandTempCperS Default = new UnitBandTempCperS();
+
+    public UnitBandTempCperS() : base() { }
+    public UnitBandTempCperS(string def) : base(def) { }
+
+    protected override string Invariant => "°C/s";
+    protected override Dictionary<string, double> dic => s_dic;
+  }
+  [Designators("TemperatureConS")]
+  public class UnitBandTempConS : Unit
+  {
+    static Dictionary<string, double> s_dic = new Dictionary<string, double>{
+           {"°C·s", 1.0},
+           {"°Cs", 1.0},
+           {"Cs", 1.0},
+           {"C", 1.0},
+           {"°C·m",60.0},
+           {"°Cm",60.0},
+           {"Cm",60.0},
+           {"°C·h",3600.0},
+           {"°Ch",3600.0},
+           {"Ch",3600.0},
+    };
+
+    public static readonly UnitBandTempConS Default = new UnitBandTempConS();
+
+    public UnitBandTempConS() : base() { }
+    public UnitBandTempConS(string def) : base(def) { }
+
+    protected override string Invariant => "C";
+    protected override Dictionary<string, double> dic => s_dic;
+  }
 }
+

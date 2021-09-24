@@ -29,17 +29,35 @@
     <Compile Update="Controls\UsrCntrlK2400.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="MainSettings.Designer.cs">
+    <Compile Update="Properties\MainSettings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>MainSettings.settings</DependentUpon>
     </Compile>
+    <Compile Update="Properties\PIDSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>PIDSettings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="MainSettings.settings">
+    <None Update="Properties\MainSettings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>MainSettings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Properties\PIDSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>PIDSettings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 

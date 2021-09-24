@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
              xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
-             xmlns:prop="clr-namespace:TEC_PID_Control"
+             xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
              xmlns:System="clr-namespace:System;assembly=System.Runtime"
              xmlns:uc="clr-namespace:TEC_PID_Control.Controls"
              x:Class="TEC_PID_Control.Controls.UsrCntrlGWPS"
@@ -56,7 +56,8 @@
                    Height="16"
                    DockPanel.Dock="Right"
                    Style="{StaticResource RectangleOnOff}" />
-        <TextBlock Text="GWI Power Supply" />
+        <TextBlock x:Name="title"
+                   Text="GWI Power Supply" />
       </DockPanel>
     </w:AnimExpander.Header>
     <Grid x:Name="grid"
@@ -133,7 +134,8 @@
                   Margin="2"
                   ToolTip="1-Right, 2-Left"
                   HorizontalAlignment="Left"
-                  SelectedItem="{Binding Channel, FallbackValue=1}">
+                  SelectedItem="{Binding Channel, FallbackValue=1}"
+                          SelectionChanged="cbChannel_SelectionChanged">
           <System:Int32>1</System:Int32>
           <System:Int32>2</System:Int32>
         </ComboBox>

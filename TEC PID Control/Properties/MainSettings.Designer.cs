@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TEC_PID_Control {
+namespace TEC_PID_Control.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -356,6 +356,30 @@ namespace TEC_PID_Control {
             }
             set {
                 this["K2400AutoPoll"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("debug.log")]
+        public string LogFile {
+            get {
+                return ((string)(this["LogFile"]));
+            }
+            set {
+                this["LogFile"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Error")]
+        public global::CSUtils.Logger.Mode LogMode {
+            get {
+                return ((global::CSUtils.Logger.Mode)(this["LogMode"]));
+            }
+            set {
+                this["LogMode"] = value;
             }
         }
     }

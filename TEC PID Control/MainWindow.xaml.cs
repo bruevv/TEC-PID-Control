@@ -1,18 +1,17 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using CustomWindows;
 
 namespace TEC_PID_Control
 {
-  using System.ComponentModel;
-  using Calibration;
   using CSUtils;
-  using Devices.Keithley;
+  using CustomWindows;
   using Devices.GWI;
-  /// <summary>
-  /// Interaction logic for MainWindow.xaml
-  /// </summary>
+  using Devices.Keithley;
+  using TEC_PID_Control.Controls;
+  using TEC_PID_Control.PID;
+
   public partial class MainWindow : CustomWindow
   {
     public Keithley2400 KD;
@@ -21,61 +20,56 @@ namespace TEC_PID_Control
     TempSensor TC;
     public MainWindow()
     {
-      var logger = new Logger(null, Logger.Mode.Full);
+      var logger = Logger.Default;
 
-      InitializeComponent();
+      try {
+        InitializeComponent();
 
-      logger.AttachLog(
-        nameof(Keithley2400),
-        (string msg, Logger.Mode lm) =>
-        ConsoleOut.Dispatcher.Invoke(() => ConsoleOut.Text += $">{msg}\n"),
-        Logger.Mode.Error);
+        logger.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.Error);
 
-      KD = usrCntrlK2400.KD;
-      GWPS = usrCntrlGWPS.GWPS;
-      //utbVoltage.DataContext = KD;
-      //utbCurrent.DataContext = KD;
-      //KD.Connect("COM4");
-      //TC = new TempSensor(KD);
-      //TC.LoadCalibration();
+        KD = usrCntrlK2400.KD;
+        GWPS = usrCntrlGWPS.GWPS;
+
+        TC = new TempSensor(usrCntrlK2400);
+        TC.LoadCalibration();
+
+        usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
+
+      } catch (Exception e) {
+        logger.log("Error Loading Application", e, Logger.Mode.Error, nameof(MainWindow));
+        MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger.FileName}\n\nfor details", "Error");
+        Application.Current.Shutdown();
+      }
     }
-
-    protected override void OnClosing(CancelEventArgs e)
-    {
-      MainSettings.Default.Save();
-      base.OnClosing(e);
-    }
+    void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $">{e.Message}\n";
 
     private void TextBox_KeyDown(object sender, KeyEventArgs e)
     {
-      if(e.Key == Key.Return) {
+      if (e.Key == Key.Return) {
         TextBox tb = (TextBox)sender;
         KD.CustomCommand(tb.Text);
         tb.Clear();
       }
     }
 
-    void GetCurrent_Click(object sender, RoutedEventArgs e)
-    {
-      KD.MeasureI();
-    }
-    private void Button2_Click(object sender, RoutedEventArgs e)
-    {
-      KD.MeasureV();
-
-    }
     private void ConsoleOut_TextChanged(object sender, TextChangedEventArgs e)
     {
       ((TextBox)sender).ScrollToEnd();
     }
 
-    private void Button_Click(object sender, RoutedEventArgs e)
+    async void bMeatureT_Click(object s, RoutedEventArgs e)
     {
-      usrCntrlGWPS.AutoPoll = false;
+      double T = await TC.ReadTemperatureAsync();
+      utbTemp.Value = T;
     }
 
-
-
+    private void Button_Click(object sender, RoutedEventArgs e)
+    {
+      IMeasureParameter ki = new TempSensorInterface(TC);
+      ki.Init();
+      double d = ki.Measure();
+      d = ki.Measure();
+    }
 
 
     //async void Set_Voltage_Click(object sender, RoutedEventArgs e)
