@@ -25,7 +25,9 @@ namespace TEC_PID_Control
       try {
         InitializeComponent();
 
-        logger.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.Error);
+        Dispatcher.ShutdownStarted += (o, e) => usrCntrlPID.Dispose();
+
+        logger?.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.Error);
 
         KD = usrCntrlK2400.KD;
         GWPS = usrCntrlGWPS.GWPS;
@@ -33,14 +35,28 @@ namespace TEC_PID_Control
         TC = new TempSensor(usrCntrlK2400);
         TC.LoadCalibration();
 
-        usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
+        DllInterface.SetSetPoint(12.0);
+        double sp = DllInterface.GetSetPoint();
 
+        usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
+        usrCntrlK2400.MeasurementCompleted += K2400_MC;
+
+        try {
+          usrCntrlK2400.ConnectCommand();
+          usrCntrlGWPS.ConnectCommand();
+        }catch(Exception e) {
+          logger?.log("Error trying to automatically connect", 
+            e, Logger.Mode.Error, nameof(MainWindow));
+        }
       } catch (Exception e) {
-        logger.log("Error Loading Application", e, Logger.Mode.Error, nameof(MainWindow));
+        logger?.log("Error Loading Application", e, Logger.Mode.Error, nameof(MainWindow));
         MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger.FileName}\n\nfor details", "Error");
         Application.Current.Shutdown();
       }
     }
+
+    void K2400_MC(object s, EventArgs e) => utbTemp.Value = TC.ConvertRtoT(KD.Resistance);
+
     void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $">{e.Message}\n";
 
     private void TextBox_KeyDown(object sender, KeyEventArgs e)

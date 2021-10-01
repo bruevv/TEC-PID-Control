@@ -135,13 +135,9 @@ namespace Devices.Keithley
       iCI.TQ.EnqueueUnique(CustomCommand_AS, command);
     }
   }
-  public class Keithley2400 : KeithleyDevice, INotifyPropertyChanged
+  public class Keithley2400 : KeithleyDevice
   {
     new private protected Keithley2400Con iCI => (Keithley2400Con)base.iCI;
-
-    public event PropertyChangedEventHandler PropertyChanged;
-    void OnPropertyChanged([CallerMemberName] string property = "") =>
-     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 
     double voltage = double.NaN;
     double current = double.NaN;
@@ -168,6 +164,7 @@ namespace Devices.Keithley
         }
       }
     }
+    public double Resistance => Voltage / Current;
     public double Time {
       get => Atomic.Read(ref time);
       protected set {
@@ -209,6 +206,7 @@ namespace Devices.Keithley
       }
     }
 
+
     bool isReset = false;
     public bool IsReset {
       get => isReset;
@@ -246,7 +244,7 @@ namespace Devices.Keithley
     }
     void OnIdleTimeout(object sender, EventArgs ea)
     {
-      if (!IdlePollEnable || !Output) return;
+      if (IsExperimentOn || !IdlePollEnable || !Output) return;
 
       MeasureConc_AS();
     }
@@ -559,7 +557,7 @@ namespace Devices.Keithley
       return (Voltage, Current, Time, Status);
     }
 
-    public void Reset()
+    public void ScheduleReset()
     {
       if (!IsConnected) return;
       iCI.TQ.Enqueue(Reset_AS);

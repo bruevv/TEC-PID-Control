@@ -92,5 +92,8 @@
     <Setting Name="LogMode" Type="CSUtils.Logger.Mode" Scope="User">
       <Value Profile="(Default)">Error</Value>
     </Setting>
+    <Setting Name="GWPSRFormat" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Resistance:Ohm</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

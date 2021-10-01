@@ -116,6 +116,10 @@
         <Button Content="Output"
                 Grid.Row="2"
                 Click="bOutput_Click" />
+        <Button Content="Reset"
+                Grid.Row="2"
+                Grid.Column="2"
+                Click="bReset_Click" />
         <Rectangle Width="18"
                    Height="18"
                    Grid.Row="2"

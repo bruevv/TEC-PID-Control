@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
-             xmlns:local="clr-namespace:TEC_PID_Control.Controls"
+             xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
              x:Name="usrCntrlPID"
              mc:Ignorable="d"
              Width="300">
@@ -22,6 +22,10 @@
               Value="Right" />
     </Style>
     <Style TargetType="{x:Type Button}">
+      <Setter Property="Margin"
+              Value="2" />
+    </Style>
+    <Style TargetType="{x:Type ToggleButton}">
       <Setter Property="Margin"
               Value="2" />
     </Style>
@@ -53,27 +57,80 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ToggleButton Content="Enable"
-                      Margin="2" IsChecked="{Binding IsControlEnabled}"
-                      Checked="ToggleButton_Checked" />
+                      IsChecked="{Binding IsControlEnabled}"
+                      Checked="ToggleButton_C_U"
+                      Unchecked="ToggleButton_C_U" />
         <TextBlock Text="SetPont:"
                    Grid.Column="2" />
-        <w:UnitTextBox Grid.Column="3"
+        <w:UnitTextBox x:Name="utbSP"
+                       Grid.Column="3"
                        Unit="TemperatureC:C"
-                       Value="{Binding SetPoint}" />
-        <ToggleButton Content="AutoTune"
-                      Margin="2"
-                      Grid.Row="1" />
+                       ValueFormat="N3"
+                       Value="{Binding SetPoint}">
+          <w:UnitTextBox.NormalBackground>
+            <DrawingBrush Viewport="0,0,1,1">
+              <DrawingBrush.Drawing>
+                <DrawingGroup>
+                  <GeometryDrawing Brush="White">
+                    <GeometryDrawing.Geometry>
+                      <RectangleGeometry Rect="0,0,1,1" />
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                  <GeometryDrawing Brush="#FFC3E5F0">
+                    <GeometryDrawing.Geometry>
+                      <RectangleGeometry x:Name="rSetP"
+                                         Rect="0,0,.3,1" />
+                    </GeometryDrawing.Geometry>
+                  </GeometryDrawing>
+                </DrawingGroup>
+              </DrawingBrush.Drawing>
+            </DrawingBrush>
+          </w:UnitTextBox.NormalBackground>
+        </w:UnitTextBox>
+
+        <w:UnitTextBox x:Name="utbCR"
+                       Grid.Column="1"
+                       Unit="{Binding Source={x:Static prop:Interface.Default}, Path=PIDCRUnit}"
+                       Grid.Row="1"
+                       ValueFormat="N3"
+                       Value="{Binding CRate}" />
+        <ToggleButton x:Name="bRampEnable"
+                      Content="Ramp"
+                      Grid.Row="1"
+                      IsChecked="{Binding IsRampEnabled}" />
+        <Button Content="Reset Ramp"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                HorizontalAlignment="Left"
+                Grid.Row="2"
+                Click="bRRamp_Click"
+                IsEnabled="{Binding IsChecked, ElementName=bRampEnable}" />
         <TextBlock Text="Measured:"
                    Grid.Column="2"
                    Grid.Row="1" />
-        <w:UnitTextBox Grid.Column="3"
+        <w:UnitTextBox x:Name="utbMP"
+                       Grid.Column="3"
                        Unit="TemperatureC:C"
                        Grid.Row="1"
-                       Value="{Binding MeasureParameter}" />
+                       IsReadOnly="True"
+                       NormalBackground="#FFEBEBEB"
+                       ValueFormat="N3" />
+        <TextBlock Text="Immediate SetPoint:"
+                   Grid.Column="1"
+                   Grid.ColumnSpan="2"
+                   Grid.Row="2" />
+        <w:UnitTextBox x:Name="utbISP"
+                       Grid.Column="3"
+                       Unit="TemperatureC:C"
+                       Grid.Row="2"
+                       IsReadOnly="True"
+                       NormalBackground="#FFEBEBEB"
+                       ValueFormat="N3" />
         <GroupBox Header="PID parameters"
-                  Grid.Row="2"
+                  Grid.Row="3"
                   Grid.ColumnSpan="10">
           <Grid>
             <Grid.ColumnDefinitions>
@@ -83,9 +140,9 @@
               <ColumnDefinition Width="14*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-              <RowDefinition  />
               <RowDefinition />
-              <RowDefinition  />
+              <RowDefinition />
+              <RowDefinition />
               <RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Text="P Band:"
@@ -93,22 +150,101 @@
                        Grid.Row="0" />
             <w:UnitTextBox Grid.Column="1"
                            Grid.Row="0"
-                           Unit="TemperatureC:C" 
-                           Value="{Binding CtrlP}"/>
+                           Unit="TemperatureC:C"
+                           Value="{Binding CtrlP}">
+              <w:UnitTextBox.NormalBackground>
+                <DrawingBrush Viewport="0,0,1,1">
+                  <DrawingBrush.Drawing>
+                    <DrawingGroup>
+                      <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry Rect="0,0,1,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFC3E5F0">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rPBandP"
+                                             Rect="0,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFF0D3C3">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rPBandN"
+                                             Rect=".7,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                    </DrawingGroup>
+                  </DrawingBrush.Drawing>
+                </DrawingBrush>
+              </w:UnitTextBox.NormalBackground>
+            </w:UnitTextBox>
             <TextBlock Text="I Band:"
                        Grid.Column="0"
                        Grid.Row="1" />
             <w:UnitTextBox Grid.Column="1"
                            Grid.Row="1"
                            Unit="TemperatureConS:Cs"
-                           Value="{Binding CtrlI}" />
+                           Value="{Binding CtrlI}">
+              <w:UnitTextBox.NormalBackground>
+                <DrawingBrush Viewport="0,0,1,1">
+                  <DrawingBrush.Drawing>
+                    <DrawingGroup>
+                      <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry Rect="0,0,1,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFC3E5F0">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rIBandP"
+                                             Rect="0,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFF0D3C3">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rIBandN"
+                                             Rect=".7,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                    </DrawingGroup>
+                  </DrawingBrush.Drawing>
+                </DrawingBrush>
+              </w:UnitTextBox.NormalBackground>
+            </w:UnitTextBox>
             <TextBlock Text="D Band:"
                        Grid.Column="0"
                        Grid.Row="2" />
             <w:UnitTextBox Grid.Column="1"
                            Grid.Row="2"
                            Unit="TemperatureCPerS:C/s"
-                           Value="{Binding CtrlD}" />
+                           Value="{Binding CtrlD}">
+              <w:UnitTextBox.NormalBackground>
+                <DrawingBrush Viewport="0,0,1,1">
+                  <DrawingBrush.Drawing>
+                    <DrawingGroup>
+                      <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry Rect="0,0,1,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFC3E5F0">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rDBandP"
+                                             Rect="0,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                      <GeometryDrawing Brush="#FFF0D3C3">
+                        <GeometryDrawing.Geometry>
+                          <RectangleGeometry x:Name="rDBandN"
+                                             Rect=".7,0,.3,1" />
+                        </GeometryDrawing.Geometry>
+                      </GeometryDrawing>
+                    </DrawingGroup>
+                  </DrawingBrush.Drawing>
+                </DrawingBrush>
+              </w:UnitTextBox.NormalBackground>
+
+            </w:UnitTextBox>
             <TextBlock Text="Time Const:"
                        Grid.Column="2"
                        Grid.Row="0" />

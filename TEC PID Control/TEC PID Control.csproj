@@ -9,6 +9,10 @@
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="RawInput.Sharp" Version="0.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
@@ -18,6 +22,9 @@
   <ItemGroup>
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
     <ProjectReference Include="..\Devices\Devices.csproj" />
+    <ProjectReference Include="..\TEC-PID-dll\TEC-PID-dll.vcxproj">
+      <Private>true</Private>
+    </ProjectReference>
     <ProjectReference Include="..\WPF Controls\CustomWindows\CustomWindows.csproj" />
     <ProjectReference Include="..\WPFUtils\WPFUtils.csproj" />
   </ItemGroup>
@@ -28,6 +35,11 @@
     </Compile>
     <Compile Update="Controls\UsrCntrlK2400.xaml.cs">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Properties\Interface.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Interface.settings</DependentUpon>
     </Compile>
     <Compile Update="Properties\MainSettings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -47,6 +59,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Properties\Interface.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Interface.Designer.cs</LastGenOutput>
+    </None>
     <None Update="Properties\MainSettings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>MainSettings.Designer.cs</LastGenOutput>
@@ -58,6 +74,9 @@
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="TEC-PID-dll.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

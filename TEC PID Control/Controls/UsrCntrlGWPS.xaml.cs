@@ -157,7 +157,7 @@ namespace TEC_PID_Control.Controls
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => GWPS.Disconnect();
-    void bConnect_Click(object sender, RoutedEventArgs e) => GWPS.Connect(SelectedPort);
+    void bConnect_Click(object sender, RoutedEventArgs e) => ConnectCommand();
 
     void UsrCntrlGWPS_Loaded(object sender, RoutedEventArgs e) => UpdateComboBox();
     void UpdateComboBox()
@@ -189,6 +189,7 @@ namespace TEC_PID_Control.Controls
 
     void bSetUp_Click(object s, RoutedEventArgs e) => SetUpCommand();
 
+    public void ConnectCommand() => GWPS.Connect(SelectedPort);
     public void SetUpCommand()
     {
       GWPS.ScheduleSetV(OutputVoltage);

@@ -68,7 +68,10 @@
                        TimeConstant="{Binding TimeConstant}"
                        MinCtrlPar="{Binding MinCtrlPar}"
                        MaxCtrlPar="{Binding MaxCtrlPar}"
-                       MaxIntegralError="{Binding MaxIntegralError}"/>
+                       MaxIntegralError="{Binding MaxIntegralError}"
+                       CRate="{Binding CRate}"
+                       IsRampEnabled="{Binding RampEnable}"
+                       SetPoint="20.0"/>
         <Button Content="measure"
                 Click="Button_Click" />
       </StackPanel>

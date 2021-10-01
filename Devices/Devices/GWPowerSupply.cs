@@ -44,12 +44,8 @@ namespace Devices.GWI
     public override int BasicTimeout => 1000;
     protected override string ACK => null;
   }
-  public class GWPowerSupply : ASCIIDevice, INotifyPropertyChanged
+  public class GWPowerSupply : ASCIIDevice
   {
-    public event PropertyChangedEventHandler PropertyChanged;
-    void OnPropertyChanged([CallerMemberName] string property = "") =>
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-
     new private protected GWPowerSupplyConnection iCI => (GWPowerSupplyConnection)base.iCI;
     private protected override ConnectionBase InitSPI(string name) => new GWPowerSupplyConnection(EventAbort, name);
 
@@ -113,6 +109,7 @@ namespace Devices.GWI
         }
       }
     }
+
     void SetV_AS(double V)
     {
       try {
@@ -153,7 +150,7 @@ namespace Devices.GWI
 
     void OnIdleTimeout(object sender, EventArgs ea)
     {
-      if (!IdlePollEnable) return;
+      if (IsExperimentOn || !IdlePollEnable) return;
 
       GetI_AS();
       GetV_AS();
@@ -180,7 +177,7 @@ namespace Devices.GWI
         goto finish;
       }
 
-      if (double.TryParse(res.Trim('\n','A'), SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val)) {
+      if (double.TryParse(res.Trim('\n', 'A'), SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture, out double val)) {
         Current = val;
         ChangeStatus($"Measure Current:{Current}A", State & ~SState.Error);
       } else {

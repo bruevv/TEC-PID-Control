@@ -16,6 +16,7 @@
     <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
     <WPFUtils:PowerConverter x:Key="PowerConverter" />
+    <WPFUtils:ResistanceConverter x:Key="ResistanceConverter" />
     <Style TargetType="{x:Type TextBlock}">
       <Setter Property="FontSize"
               Value="14" />
@@ -201,6 +202,24 @@
         <Button Grid.Row="7"
                 Content="SetUp"
                 Click="bSetUp_Click" />
+        <TextBlock Text="Eff. Res.:"
+                   Grid.Row="4"
+                   Grid.Column="0" />
+        <w:UnitTextBox x:Name="utbResistance"
+                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=GWPSRFormat}"
+                       ValueFormat="N3"
+                       IsReadOnly="True"
+                       Grid.Row="4"
+                       Grid.Column="1"
+                       NormalBackground="#FFEBEBEB">
+          <w:UnitTextBox.Value>
+            <MultiBinding Converter="{StaticResource ResistanceConverter}"
+                          Mode="OneWay">
+              <Binding Path="Voltage" />
+              <Binding Path="Current" />
+            </MultiBinding>
+          </w:UnitTextBox.Value>
+        </w:UnitTextBox>
         <TextBlock Text="Power:"
                    Grid.Row="4"
                    Grid.Column="2" />

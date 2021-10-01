@@ -102,7 +102,7 @@ namespace WPFControls
     static protected void propertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       NumberTextBox<T> ntb = (NumberTextBox<T>)d;
-      if(!ntb.updating) ntb.ChangeValue(ntb.ValueFromInvariant((T)e.NewValue));
+      if (!ntb.updating) ntb.ChangeValue(ntb.ValueFromInvariant((T)e.NewValue));
     }
     #endregion
 
@@ -128,7 +128,7 @@ namespace WPFControls
       get => minValue;
       set {
         minValue = value;
-        if(maxValue.CompareTo(minValue) < 0)
+        if (maxValue.CompareTo(minValue) < 0)
           maxValue = minValue;
         LimitValue(ref val);
       }
@@ -137,7 +137,7 @@ namespace WPFControls
       get => maxValue;
       set {
         maxValue = value;
-        if(maxValue.CompareTo(minValue) < 0)
+        if (maxValue.CompareTo(minValue) < 0)
           minValue = maxValue;
         LimitValue(ref val);
       }
@@ -164,7 +164,7 @@ namespace WPFControls
       get { return state; }
       protected set {
         state = value;
-        switch(state) {
+        switch (state) {
           case NTBState.Normal:
             Background = NormalBackground ?? (Brush)NormalBackgroundProperty.DefaultMetadata.DefaultValue;
             break;
@@ -184,22 +184,22 @@ namespace WPFControls
     {
       T v = ValueToInvariant(val);
 
-      if(v.CompareTo(minValue) < 0)
+      if (!IsNaNVal(minValue) && v.CompareTo(minValue) < 0)
         return ValueFromInvariant(minValue);
-      else if(v.CompareTo(maxValue) > 0)
+      else if (!IsNaNVal(maxValue) && v.CompareTo(maxValue) > 0)
         return ValueFromInvariant(maxValue);
       else return val;
     }
     bool LimitValue(ref T val)
     {
-      if(IsNaNVal(val)) return false;
+      if (IsNaNVal(val)) return false;
 
       T v = ValueToInvariant(val);
 
-      if(v.CompareTo(minValue) < 0) {
+      if (!IsNaNVal(minValue) && v.CompareTo(minValue) < 0) {
         val = ValueFromInvariant(minValue);
         return true;
-      } else if(v.CompareTo(maxValue) > 0) {
+      } else if (!IsNaNVal(maxValue) && v.CompareTo(maxValue) > 0) {
         val = ValueFromInvariant(maxValue);
         return true;
       } else {
@@ -222,19 +222,19 @@ namespace WPFControls
       val = v;
       bool valchanged = !v.Equals(oldVal);
 
-      if(valchanged) {
+      if (valchanged) {
         var vcea = new ValueChangingEventArgs<T>(v, oldVal);
         OnValueChanging(vcea);
         LimitValue(ref vcea.NewVal);
         oldVal = v = vcea.NewVal;
       }
-      if(!value.Equals(v)) value = v;
+      if (!value.Equals(v)) value = v;
       SetMathText(v);
       updating = false;
       State = NTBState.Normal;
       toolTip.IsOpen = false;
       ToolTip = null;
-      if(valchanged || !ValChangedByInput)
+      if (valchanged || !ValChangedByInput)
         OnValueUpdated(new ValueUpdatedEventArgs(ValChangedByInput, valchanged));
       ValChangedByInput = false;
     }
@@ -246,9 +246,9 @@ namespace WPFControls
     }
     protected void SetMathText(T v)
     {
-      if(IsNaNVal(v))
+      if (IsNaNVal(v))
         MathText = NaNString;
-      else if(ValueFormat == null)
+      else if (ValueFormat == null)
         MathText = v.ToString(CI);
       else
         MathText = string.Format(CI, $"{{0:{ValueFormat}}}", v);
@@ -262,14 +262,14 @@ namespace WPFControls
     bool ValChangedByInput = false;
     protected override void OnKeyDown(KeyEventArgs e)
     {
-      if(!e.Handled) {
-        if(e.Key == Key.Enter) {
-          if(State == NTBState.Error)
+      if (!e.Handled) {
+        if (e.Key == Key.Enter) {
+          if (State == NTBState.Error)
             e.Handled = true;
           ValChangedByInput = true;
           ChangeValue(val);
           CaretIndex = Text.Length;
-        } else if(e.Key == Key.Escape) {
+        } else if (e.Key == Key.Escape) {
           ChangeValue(oldVal);
           CaretIndex = Text.Length;
           //               e.Handled = true;
@@ -287,7 +287,7 @@ namespace WPFControls
       toolTip.PlacementTarget = this;
       toolTip.Placement =
           System.Windows.Controls.Primitives.PlacementMode.Bottom;
-      if(State != NTBState.Normal)
+      if (State != NTBState.Normal)
         ChangeValue(val);
       base.OnInitialized(e);
     }
@@ -300,35 +300,35 @@ namespace WPFControls
     protected override void OnTextChanged(TextChangedEventArgs ea)
     {
       string mathText = "";
-      if(!updating) {
+      if (!updating) {
         try {
           mathText = MathText;
-          if(string.IsNullOrWhiteSpace(mathText))
+          if (string.IsNullOrWhiteSpace(mathText))
             val = new T();
-          else if(mathText.Trim() == NaNString)
+          else if (mathText.Trim() == NaNString)
             val = NaN;
           else
             val = (T)Convert.ChangeType(mathText, typeof(T));
           toolTip.IsOpen = false;
           ToolTip = null;
           State = NTBState.Correct;
-        } catch(Exception e1) {
+        } catch (Exception e1) {
           try {
             val = (T)Convert.ChangeType(mathParser.Parse(mathText), typeof(T));
             toolTip.Content = CalculationResultsPreview;
             toolTip.Background = CorrectBackground;
             ToolTip = toolTip;
-            if(!suppressToolTip) toolTip.IsOpen = true;
+            if (!suppressToolTip) toolTip.IsOpen = true;
             State = NTBState.Correct;
-          } catch(Exception e2) {
+          } catch (Exception e2) {
             State = NTBState.Error;
-            if(e1.Message == e2.Message)
+            if (e1.Message == e2.Message)
               toolTip.Content = e1.Message;
             else
               toolTip.Content = $"{e1.Message}\n{e2.Message}";
             toolTip.Background = ErrorBackground;
             ToolTip = toolTip;
-            if(!suppressToolTip) toolTip.IsOpen = true;
+            if (!suppressToolTip) toolTip.IsOpen = true;
 
           }
         }
@@ -351,7 +351,7 @@ namespace WPFControls
     {
       MemberInfo mi = this?.GetType()?.GetMember(prop)[0];
       DefaultValueAttribute dva = null;
-      if(mi != null)
+      if (mi != null)
         dva = (DefaultValueAttribute)Attribute.GetCustomAttribute(mi, typeof(DefaultValueAttribute));
       return (T)((dva?.Value) ?? new T());
     }
@@ -398,9 +398,9 @@ namespace WPFControls
 
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Category("Common")]
-    [DefaultValue(-1e100)]
+    [DefaultValue(double.NaN)]
     public double MinValue { get => base.MinVal; set => base.MinVal = value; }
-    [DefaultValue(1e100)]
+    [DefaultValue(double.NaN)]
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Category("Common")]
     public double MaxValue { get => base.MaxVal; set => base.MaxVal = value; }
@@ -493,7 +493,7 @@ namespace WPFControls
       get => outputUnits;
       set {
         Type unitt = typeof(Unit);
-        if(value.BaseType != unitt)
+        if (value.BaseType != unitt)
           throw new ArgumentException($"{nameof(OutputUnits)} should be type derived from {unitt.FullName}");
         outputUnits = value;
       }
@@ -501,23 +501,23 @@ namespace WPFControls
     static protected void UnitChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       UnitTextBox ntb = (UnitTextBox)d;
-      if(e.NewValue == e.OldValue) return;
+      if (e.NewValue == e.OldValue) return;
       bool b = ntb.suppressToolTip;
       ntb.suppressToolTip = true;
       ntb.ChangeValue(ntb.value);
       ntb.suppressToolTip = b;
-      if(ntb.OutputUnits == null) ntb.OutputUnits = e.NewValue.GetType();
+      if (ntb.OutputUnits == null) ntb.OutputUnits = e.NewValue.GetType();
     }
     protected override double ValueFromInvariant(double from)
     {
-      if(outputUnits == null || outputUnits.Equals(Unit.GetType()))
+      if (outputUnits == null || outputUnits.Equals(Unit.GetType()))
         return Unit.ConvertToInvariant(from);
       else
         return Unit.ConvertToOtherUnits(from, outputUnits);
     }
     protected override double ValueToInvariant(double to)
     {
-      if(outputUnits == null || outputUnits.Equals(Unit.GetType()))
+      if (outputUnits == null || outputUnits.Equals(Unit.GetType()))
         return Unit.ConvertFromInvariant(to);
       else
         return Unit.ConvertFromOtherUnits(to, outputUnits);
@@ -532,7 +532,7 @@ namespace WPFControls
     protected override void OnValueChanging(ValueChangingEventArgs<double> vcea)
     {
       var nea = new ValueChangingEventArgs<double>(ValueToInvariant(vcea.NewVal), oldval);
-      if(nea.NewVal != nea.OldVal) {
+      if (nea.NewVal != nea.OldVal) {
         base.OnValueChanging(nea);
         vcea.NewVal = ValueFromInvariant(nea.NewVal);
         oldval = nea.NewVal;
@@ -547,7 +547,7 @@ namespace WPFControls
 
     void UnitTextBox_ContextMenuOpening(object o, ContextMenuEventArgs rea)
     {
-      if(ContextMenu == null && IsEnabled) {
+      if (ContextMenu == null && IsEnabled) {
         UpdateContextMenu();
         ContextMenu.IsOpen = true;
         rea.Handled = true;
@@ -557,7 +557,7 @@ namespace WPFControls
     MenuItem OtherUnitsMI = null;
     void UpdateContextMenu()
     {
-      if(ContextMenu == null) {
+      if (ContextMenu == null) {
         ContextMenu = new ContextMenu();
 
         ContextMenu.Items.Add(new MenuItem() { Command = ApplicationCommands.Copy });
@@ -573,30 +573,30 @@ namespace WPFControls
         ContextMenu.Items.Add(OtherUnitsMI);
       } else {
         List<MenuItem> l = new List<MenuItem>();
-        foreach(object cmi in ContextMenu.Items) {
-          if(cmi is MenuItem mi) {
-            if(mi.Tag != null) l.Add(mi);
+        foreach (object cmi in ContextMenu.Items) {
+          if (cmi is MenuItem mi) {
+            if (mi.Tag != null) l.Add(mi);
           }
         }
-        foreach(MenuItem mi in l) {
+        foreach (MenuItem mi in l) {
           ContextMenu.Items.Remove(mi);
         }
         l.Clear();
-        foreach(object cmi in OtherUnitsMI.Items) {
+        foreach (object cmi in OtherUnitsMI.Items) {
           l.Add((MenuItem)cmi);
         }
-        foreach(MenuItem mi in l) {
+        foreach (MenuItem mi in l) {
           OtherUnitsMI.Items.Remove(mi);
         }
       }
 
-      if(Unit.HasConverters == null) Unit.InitUnitsToConvertFrom();
-      if(Unit.UnipPairs[Unit.GetType()].Count == 0) {
+      if (Unit.HasConverters == null) Unit.InitUnitsToConvertFrom();
+      if (Unit.UnipPairs[Unit.GetType()].Count == 0) {
         OtherUnitsMI.IsEnabled = false;
       } else {
         OtherUnitsMI.IsEnabled = true;
 
-        foreach(Unit u in Unit.UnipPairs[Unit.GetType()]) {
+        foreach (Unit u in Unit.UnipPairs[Unit.GetType()]) {
           MenuItem mi = new MenuItem() {
             Header = u.Name,
             IsCheckable = false,
@@ -607,8 +607,8 @@ namespace WPFControls
         }
       }
       string name = Unit.Name;
-      foreach(string key in Unit) {
-        if(key == Unit[Unit[key]]) {
+      foreach (string key in Unit) {
+        if (key == Unit[Unit[key]]) {
           MenuItem mi = new MenuItem() {
             Header = $"{name}({key})",
             Tag = key,
@@ -625,11 +625,11 @@ namespace WPFControls
 
     void UnitSelected(object o, RoutedEventArgs rea)
     {
-      if(checking) return;
+      if (checking) return;
       checking = true;
-      foreach(object mio in ContextMenu.Items) {
-        if(mio is MenuItem mi) {
-          if(mi.IsChecked && mi.Tag is string) {
+      foreach (object mio in ContextMenu.Items) {
+        if (mio is MenuItem mi) {
+          if (mi.IsChecked && mi.Tag is string) {
             mi.IsChecked = false;
             mi.IsCheckable = true;
           }
@@ -647,7 +647,7 @@ namespace WPFControls
     }
     void OtherUnitSelected(object o, RoutedEventArgs rea)
     {
-      if(checking) return;
+      if (checking) return;
       checking = true;
 
       MenuItem smi = (MenuItem)o;

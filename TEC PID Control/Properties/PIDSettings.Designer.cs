@@ -118,5 +118,29 @@ namespace TEC_PID_Control.Properties {
                 this["MaxIntegralError"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.1")]
+        public double CRate {
+            get {
+                return ((double)(this["CRate"]));
+            }
+            set {
+                this["CRate"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool RampEnable {
+            get {
+                return ((bool)(this["RampEnable"]));
+            }
+            set {
+                this["RampEnable"] = value;
+            }
+        }
     }
 }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TEC PID Control": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -382,5 +382,17 @@ namespace TEC_PID_Control.Properties {
                 this["LogMode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Resistance:Ohm")]
+        public string GWPSRFormat {
+            get {
+                return ((string)(this["GWPSRFormat"]));
+            }
+            set {
+                this["GWPSRFormat"] = value;
+            }
+        }
     }
 }

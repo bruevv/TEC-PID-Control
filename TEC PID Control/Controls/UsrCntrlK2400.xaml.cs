@@ -35,8 +35,19 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Voltage_PropChanged));
     static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Current_PropChanged));
 
-    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Voltage = (double)e.NewValue;
-    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).Current = (double)e.NewValue;
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlK2400 This = (UsrCntrlK2400)d;
+      This.Voltage = (double)e.NewValue;
+      This.OnMeasurementCompleted();
+    }
+
+    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlK2400 This = (UsrCntrlK2400)d;
+      This.Current = (double)e.NewValue;
+      if (This.KD.MeasureMode == Mode.CURR) This.OnMeasurementCompleted();
+    }
 
     public static readonly DependencyProperty OutputVoltageProperty =
         DependencyProperty.Register("OutputVoltage", typeof(double), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
@@ -112,6 +123,10 @@ namespace TEC_PID_Control.Controls
     }
     static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).KD.IdlePollEnable = (bool)e.NewValue;
 
+    public event EventHandler MeasurementCompleted;
+
+    void OnMeasurementCompleted() => MeasurementCompleted?.Invoke(this, EventArgs.Empty);
+
     public UsrCntrlK2400()
     {
       InitializeComponent();
@@ -122,7 +137,7 @@ namespace TEC_PID_Control.Controls
 
       utbResistance.DataContext = KD;
 
-      Logger.Default.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.NoAutoPoll);
+      Logger.Default.AttachLog(nameof(UsrCntrlK2400), AddToLog, Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = KD, Mode = BindingMode.OneWay });
@@ -133,8 +148,6 @@ namespace TEC_PID_Control.Controls
     }
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
-
-    delegate void f();
 
     private void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
@@ -197,5 +210,7 @@ namespace TEC_PID_Control.Controls
 
     public void SetUpICommand() => KD.SourceI(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
     public void ConnectCommand() => KD.Connect(SelectedPort);
+
+    void bReset_Click(object sender, RoutedEventArgs e) => KD.ScheduleReset();
   }
 }

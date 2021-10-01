@@ -39,14 +39,18 @@ namespace TEC_PID_Control
           Settings.Default.Upgrade();
           MainSettings.Default.Upgrade();
           PIDSettings.Default.Upgrade();
+          Interface.Default.Upgrade();
         } catch {
           Settings.Default.Reset();
           MainSettings.Default.Reset();
           PIDSettings.Default.Reset();
+          Interface.Default.Reset();
         }
         Settings.Default.UpgradeRequired = false;
       }
       //}
+
+      MainSettings.Default.LogMode = Logger.Mode.NoAutoPoll;
 
       CultureInfo ci = (CultureInfo)CultureInfo.InvariantCulture.Clone();
       ci.NumberFormat.NumberGroupSeparator = "";
@@ -72,6 +76,7 @@ namespace TEC_PID_Control
       Settings.Default.Save();
       MainSettings.Default.Save();
       PIDSettings.Default.Save();
+      Interface.Default.Save();
 
       mutex_AppGuid.Dispose();
 

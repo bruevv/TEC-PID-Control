@@ -3,13 +3,19 @@ using System.Threading;
 
 namespace Devices
 {
+  using System.ComponentModel;
+  using System.Runtime.CompilerServices;
   using System.Threading.Tasks;
   using CSUtils;
   using ThreadQueuing;
   using static CSUtils.Invoke;
 
-  abstract public class Device : IDisposable
+  abstract public class Device : IDisposable, INotifyPropertyChanged
   {
+    public event PropertyChangedEventHandler PropertyChanged;
+    protected virtual void OnPropertyChanged([CallerMemberName] string property = "") =>
+     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+
     readonly private protected ConnectionBase iCI;
     abstract private protected ConnectionBase InitSPI(string name);
     protected Device(string name) => iCI = InitSPI(name);
@@ -27,7 +33,17 @@ namespace Devices
 
     public bool IsConnected => (State & SState.Ready) == SState.Ready;
     public bool HasError => (State & SState.Error) == SState.Error;
-    protected bool IsAutopollingNow => (State & SState.AutoPolling) == SState.AutoPolling;
+    protected bool IsAutopolling => (State & SState.AutoPolling) == SState.AutoPolling;
+    public bool IsExperimentOn {
+      get => (State & SState.ExperimentOn) == SState.ExperimentOn;
+      set {
+        if (IsExperimentOn != value) {
+          if (value) State |= SState.ExperimentOn;
+          else State &= ~SState.ExperimentOn;
+          OnPropertyChanged();
+        }
+      }
+    }
 
     public event EventHandler<DevStatusChangedEA> StatusChanged;
     public event EventHandler Idle;
@@ -39,8 +55,8 @@ namespace Devices
     protected virtual void ChangeStatus(ref string str, SState state, Exception e = null)
     {
       State = (State | (state & ModifiableState)) & (state | ~ModifiableState);// better move to property
-      Logger.Mode lm = state.HasFlag(SState.Error) ?
-        Logger.Mode.Error : state.HasFlag(SState.AutoPolling) ?
+      Logger.Mode lm = HasError ?
+        Logger.Mode.Error : (IsAutopolling || IsExperimentOn) ?
          Logger.Mode.Full : Logger.Mode.NoAutoPoll;
       Logger.Log(ref str, e, lm, GetType().Name);
       StatusStr = str ?? StatusStr;
@@ -162,8 +178,8 @@ namespace Devices
           disconnect = true;
           iCI.Connect(port);
         }
-  //      if(!iCI.IsInitialized)
-          initS = iCI.Iitialize();
+        //      if(!iCI.IsInitialized)
+        initS = iCI.Iitialize();
       } catch (Exception e) {
         if (disconnect)
           iCI.Disconnect();
@@ -256,5 +272,21 @@ namespace Devices
   public abstract class ASCIIDevice : TDevice<string>
   {
     protected ASCIIDevice(string name) : base(name) { }
+  }
+
+  public class InvalidDeviceStateException : Exception
+  {
+    public SState DeviceState { get; init; }
+
+    public InvalidDeviceStateException() : base() { }
+    public InvalidDeviceStateException(string err) : base(err) { }
+    public InvalidDeviceStateException(SState ds) : base($"Device State:{ds}") { DeviceState = ds; }
+    public InvalidDeviceStateException(string err, SState ds) : base(err) { DeviceState = ds; }
+  }
+  public class DeviceDisconnectedException : InvalidDeviceStateException
+  {
+    public DeviceDisconnectedException( ) : base(SState.Disconnected) { }
+    public DeviceDisconnectedException(string error) : base(error, SState.Disconnected) { }
+    public DeviceDisconnectedException(string error, SState ds) : base(error, ds) { }
   }
 }

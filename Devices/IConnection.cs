@@ -15,6 +15,7 @@ namespace Devices
     Error = 8,
     AutoPolling = 0x10,
     Initialized = 0x20,
+    ExperimentOn = 0x40,
     Ready = Connected | Initialized,
   }
   abstract class ConnectionBase : IDisposable

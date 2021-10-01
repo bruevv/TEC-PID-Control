@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Calibration;
 using CSUtils;
+using Devices;
 using Devices.Keithley;
 using TEC_PID_Control.Controls;
 
@@ -11,7 +12,7 @@ namespace TEC_PID_Control
 {
   public class TempSensor : INotifyPropertyChanged
   {
-    UsrCntrlK2400 KC;
+    public UsrCntrlK2400 KC { get; private set; }
     ICalibration cal;
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -64,10 +65,13 @@ namespace TEC_PID_Control
     public void LoadCalibration(string filename = "Calibration.csv") => cal = new TableCalibration(filename);
     public void ScheduleInit()
     {
-      if (!KC.KD.IsConnected) KC.Dispatcher.Invoke(KC.ConnectCommand);
+      if (!KC.KD.IsConnected)
+        throw new DeviceDisconnectedException(
+          "2400 SourceMeter should be connected.\n" +
+          "Correct port should be selected.\n");
 
       if (!KC.KD.IsReset) {
-        KC.KD.Reset();
+        KC.KD.ScheduleReset();
         if (!string.IsNullOrEmpty(SetupCommands)) KC.KD.CustomCommand(SetupCommands);
       }
       KC.Dispatcher.Invoke(KC.SetUpICommand); // setup I source with parameters from control
@@ -79,7 +83,7 @@ namespace TEC_PID_Control
       if (!KC.IsConnected) KC.ConnectCommand();
 
       if (!KC.KD.IsReset) {
-        KC.KD.Reset();
+        KC.KD.ScheduleReset();
         if (string.IsNullOrEmpty(SetupCommands))
           KC.KD.CustomCommand(SetupCommands);
       }
@@ -96,5 +100,6 @@ namespace TEC_PID_Control
       Temperature = cal.TransformBack(res);
       return Temperature;
     }
+    public double ConvertRtoT(double R) => Temperature = cal.TransformBack(R);
   }
 }
