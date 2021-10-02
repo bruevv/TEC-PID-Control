@@ -370,6 +370,7 @@ namespace TEC_PID_Control.Controls
         Logger.Default.log("PID Thread Exception", e, Logger.Mode.Error, nameof(UsrCntrlPID));
       }
     }
+    float pbandw = 0.0f, ibandw = 0.0f, dbandw = 0.0f;
     void OnCycleInterfaceUpdate()
     {
       utbMP.Value = MeasureParameter;
@@ -397,9 +398,14 @@ namespace TEC_PID_Control.Controls
       }
       double cp = pbandw + ibandw + dbandw;
       rSetP.Rect = new Rect(0, 0, cp > 0 ? cp : 0, 1);
-    }
-    float pbandw = 0.0f, ibandw = 0.0f, dbandw = 0.0f;
 
+      UpdateWithDll();
+    }
+    public void UpdateWithDll()
+    {
+      SetPoint = TECPIDdll.DLL.GetSetPoint();
+      TECPIDdll.DLL.SetTemperature(MeasureParameter);
+    }
     double errorint = 0.0;
     double? lasterror = null;
 

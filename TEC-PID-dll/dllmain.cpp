@@ -16,6 +16,7 @@ public:
 			YieldProcessor();
 			if (iterations++ > SPIN_ITERATIONS) {
 				iterations = 0;
+
 				Sleep(0);
 			}
 		}

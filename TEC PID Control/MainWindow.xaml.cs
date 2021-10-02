@@ -9,6 +9,7 @@ namespace TEC_PID_Control
   using CustomWindows;
   using Devices.GWI;
   using Devices.Keithley;
+  using System.Diagnostics;
   using TEC_PID_Control.Controls;
   using TEC_PID_Control.PID;
 
@@ -34,9 +35,6 @@ namespace TEC_PID_Control
 
         TC = new TempSensor(usrCntrlK2400);
         TC.LoadCalibration();
-
-        DllInterface.SetSetPoint(12.0);
-        double sp = DllInterface.GetSetPoint();
 
         usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
         usrCntrlK2400.MeasurementCompleted += K2400_MC;
