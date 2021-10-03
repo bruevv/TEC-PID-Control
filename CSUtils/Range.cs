@@ -43,7 +43,7 @@ namespace Samples
     public int Completed {
       get => completed;
       set {
-        int cpl = Bound(value, 0, 100);
+        int cpl = Limit(value, 0, 100);
         if(completed != cpl) {
           completed = cpl;
           RaisePropertyChanged(nameof(Completed));

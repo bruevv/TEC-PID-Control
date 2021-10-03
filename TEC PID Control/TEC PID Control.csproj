@@ -42,6 +42,21 @@
     <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(TargetDir)%(Filename)%(Extension)')" />
   </Target>
   
+  <Target Name="CopyFilesPublish" AfterTargets="Publish">
+    <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" />
+    <Message Text="Project File Name = $(MSBuildProjectFile)" />
+    <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high"/>
+  </Target>
+  <!--<Target Name="BuildDlls" AfterTargets="BuildCompile">
+    
+  </Target>-->
+  
+  <ItemGroup>
+    <DotNetPublishFiles Include="$(MSBuildProjectDirectory)\Dll\*.dll">
+      <DestinationRelativePath>%(Filename)%(Extension)</DestinationRelativePath>
+    </DotNetPublishFiles>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="RawInput.Sharp" Version="0.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
