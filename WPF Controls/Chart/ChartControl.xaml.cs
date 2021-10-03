@@ -730,7 +730,7 @@ namespace WPFControls
     {
       double axislen = (int)(a.ValueToPixelPosition(maxValue) - a.ValueToPixelPosition(minValue));
       int MaxMajTicks = (int)(axislen / (7 * a.LabelAutoFitMaxFontSize));
-      GUtils.Bound(ref MaxMajTicks, 5, 30);
+      GUtils.Limit(ref MaxMajTicks, 5, 30);
       double min = Min(minValue, maxValue);
       double max = Max(minValue, maxValue);
       double delta = max - min;

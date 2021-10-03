@@ -419,13 +419,13 @@ namespace TEC_PID_Control.Controls
       MeasureParameter = error + ImSetPoint;
 
       lock (RCCLock) {
-        GUtils.Bound(ref errorint, -maxIntegralError * ctrlI, +maxIntegralError * ctrlI);
+        GUtils.Limit(ref errorint, -maxIntegralError * ctrlI, +maxIntegralError * ctrlI);
 
         output = globalGain * /*Math.Sqrt*/(error / ctrlP + errorint / ctrlI + errorder / ctrlD);
         pbandw = (float)(error / ctrlP);
         ibandw = (float)(errorint / ctrlI);
         dbandw = (float)(errorder / ctrlD);
-        GUtils.Bound(ref output, minCtrlPar, maxCtrlPar);
+        GUtils.Limit(ref output, minCtrlPar, maxCtrlPar);
       }
       ControlParameter = output;
       iC.Control(output);
@@ -512,8 +512,8 @@ namespace TEC_PID_Control.Controls
     {
       if (!ucGWPS.GWPS.IsConnected)
         throw new DeviceDisconnectedException(
-          "GWIPS Device should be connected.\n" +
-          "Correct port should be selected.\n");
+          $"{nameof(ucGWPS.GWPS)}GWIPS Device should be connected.\n" +
+          $"Correct port should be selected.\n");
 
       ucGWPS.Dispatcher.Invoke(ucGWPS.SetUpCommand);
       if (!ucGWPS.GWPS.Output) ucGWPS.GWPS.ScheduleTurnOn();

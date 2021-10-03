@@ -35,6 +35,8 @@ namespace TEC_PID_Control
 
         TC = new TempSensor(usrCntrlK2400);
         TC.LoadCalibration();
+       
+        TECPIDdll.DLL.SetSetPoint(10.0); // check if dll file present
 
         usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
         usrCntrlK2400.MeasurementCompleted += K2400_MC;

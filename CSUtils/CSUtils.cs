@@ -19,7 +19,7 @@ namespace CSUtils
 
   public static class GUtils
   {
-    public static T Bound<T>(T val, T min, T max) where T : IComparable<T>
+    public static T Limit<T>(T val, T min, T max) where T : IComparable<T>
     {
       if (val.CompareTo(min) < 0)
         return min;
@@ -27,7 +27,7 @@ namespace CSUtils
         return max;
       return val;
     }
-    public static T Bound<T>(ref T val, T min, T max) where T : IComparable<T>
+    public static T Limit<T>(ref T val, T min, T max) where T : IComparable<T>
     {
       if (val.CompareTo(min) < 0)
         return val = min;
