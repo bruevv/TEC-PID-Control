@@ -9,6 +9,7 @@ namespace TEC_PID_Control
     double GetTemperature();
     void SetTemperature(double temp);
     double GetSetPoint();
+    double GetSetPointOncePerChange();
     void SetSetPoint(double sp);
   }
 
@@ -17,6 +18,7 @@ namespace TEC_PID_Control
     public double GetTemperature() => DllInterface32.GetTemperature();
     public void SetTemperature(double temp) => DllInterface32.SetTemperature(temp);
     public double GetSetPoint() => DllInterface32.GetSetPoint();
+    public double GetSetPointOncePerChange() => DllInterface32.GetSPOPC();
     public void SetSetPoint(double sp) => DllInterface32.SetSetPoint(sp);
   }
   class TECPIDdll64 : TECPIDdll
@@ -24,6 +26,7 @@ namespace TEC_PID_Control
     public double GetTemperature() => DllInterface64.GetTemperature();
     public void SetTemperature(double temp) => DllInterface64.SetTemperature(temp);
     public double GetSetPoint() => DllInterface64.GetSetPoint();
+    public double GetSetPointOncePerChange() => DllInterface64.GetSPOPC();
     public void SetSetPoint(double sp) => DllInterface64.SetSetPoint(sp);
   }
   static class DllInterface32
@@ -35,6 +38,8 @@ namespace TEC_PID_Control
     [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern double GetSetPoint();
     [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern double GetSPOPC();
+    [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetSetPoint(double sp);
   }
   static class DllInterface64
@@ -45,6 +50,8 @@ namespace TEC_PID_Control
     public static extern void SetTemperature(double temp);
     [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern double GetSetPoint();
+    [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern double GetSPOPC();
     [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetSetPoint(double sp);
   }

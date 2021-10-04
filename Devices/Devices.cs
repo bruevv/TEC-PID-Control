@@ -18,8 +18,15 @@ namespace Devices
 
     readonly private protected ConnectionBase iCI;
     abstract private protected ConnectionBase InitSPI(string name);
-    protected Device(string name) => iCI = InitSPI(name);
-
+    protected Device(string name)
+    {
+      iCI = InitSPI(name);
+      iCI.StateChangedDelegate += ICIStateChanged;
+    }
+    void ICIStateChanged()
+    {
+      OnPropertyChanged(nameof(State));
+    }
     public SState State {
       get => iCI.State;
       protected set {
@@ -35,11 +42,11 @@ namespace Devices
     public bool HasError => (State & SState.Error) == SState.Error;
     protected bool IsAutopolling => (State & SState.AutoPolling) == SState.AutoPolling;
     public bool IsExperimentOn {
-      get => (State & SState.ExperimentOn) == SState.ExperimentOn;
+      get => (State & SState.ControlOn) == SState.ControlOn;
       set {
         if (IsExperimentOn != value) {
-          if (value) State |= SState.ExperimentOn;
-          else State &= ~SState.ExperimentOn;
+          if (value) State |= SState.ControlOn;
+          else State &= ~SState.ControlOn;
           OnPropertyChanged();
         }
       }
@@ -54,6 +61,8 @@ namespace Devices
       ChangeStatus(ref str, state, e);
     protected virtual void ChangeStatus(ref string str, SState state, Exception e = null)
     {
+      if(state.HasFlag(SState.Error)) iCI.SetError();
+      
       State = (State | (state & ModifiableState)) & (state | ~ModifiableState);// better move to property
       Logger.Mode lm = HasError ?
         Logger.Mode.Error : (IsAutopolling || IsExperimentOn) ?
@@ -155,13 +164,16 @@ namespace Devices
     bool connecting = false;
     void СonnectedEvent(object o, EventArgs e)
     {
-      if (!connecting && !iCI.IsInitialized) iCI.TQ.EnqueueUnique(Connect_AS, iCI.PortName);
+      if (connecting) return;
+
+      if (!iCI.IsInitialized) iCI.TQ.EnqueueUnique(Connect_AS, iCI.PortName);
+      else OnConnectedToDevice(this, EventArgs.Empty);
     }
 
     protected TDevice(string name) : base(name)
     {
       iCI.Disconnected += DisconnectedEvent;
-      iCI.Connected += СonnectedEvent;
+      iCI.Initialized += СonnectedEvent;
 
       iCI.TQ.ThreadIdle += OnIdle;
       iCI.TQ.ExitIdle += OnNotIdle;
@@ -189,8 +201,9 @@ namespace Devices
       ChangeStatus($"Connected succsefully. Init String:\n{initS}");
 
       OnConnectedToDevice(this, EventArgs.Empty);
+      iCI.OnInitialized();
 
-    finish:
+      finish:
       connecting = false;
       ewh?.Set();
     }
@@ -209,7 +222,7 @@ namespace Devices
 
       OnDisconnectedFromDevice(this, EventArgs.Empty);
 
-    finish:
+      finish:
       ewh?.Set();
     }
 
@@ -285,7 +298,7 @@ namespace Devices
   }
   public class DeviceDisconnectedException : InvalidDeviceStateException
   {
-    public DeviceDisconnectedException( ) : base(SState.Disconnected) { }
+    public DeviceDisconnectedException() : base(SState.Disconnected) { }
     public DeviceDisconnectedException(string error) : base(error, SState.Disconnected) { }
     public DeviceDisconnectedException(string error, SState ds) : base(error, ds) { }
   }

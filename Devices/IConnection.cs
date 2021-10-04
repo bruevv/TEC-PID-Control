@@ -15,8 +15,9 @@ namespace Devices
     Error = 8,
     AutoPolling = 0x10,
     Initialized = 0x20,
-    ExperimentOn = 0x40,
+    ControlOn = 0x40,
     Ready = Connected | Initialized,
+    Controlled = Ready | ControlOn,
   }
   abstract class ConnectionBase : IDisposable
   {
@@ -29,12 +30,36 @@ namespace Devices
     public abstract string PortName { get; }
     protected abstract string InitString { get; }
 
-    public SState State { get; set; } = SState.Disconnected;
+    SState state = SState.Disconnected;
+    public SState State {
+      get => state;
+      set {
+        if (state != value) {
+          state = value;
+          if (!state.HasFlag(SState.Error)) NumberOfErrors = 0;
+          StateChangedDelegate?.Invoke();
+        }
+      }
+    }
+
+    public static uint MaxNumberOfErrors = 3;
+    public int NumberOfErrors { get; private set; } = 0;
+    public virtual bool SetError()
+    {
+      State |= SState.Error;
+      if (++NumberOfErrors >= MaxNumberOfErrors) {
+        TQ.EnqueueUnique(Disconnect);
+        return true;
+      }
+      return false;
+    }
+
+    public Action StateChangedDelegate;
 
     public bool IsConnected => (State & SState.Connected) == SState.Connected;
     public bool IsInitialized => (State & SState.Initialized) == SState.Initialized;
 
-    public event EventHandler Connected;
+    public event EventHandler Initialized;
     public event EventHandler Disconnected;
     public event EventHandler Idle;
     public event EventHandler IdleTimeout;
@@ -63,13 +88,13 @@ namespace Devices
         State &= ~SState.AutoPolling;
       }
     }
-    protected virtual void OnConnected()
+    public virtual void OnInitialized()
     {
       foreach (object o in TQ.UserObjects) {
         if (o is ConnectionBase si) {
           si.State &= ~SState.Disconnected;
-          si.State |= SState.Connected;
-          si.Connected?.Invoke(this, EventArgs.Empty);
+          si.State |= SState.Ready;
+          si.Initialized?.Invoke(this, EventArgs.Empty);
         }
       }
     }

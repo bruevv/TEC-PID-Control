@@ -30,6 +30,7 @@ struct MemStructure {
 
 	volatile double CurrentTemperature;
 	volatile double SetPoint;
+	volatile bool SetPointAccessed;
 };
 
 #define SHMEMSIZE sizeof(MemStructure) 
@@ -47,8 +48,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,  // DLL module handle
 {
 	BOOL fInit, fIgnore;
 
-	switch (fdwReason)
-	{
+	switch (fdwReason) {
 		// DLL load due to process initialization or LoadLibrary
 
 	case DLL_PROCESS_ATTACH:
@@ -119,7 +119,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,  // DLL module handle
 	return TRUE;
 }
 
-extern "C" { 
+extern "C" {
 
 	__declspec(dllexport) double _cdecl GetTemperature()
 	{
@@ -148,7 +148,25 @@ extern "C" {
 		return sp;
 	}
 
-	__declspec(dllexport) VOID _cdecl SetTemperature(double temp)
+	__declspec(dllexport) double _cdecl GetSPOPC()
+	{
+		double sp;
+		MemStructure* pSstr = (MemStructure*)lpvMem;
+		pSstr->spinlock.GetLock();
+
+		if (!pSstr->SetPointAccessed) {
+			sp = pSstr->SetPoint;
+			pSstr->SetPointAccessed = true;
+		} else {
+			sp = NAN;
+		}
+
+		pSstr->spinlock.ReleaseLock();
+
+		return sp;
+	}
+
+	__declspec(dllexport) void _cdecl SetTemperature(double temp)
 	{
 		MemStructure* pSstr = (MemStructure*)lpvMem;
 		pSstr->spinlock.GetLock();
@@ -157,12 +175,13 @@ extern "C" {
 
 		pSstr->spinlock.ReleaseLock();
 	}
-	__declspec(dllexport) VOID _cdecl SetSetPoint(double setpoint)
+	__declspec(dllexport) void _cdecl SetSetPoint(double setpoint)
 	{
 		MemStructure* pSstr = (MemStructure*)lpvMem;
 		pSstr->spinlock.GetLock();
 
 		pSstr->SetPoint = setpoint;
+		pSstr->SetPointAccessed = false;
 
 		pSstr->spinlock.ReleaseLock();
 	}

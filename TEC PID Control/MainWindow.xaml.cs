@@ -28,7 +28,7 @@ namespace TEC_PID_Control
 
         Dispatcher.ShutdownStarted += (o, e) => usrCntrlPID.Dispose();
 
-        logger?.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.Error);
+        logger?.AttachLog(null, AddToLog, Logger.Mode.NoAutoPoll);
 
         KD = usrCntrlK2400.KD;
         GWPS = usrCntrlGWPS.GWPS;
@@ -41,7 +41,11 @@ namespace TEC_PID_Control
         usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
         usrCntrlK2400.MeasurementCompleted += K2400_MC;
 
-        try {
+        logger?.log($"Trying to automatically connect to following devices:\n" +
+                    $"Keithley 2400 Port:<{usrCntrlK2400.SelectedPort}>\n" +
+                    $"GWI Power Supply Port:<{usrCntrlGWPS.SelectedPort}>",
+                    Logger.Mode.AppState, nameof(MainWindow));
+        try { 
           usrCntrlK2400.ConnectCommand();
           usrCntrlGWPS.ConnectCommand();
         }catch(Exception e) {
@@ -70,7 +74,10 @@ namespace TEC_PID_Control
 
     private void ConsoleOut_TextChanged(object sender, TextChangedEventArgs e)
     {
-      ((TextBox)sender).ScrollToEnd();
+      TextBox tb = (TextBox)sender;
+      if (tb.Text.Length > 30000)
+        tb.Text = "<Log trimmed>" + tb.Text.Substring(tb.Text.IndexOf('\n', 1000));
+      tb.ScrollToEnd();
     }
 
     async void bMeatureT_Click(object s, RoutedEventArgs e)

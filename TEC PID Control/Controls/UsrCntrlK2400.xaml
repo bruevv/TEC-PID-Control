@@ -48,7 +48,7 @@
                  Stroke="Black"
                  Width="14"
                  Height="14"
-                 ToolTip="Disconnected"
+                 ToolTip="{Binding State}"
                  DockPanel.Dock="Right"
                  Margin="5,0,31,0" />
         <Rectangle Width="16"

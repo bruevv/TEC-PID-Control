@@ -33,29 +33,10 @@
     <DllFiles Include="Dll\TEC-PID-dll-64.dll" />
   </ItemGroup>
   
-  <ItemGroup>
-    <DllDestination Include="TEC-PID-dll-32.dll" />
-    <DllDestination Include="TEC-PID-dll-64.dll" />
-  </ItemGroup>
-  
   <Target Name="CopyFiles" AfterTargets="Build">
     <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(TargetDir)%(Filename)%(Extension)')" />
   </Target>
-  
-  <Target Name="CopyFilesPublish" AfterTargets="Publish">
-    <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" />
-    <Message Text="Project File Name = $(MSBuildProjectFile)" />
-    <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high"/>
-  </Target>
-  <!--<Target Name="BuildDlls" AfterTargets="BuildCompile">
-    
-  </Target>-->
-  
-  <ItemGroup>
-    <DotNetPublishFiles Include="$(MSBuildProjectDirectory)\Dll\*.dll">
-      <DestinationRelativePath>%(Filename)%(Extension)</DestinationRelativePath>
-    </DotNetPublishFiles>
-  </ItemGroup>
+ 
 
   <ItemGroup>
     <PackageReference Include="RawInput.Sharp" Version="0.0.3" />
@@ -130,9 +111,21 @@
     </Page>
   </ItemGroup>
 
-  <!--<ItemGroup>
-    <Content Update="..\"
-  </ItemGroup>-->
+  <Target Name="CopyFilesPublish" AfterTargets="Publish">
+    <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" />
+    <Message Text="Project File Name = $(MSBuildProjectFile)" />
+    <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high"/>
+  </Target>
 
+  <ItemGroup>
+    <PDBFiles Include="bin\publish\CSUtils.pdb;bin\publish\CustomWindows.pdb;bin\publish\Devices.pdb;bin\publish\MathParserTK.pdb;bin\publish\TEC PID Control.pdb;bin\publish\WPFUtils.pdb" />
+  </ItemGroup>
+
+  <Target Name="DeletePDBAfterPublish" AfterTargets="CopyFilesPublish">
+    <Delete Files="@(PDBFiles)" >
+      <Output TaskParameter="DeletedFiles" ItemName="DeletedList"/>
+    </Delete>
+    <Message Text="Deleted files: '@(DeletedList)'" Importance="high"/>
+  </Target>
 
 </Project>

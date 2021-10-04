@@ -1,4 +1,5 @@
 ﻿using CSUtils;
+using Devices;
 using Devices.Keithley;
 using System;
 using System.ComponentModel;
@@ -61,11 +62,18 @@ namespace TEC_PID_Control.Controls
 
     static readonly DependencyProperty IsOn_Prop =
       DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false, IsOn_PropChanged));
+    static readonly DependencyProperty State_Prop =
+   DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected, State_PropChanged));
+
     static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).IsOn = (bool)e.NewValue;
+    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).State = (SState)e.NewValue;
 
     static readonly DependencyPropertyKey IsOnKey =
        DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey StateKey =
+     DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected));
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
+    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
     #endregion Binding
 
     [Category("Appearance")]
@@ -117,6 +125,11 @@ namespace TEC_PID_Control.Controls
       protected set { SetValue(IsOnKey, value); }
     }
     [Category("Device")]
+    public SState State {
+      get { return (SState)GetValue(StateProperty); }
+      protected set { SetValue(StateKey, value); }
+    }
+    [Category("Device")]
     public bool AutoPoll {
       get { return (bool)GetValue(AutoPollProperty); }
       set { SetValue(AutoPollProperty, value); }
@@ -137,14 +150,12 @@ namespace TEC_PID_Control.Controls
 
       utbResistance.DataContext = KD;
 
-      Logger.Default.AttachLog(nameof(UsrCntrlK2400), AddToLog, Logger.Mode.NoAutoPoll);
+      Logger.Default.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
+      SetBinding(State_Prop, new Binding("State") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = KD, Mode = BindingMode.OneWay });
-
-      Action xxx = delegate { tbLog.Text += $">\n"; };
-      Delegate d = xxx;
     }
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
@@ -153,14 +164,14 @@ namespace TEC_PID_Control.Controls
     {
       IsConnected = false;
       circle.Fill = Brushes.LightGray;
-      circle.ToolTip = KD.State.ToString();
+//      circle.ToolTip = KD.State.ToString();
     }
 
     private void KD_ConnectedToDevice(object sender, EventArgs e)
     {
       IsConnected = true;
       circle.Fill = Brushes.LimeGreen;
-      circle.ToolTip = KD.State.ToString();
+//      circle.ToolTip = KD.State.ToString();
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => KD.Disconnect();

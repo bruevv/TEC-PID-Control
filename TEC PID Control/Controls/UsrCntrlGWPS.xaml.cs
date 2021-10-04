@@ -1,4 +1,5 @@
 ﻿using CSUtils;
+using Devices;
 using Devices.GWI;
 using System;
 using System.ComponentModel;
@@ -23,9 +24,12 @@ namespace TEC_PID_Control.Controls
     public static readonly DependencyProperty IsLogExpandedProperty =
         DependencyProperty.Register("IsLogExpanded", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty SelectedPortProperty =
-        DependencyProperty.Register("SelectedPort", typeof(string), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata("") { BindsTwoWayByDefault = true });
-
-
+        DependencyProperty.Register(nameof(SelectedPort), typeof(string), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata("", SelectedPortChanged) { BindsTwoWayByDefault = true });
+    static void SelectedPortChanged(DependencyObject o, DependencyPropertyChangedEventArgs ea) {
+      var t = (UsrCntrlGWPS)o;
+      if (!t.cbPort.Items.Contains(t.SelectedPort)) t.cbPort.Items.Add(t.SelectedPort);
+      t.cbPort.SelectedItem = t.SelectedPort;
+    }
     public static readonly DependencyProperty ChannelProperty =
         DependencyProperty.Register("Channel", typeof(int), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1, ChannelChanged) { BindsTwoWayByDefault = true });
 
@@ -38,16 +42,14 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Voltage_PropChanged));
     static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Current_PropChanged));
 
-    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
-    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
-    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.Channel = (int)e.NewValue;
+
 
     public static readonly DependencyProperty OutputVoltageProperty =
-        DependencyProperty.Register("OutputVoltage", typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
+        DependencyProperty.Register(nameof(OutputVoltage), typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty OutputCurrentProperty =
-    DependencyProperty.Register("OutputCurrent", typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
+    DependencyProperty.Register(nameof(OutputCurrent), typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty AutoPollProperty =
-        DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
+        DependencyProperty.Register(nameof(AutoPoll), typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
 
     static readonly DependencyPropertyKey IsConnectedKey =
        DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
@@ -55,11 +57,22 @@ namespace TEC_PID_Control.Controls
 
     static readonly DependencyProperty IsOn_Prop =
       DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false, IsOn_PropChanged));
-    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
+    static readonly DependencyProperty State_Prop =
+      DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected, State_PropChanged));
+
     static readonly DependencyPropertyKey IsOnKey =
        DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey StateKey =
+       DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected));
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
+    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
 
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
+    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
+    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.Channel = (int)e.NewValue;
+    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
+    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).State = (SState)e.NewValue;
+    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
     #endregion Binding
 
 
@@ -118,11 +131,15 @@ namespace TEC_PID_Control.Controls
       protected set { SetValue(IsOnKey, value); }
     }
     [Category("Device")]
+    public SState State {
+      get { return (SState)GetValue(StateProperty); }
+      protected set { SetValue(StateKey, value); }
+    }
+    [Category("Device")]
     public bool AutoPoll {
       get { return (bool)GetValue(AutoPollProperty); }
       set { SetValue(AutoPollProperty, value); }
     }
-    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
 
 
     public UsrCntrlGWPS()
@@ -130,12 +147,13 @@ namespace TEC_PID_Control.Controls
       InitializeComponent();
 
       GWPS = new GWPowerSupply();
-      GWPS.ConnectedToDevice += KD_ConnectedToDevice;
+      GWPS.ConnectedToDevice += ConnectedToDevice;
       GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
       Logger.Default.AttachLog(nameof(GWPowerSupply), AddToLog, Logger.Mode.NoAutoPoll);
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = GWPS, Mode = BindingMode.OneWay });
+      SetBinding(State_Prop, new Binding("State") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = GWPS, Mode = BindingMode.OneWay });
     }
@@ -146,14 +164,15 @@ namespace TEC_PID_Control.Controls
     {
       IsConnected = false;
       circle.Fill = Brushes.LightGray;
-      circle.ToolTip = GWPS.State.ToString();
+ //     circle.ToolTip = GWPS.State.ToString();
     }
 
-    private void KD_ConnectedToDevice(object sender, EventArgs e)
+    private void ConnectedToDevice(object sender, EventArgs e)
     {
       IsConnected = true;
+
       circle.Fill = Brushes.LimeGreen;
-      circle.ToolTip = GWPS.State.ToString();
+//      circle.ToolTip = GWPS.State.ToString();
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => GWPS.Disconnect();
@@ -174,7 +193,7 @@ namespace TEC_PID_Control.Controls
     void cbPort_SelectionChanged(object s, EventArgs e)
     {
       string str = cbPort.SelectedItem as string;
-      if (!string.IsNullOrEmpty(str)) SelectedPort = str;
+      if (!string.IsNullOrEmpty(str) && SelectedPort != str) SelectedPort = str;
     }
 
     void cbPort_DropDownOpened(object sender, EventArgs e) => UpdateComboBox();

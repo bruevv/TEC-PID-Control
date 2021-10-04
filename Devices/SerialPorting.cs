@@ -83,7 +83,6 @@ namespace SerialPorting
       }
 
       State = SState.Connected;
-      OnConnected();
     }
     public override void Disconnect()
     {
@@ -145,7 +144,7 @@ namespace SerialPorting
       }
       catch (Exception e)
       {
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Initialization Failed\n{e.Message}", e);
       }
       if (!ret.Contains(InitString))
@@ -248,7 +247,6 @@ namespace SerialPorting
           throw new ArgumentException();
       }
     }
-
     public void Command(Enum c)
     {
       string ack;
@@ -259,12 +257,12 @@ namespace SerialPorting
       }
       catch (Exception e)
       {
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Command {c.GetType().Name}:{c} Failed\n{e.Message}", e);
       }
       if (NeedAck && ack != ACK)
       {
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Command {c.GetType().Name}:{c} Error String '{ack}'");
       }
 
@@ -279,12 +277,12 @@ namespace SerialPorting
       }
       catch (Exception e)
       {
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Command {c.GetType().Name}:{c} Args '{AsString(args)}' Failed\n{e.Message}", e);
       }
       if (NeedAck && ack != ACK)
       {
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Command {c.GetType().Name}:{c} Args '{AsString(args)}' String '{ack}'");
       }
       State &= ~(SState.Error | SState.Busy);
@@ -345,7 +343,7 @@ namespace SerialPorting
       catch (Exception e)
       {
         State &= ~SState.Busy;
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Request {r.GetType().Name}:{r} Failed\n{e.Message}", e);
       }
       State &= ~(SState.Error | SState.Busy);
@@ -370,7 +368,7 @@ namespace SerialPorting
       catch (Exception e)
       {
         State &= ~SState.Busy;
-        State |= SState.Error;
+        SetError();
         throw new IOException($"Request {r.GetType().Name}:{r} Failed\n{e.Message}", e);
       }
       State &= ~(SState.Error | SState.Busy);

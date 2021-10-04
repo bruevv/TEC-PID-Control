@@ -15,6 +15,7 @@ namespace TEC_PID_Control.PID
 {
   public interface IMeasureParameter
   {
+    void Reset();
     void Init();
     double Measure();
 
@@ -65,7 +66,16 @@ namespace TEC_PID_Control.Controls
     static void SetPointCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
       var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.setPoint = t.SetPoint;
+      bool changed = false;
+      double sp;
+      lock (t.RCCLock) {
+        sp = t.SetPoint;
+        if (t.setPoint != sp) {
+          t.setPoint = sp;
+          changed = true;
+        }
+      }
+      if (changed) Log($"SetPoint changed to {sp:N3} °C", Logger.Mode.NoAutoPoll);
     }
     static void CRateCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
@@ -120,9 +130,9 @@ namespace TEC_PID_Control.Controls
         lock (t.RCCLock) {
           if (b) {
             t.needInit = true;
-            logger?.log($"PID Enabled", Logger.Mode.NoAutoPoll, nameof(UsrCntrlPID));
+            Log($"PID Enabled", Logger.Mode.NoAutoPoll);
           } else {
-            logger?.log($"PID Disabled",  Logger.Mode.NoAutoPoll, nameof(UsrCntrlPID));
+            Log($"PID Disabled", Logger.Mode.NoAutoPoll);
           }
           t.isControlEnabled = t.IsControlEnabled;
         }
@@ -305,18 +315,29 @@ namespace TEC_PID_Control.Controls
             try {
               iM.Init();
               iC.Init();
-              logger?.log($"Devices Configured", Logger.Mode.NoAutoPoll, nameof(UsrCntrlPID));
+              Log($"Devices Configured", Logger.Mode.NoAutoPoll);
             } catch (InvalidDeviceStateException e) {
               isControlEnabled = false;
               Dispatcher.BeginInvoke(() => { IsControlEnabled = false; });
               string err = $"Unable to initialize the PID controller";
-              logger?.log(ref err, e, Logger.Mode.Error, nameof(UsrCntrlPID));
+              Log(ref err, e);
               MessageBox.Show(err, "Error");
               continue;
             }
           }
 
           double mp = iM.Measure();
+
+          if (double.IsNaN(mp)) {
+            Log("Problem with K2400 configuration\nTrying to Reset", Logger.Mode.Error);
+            needInit = true;
+            iM.Reset();
+            Log("Waiting to Reset (2s)", Logger.Mode.Error);
+            Thread.Sleep(2000);
+            MeasurementStamp = DateTime.Now;
+            continue;
+          }
+
           DateTime Now = DateTime.Now;
           dtm = (Now - MeasurementStamp).TotalSeconds;
 
@@ -403,7 +424,8 @@ namespace TEC_PID_Control.Controls
     }
     public void UpdateWithDll()
     {
-      SetPoint = TECPIDdll.DLL.GetSetPoint();
+      double sp = TECPIDdll.DLL.GetSetPointOncePerChange();
+      if (!double.IsNaN(sp)) SetPoint = sp;
       TECPIDdll.DLL.SetTemperature(MeasureParameter);
     }
     double errorint = 0.0;
@@ -430,7 +452,11 @@ namespace TEC_PID_Control.Controls
       ControlParameter = output;
       iC.Control(output);
     }
-    public void ResetRamp() => resetRamp = true;
+    public void ResetRamp()
+    {
+      resetRamp = true;
+      Log($"PID is Reset", Logger.Mode.NoAutoPoll);
+    }
     public UsrCntrlPID()
     {
       if (logger == null) logger = Logger.Default;
@@ -444,6 +470,8 @@ namespace TEC_PID_Control.Controls
     }
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
 
+    static void Log(string txt, Logger.Mode mode) => logger?.log(txt, mode, nameof(UsrCntrlPID));
+    static void Log(ref string txt, Exception e) => logger?.log(ref txt, e, Logger.Mode.Error, nameof(UsrCntrlPID));
     public void Init(IMeasureParameter im, IControlParameter ic)
     {
       iM = im; iC = ic;
@@ -451,10 +479,11 @@ namespace TEC_PID_Control.Controls
       if (thread.IsAlive) StopThread();
       IsControlEnabled = false;
 
-      logger?.log($"PID Initialized.\nMeasure Parameter\n{im}\nControl Parameter\n{ic}",
-         Logger.Mode.AppState, nameof(UsrCntrlPID));
+      Log($"PID Initialized.\nMeasure Parameter\n{im}\nControl Parameter\n{ic}", Logger.Mode.AppState);
 
       thread.Start();
+
+      OnCycleInterfaceUpdate();
     }
     void StopThread()
     {
@@ -487,6 +516,7 @@ namespace TEC_PID_Control.Controls
     public TempSensorInterface(TempSensor tc) => TC = tc;
 
     public void Init() => TC.ScheduleInit();
+    public void Reset() => TC.KC.KD.ScheduleReset();
 
     public double Measure() => TC.ReadTemperature();
     public bool ExpGoing {

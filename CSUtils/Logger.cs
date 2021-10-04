@@ -31,6 +31,7 @@ namespace CSUtils
 
     public void AttachLog(string name, EventHandler<LogFeedBEA> del, Mode? mode = null)
     {
+      name = name ?? "";
       if (AttachedLogModes.ContainsKey(del)) {
         AttachedLogModes[del] = mode ?? LoggerMode;
         return;
@@ -137,6 +138,12 @@ namespace CSUtils
           foreach (EventHandler<LogFeedBEA> del in AttachedLogs[source].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
               Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode)); 
+          }
+        }
+        if (AttachedLogs.ContainsKey("")) {
+          foreach (EventHandler<LogFeedBEA> del in AttachedLogs[""].GetInvocationList()) {
+            if (AttachedLogModes[del] >= mode)
+              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode));
           }
         }
       } catch (Exception) { }
