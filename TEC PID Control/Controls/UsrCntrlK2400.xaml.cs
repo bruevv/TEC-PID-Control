@@ -7,8 +7,6 @@ using System.IO.Ports;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
-using ThreadQueuing;
 
 namespace TEC_PID_Control.Controls
 {
@@ -160,17 +158,17 @@ namespace TEC_PID_Control.Controls
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
 
-    private void KD_DisconnectedFromDevice(object sender, EventArgs e)
+    void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
       IsConnected = false;
-      circle.Fill = Brushes.LightGray;
+//      circle.Fill = Brushes.LightGray;
 //      circle.ToolTip = KD.State.ToString();
     }
 
-    private void KD_ConnectedToDevice(object sender, EventArgs e)
+    void KD_ConnectedToDevice(object sender, EventArgs e)
     {
       IsConnected = true;
-      circle.Fill = Brushes.LimeGreen;
+//      circle.Fill = Brushes.LimeGreen;
 //      circle.ToolTip = KD.State.ToString();
     }
 

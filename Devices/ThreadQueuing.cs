@@ -214,6 +214,17 @@ namespace ThreadQueuing
       lock (TQueue) { if (!TQueue.Contains(a)) TQueue.Enqueue(a); }
       TSuspend.Set();
     }
+    void EnqueueReplace(ITransaction a)
+    {
+      if (IsIdle) OnThreadExitIdle();
+      lock (TQueue) {
+        if (TQueue.Count > 0) {
+          TQueue.Clear();
+        }
+        TQueue.Enqueue(a);
+      }
+      TSuspend.Set();
+    }
     public void Enqueue(Action a) => Enqueue(new TAction(a));
     public void Enqueue<T>(Action<T> a, T s) => Enqueue(new TCommand<T>(a, s));
     public void Enqueue<T1, T2>(Action<T1, T2> a, T1 s1, T2 s2) => Enqueue(new TCommand<T1, T2>(a, s1, s2));
@@ -223,6 +234,11 @@ namespace ThreadQueuing
     public void EnqueueUnique<T>(Action<T> a, T s) => EnqueueUnique(new TCommand<T>(a, s));
     public void EnqueueUnique<T1, T2>(Action<T1, T2> a, T1 s1, T2 s2) => EnqueueUnique(new TCommand<T1, T2>(a, s1, s2));
     public void EnqueueUnique<T1, T2, T3>(Action<T1, T2, T3> a, T1 s1, T2 s2, T3 s3) => EnqueueUnique(new TCommand<T1, T2, T3>(a, s1, s2, s3));
+
+    public void EnqueueReplace(Action a) => EnqueueReplace(new TAction(a));
+    public void EnqueueReplace<T>(Action<T> a, T s) => EnqueueReplace(new TCommand<T>(a, s));
+    public void EnqueueReplace<T1, T2>(Action<T1, T2> a, T1 s1, T2 s2) => EnqueueReplace(new TCommand<T1, T2>(a, s1, s2));
+    public void EnqueueReplace<T1, T2, T3>(Action<T1, T2, T3> a, T1 s1, T2 s2, T3 s3) => EnqueueReplace(new TCommand<T1, T2, T3>(a, s1, s2, s3));
     //    void ClearQueue() => TQueue.Clear();
     #region implementing Dispose
 

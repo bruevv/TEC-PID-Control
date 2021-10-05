@@ -6,7 +6,7 @@
                  xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
                  x:Name="customWindow"
                  x:Class="TEC_PID_Control.MainWindow"
-                 Title="Main Window"
+                 Title="Temperature controller for AC-Hall"
                  Height="664"
                  Width="599">
   <Grid>

@@ -163,7 +163,7 @@ namespace TEC_PID_Control.Controls
     void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
       IsConnected = false;
-      circle.Fill = Brushes.LightGray;
+ //     circle.Fill = Brushes.LightGray;
  //     circle.ToolTip = GWPS.State.ToString();
     }
 
@@ -171,7 +171,7 @@ namespace TEC_PID_Control.Controls
     {
       IsConnected = true;
 
-      circle.Fill = Brushes.LimeGreen;
+//      circle.Fill = Brushes.LimeGreen;
 //      circle.ToolTip = GWPS.State.ToString();
     }
 

@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <!--<ItemGroup>
@@ -114,7 +114,7 @@
   <Target Name="CopyFilesPublish" AfterTargets="Publish">
     <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" />
     <Message Text="Project File Name = $(MSBuildProjectFile)" />
-    <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high"/>
+    <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high" />
   </Target>
 
   <ItemGroup>
@@ -122,10 +122,10 @@
   </ItemGroup>
 
   <Target Name="DeletePDBAfterPublish" AfterTargets="CopyFilesPublish">
-    <Delete Files="@(PDBFiles)" >
-      <Output TaskParameter="DeletedFiles" ItemName="DeletedList"/>
+    <Delete Files="@(PDBFiles)">
+      <Output TaskParameter="DeletedFiles" ItemName="DeletedList" />
     </Delete>
-    <Message Text="Deleted files: '@(DeletedList)'" Importance="high"/>
+    <Message Text="Deleted files: '@(DeletedList)'" Importance="high" />
   </Target>
 
 </Project>

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
-using SerialPorting;
+using System.Windows.Data;
+using System.Windows.Media;
 using ThreadQueuing;
 
 namespace Devices
@@ -13,11 +15,43 @@ namespace Devices
     Connected = 2,
     Busy = 4,
     Error = 8,
-    AutoPolling = 0x10,
+    AutoPollingOn = 0x10,
     Initialized = 0x20,
     ControlOn = 0x40,
     Ready = Connected | Initialized,
     Controlled = Ready | ControlOn,
+    AutoPolling = Ready | AutoPollingOn | Busy,
+    Working = Ready | Busy,
+  }
+
+  public class StateBrushesConverter : IValueConverter
+  {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+      var c = (SState)value;
+      if (c.HasFlag(SState.Error)) return Brushes.Red;
+
+      switch (c) {
+        case SState.Connected:
+        case SState.Ready:
+          return Brushes.LimeGreen;
+        case SState.AutoPolling:
+          return Brushes.LightGreen;
+        case SState.Working:
+          return Brushes.LightYellow;
+        case SState.Controlled:
+          return Brushes.LightBlue;
+        case SState.Controlled | SState.Busy:
+          return Brushes.LightSkyBlue;
+        case SState.Disconnected:
+        default:
+          return Brushes.LightGray;
+      }
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+      throw new NotSupportedException();
+    }
   }
   abstract class ConnectionBase : IDisposable
   {
@@ -42,13 +76,14 @@ namespace Devices
       }
     }
 
-    public static uint MaxNumberOfErrors = 3;
-    public int NumberOfErrors { get; private set; } = 0;
+    public uint MaxNumberOfErrors = 3;
+    public uint NumberOfErrors { get; private set; } = 0;
     public virtual bool SetError()
     {
       State |= SState.Error;
       if (++NumberOfErrors >= MaxNumberOfErrors) {
-        TQ.EnqueueUnique(Disconnect);
+        TQ.EnqueueReplace(Disconnect);
+        NumberOfErrors = 0;
         return true;
       }
       return false;
@@ -83,9 +118,9 @@ namespace Devices
     protected virtual void OnSPIdleTimeout()
     {
       if (IsConnected) {
-        State |= SState.AutoPolling;
+        State |= SState.AutoPollingOn;
         IdleTimeout?.Invoke(this, EventArgs.Empty);
-        State &= ~SState.AutoPolling;
+        State &= ~SState.AutoPollingOn;
       }
     }
     public virtual void OnInitialized()

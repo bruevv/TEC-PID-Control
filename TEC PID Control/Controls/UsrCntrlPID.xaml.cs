@@ -23,6 +23,7 @@ namespace TEC_PID_Control.PID
   }
   public interface IControlParameter
   {
+    void Reset();
     void Init();
     void Control(double parameter);
     bool ExpGoing { get; set; }
@@ -299,96 +300,102 @@ namespace TEC_PID_Control.Controls
       double ierror = 0;
       double dtm;
       int averagecount = 0;
+      int numerrors = 0;
 
       DispatcherOperation DO = null;
 
       try {
 
         while (!cancellation.IsCancellationRequested) {
-          if (!isControlEnabled) {
-            cancellation.WaitHandle.WaitOne(10);
-            continue;
-          }
-
-          if (needInit) {
-            needInit = false;
-            try {
-              iM.Init();
-              iC.Init();
-              Log($"Devices Configured", Logger.Mode.NoAutoPoll);
-            } catch (InvalidDeviceStateException e) {
-              isControlEnabled = false;
-              Dispatcher.BeginInvoke(() => { IsControlEnabled = false; });
-              string err = $"Unable to initialize the PID controller";
-              Log(ref err, e);
-              MessageBox.Show(err, "Error");
+          try {
+            if (!isControlEnabled) {
+              cancellation.WaitHandle.WaitOne(10);
               continue;
             }
-          }
 
-          double mp = iM.Measure();
-
-          if (double.IsNaN(mp)) {
-            Log("Problem with K2400 configuration\nTrying to Reset", Logger.Mode.Error);
-            needInit = true;
-            iM.Reset();
-            Log("Waiting to Reset (2s)", Logger.Mode.Error);
-            Thread.Sleep(2000);
-            MeasurementStamp = DateTime.Now;
-            continue;
-          }
-
-          DateTime Now = DateTime.Now;
-          dtm = (Now - MeasurementStamp).TotalSeconds;
-
-          lock (RCCLock) {
-            if (isRampEnabled) {
-              if (resetRamp) {
-                ImSetPoint = mp;
-                lasterror = null;
-                errorint = 0.0;
-                dtm = 0.0;
-                resetRamp = false;
+            if (needInit) {
+              needInit = false;
+              try {
+                iM.Init();
+                iC.Init();
+                Log($"Devices Configured", Logger.Mode.NoAutoPoll);
+              } catch (InvalidDeviceStateException e) {
+                isControlEnabled = false;
+                Dispatcher.BeginInvoke(() => { IsControlEnabled = false; });
+                string err = $"Unable to initialize the PID controller";
+                Log(ref err, e);
+                MessageBox.Show(err, "Error");
+                continue;
               }
-
-              if (ImSetPoint > setPoint) {
-                ImSetPoint -= cRate * dtm;
-                if (ImSetPoint < setPoint) ImSetPoint = setPoint;
-              } else if (ImSetPoint < setPoint) {
-                ImSetPoint += cRate * dtm;
-                if (ImSetPoint > setPoint) ImSetPoint = setPoint;
-              }
-            } else {
-              if (ImSetPoint != setPoint)
-                lasterror = null;
-              ImSetPoint = setPoint;
             }
-          }
 
-          double error = mp - ImSetPoint;
-          ierror += error * dtm;
-          MeasurementStamp = Now;
+            double mp = iM.Measure();
+            DateTime Now = DateTime.Now;
+            dtm = (Now - MeasurementStamp).TotalSeconds;
 
-          averagecount++; // for debug
+            if (double.IsNaN(mp)) {
+              if (++numerrors == 3) throw new InvalidDeviceStateException("K2400 not working properly or thermoresistor disconnected");
+              Log("Problem with K2400 configuration\nTrying to Reset", Logger.Mode.Error);
+              needInit = true;
+              iM.Reset();
+              Log("Waiting to Reset (2s)", Logger.Mode.Error);
+              Thread.Sleep(2000);
+              MeasurementStamp = Now;
+              continue;
+            } else { numerrors = 0; }
 
-          double dti = (Now - ControlIterationStamp).TotalSeconds;
-          double tc;
-          lock (RCCLock) tc = timeConstant;
-          if (dti >= tc) {
-            if (double.IsNaN(ierror)) ierror = 0;
-            ControlIteration(ierror / dti, tc);
-            if ((DO?.Status ?? DispatcherOperationStatus.Completed) == DispatcherOperationStatus.Completed)
-              DO = Dispatcher.BeginInvoke((Action)OnCycleInterfaceUpdate);
-            ControlIterationStamp = Now;
-            ierror = 0;
-            averagecount = 0;
+            double tc;
+            lock (RCCLock) {
+              if (isRampEnabled) {
+                if (resetRamp) {
+                  ImSetPoint = mp;
+                  lasterror = null;
+                  errorint = 0.0;
+                  dtm = 0.0;
+                  resetRamp = false;
+                }
+
+                if (ImSetPoint > setPoint) {
+                  ImSetPoint -= cRate * dtm;
+                  if (ImSetPoint < setPoint) ImSetPoint = setPoint;
+                } else if (ImSetPoint < setPoint) {
+                  ImSetPoint += cRate * dtm;
+                  if (ImSetPoint > setPoint) ImSetPoint = setPoint;
+                }
+              } else {
+                if (ImSetPoint != setPoint)
+                  lasterror = null;
+                ImSetPoint = setPoint;
+              }
+              tc = timeConstant;
+            }
+
+            double error = mp - ImSetPoint;
+            ierror += error * dtm;
+            MeasurementStamp = Now;
+
+            averagecount++; // for debug
+
+            double dti = (Now - ControlIterationStamp).TotalSeconds;
+            if (dti >= tc) {
+              if (double.IsNaN(ierror)) ierror = 0;
+              ControlIteration(ierror / dti, tc);
+              if ((DO?.Status ?? DispatcherOperationStatus.Completed) == DispatcherOperationStatus.Completed)
+                DO = Dispatcher.BeginInvoke((Action)OnCycleInterfaceUpdate);
+              ControlIterationStamp = Now;
+              ierror = 0;
+              averagecount = 0;
+            }
+          } catch (Exception e) when (e is not ThreadInterruptedException){
+            Logger.Default.log("PID Control Exception", e, Logger.Mode.Error, nameof(UsrCntrlPID));
+            iM.Reset();
+            iC.Reset();
+            Dispatcher.Invoke(() => { IsControlEnabled = false; });
           }
         }
         Logger.Default.log("PID Thread Cancelled", Logger.Mode.Full, nameof(UsrCntrlPID));
       } catch (ThreadInterruptedException ae) {
         Logger.Default.log("PID Thread Aborted", ae, Logger.Mode.Error, nameof(UsrCntrlPID));
-      } catch (Exception e) {
-        Logger.Default.log("PID Thread Exception", e, Logger.Mode.Error, nameof(UsrCntrlPID));
       }
     }
     float pbandw = 0.0f, ibandw = 0.0f, dbandw = 0.0f;
@@ -518,7 +525,11 @@ namespace TEC_PID_Control.Controls
     public void Init() => TC.ScheduleInit();
     public void Reset() => TC.KC.KD.ScheduleReset();
 
-    public double Measure() => TC.ReadTemperature();
+    public double Measure()
+    {
+      if (!TC.KC.KD.IsConnected) throw new DeviceDisconnectedException("K2400 is disconnected");
+      return TC.ReadTemperature();
+    }
     public bool ExpGoing {
       get => TC.KC.KD.IsExperimentOn;
       set => TC.KC.KD.IsExperimentOn = value;
@@ -533,6 +544,7 @@ namespace TEC_PID_Control.Controls
 
     public void Control(double parameter)
     {
+      if (!ucGWPS.GWPS.IsConnected) throw new DeviceDisconnectedException("GWPS is disconnected");
       ucGWPS.GWPS.ScheduleSetI(parameter);
       ucGWPS.GWPS.ScheduleUpdateI();
       ucGWPS.GWPS.ScheduleUpdateV();
@@ -548,6 +560,11 @@ namespace TEC_PID_Control.Controls
       ucGWPS.Dispatcher.Invoke(ucGWPS.SetUpCommand);
       if (!ucGWPS.GWPS.Output) ucGWPS.GWPS.ScheduleTurnOn();
 
+    }
+    public void Reset()
+    {
+      ucGWPS.GWPS.ScheduleSetI(0.0);
+      ucGWPS.GWPS.ScheduleTurnOff();
     }
 
     public bool ExpGoing {

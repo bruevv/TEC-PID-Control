@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
              xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
+             xmlns:Dev="clr-namespace:Devices;assembly=Devices"
              xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
              xmlns:System="clr-namespace:System;assembly=System.Runtime"
              xmlns:uc="clr-namespace:TEC_PID_Control.Controls"
@@ -17,6 +18,7 @@
     <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
     <WPFUtils:PowerConverter x:Key="PowerConverter" />
     <WPFUtils:ResistanceConverter x:Key="ResistanceConverter" />
+    <Dev:StateBrushesConverter x:Key="StateBrushesConverter" />
     <Style TargetType="{x:Type TextBlock}">
       <Setter Property="FontSize"
               Value="14" />
@@ -46,7 +48,7 @@
                  Width="{Binding ActualWidth, Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type w:AnimExpander}}}"
                  LastChildFill="False">
         <Ellipse x:Name="circle"
-                 Fill="LightGray"
+                 Fill="{Binding State, Converter={StaticResource StateBrushesConverter}}"
                  Stroke="Black"
                  Width="14"
                  Height="14"

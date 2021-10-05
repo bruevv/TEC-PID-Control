@@ -93,15 +93,15 @@ namespace WPFUtils
   {
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      var c = (System.Windows.Media.Color)value;
-      return System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
+      var c = (Color)value;
+      return Color.FromArgb(c.A, c.R, c.G, c.B);
     }
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
       var c = (System.Drawing.Color)value;
       if (c.IsEmpty) {
       }
-      return System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
+      return Color.FromArgb(c.A, c.R, c.G, c.B);
     }
   }
   public class EnumBooleanConverter : IValueConverter

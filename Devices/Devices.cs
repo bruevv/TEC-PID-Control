@@ -40,7 +40,7 @@ namespace Devices
 
     public bool IsConnected => (State & SState.Ready) == SState.Ready;
     public bool HasError => (State & SState.Error) == SState.Error;
-    protected bool IsAutopolling => (State & SState.AutoPolling) == SState.AutoPolling;
+    protected bool IsAutopolling => (State & SState.AutoPollingOn) == SState.AutoPollingOn;
     public bool IsExperimentOn {
       get => (State & SState.ControlOn) == SState.ControlOn;
       set {
