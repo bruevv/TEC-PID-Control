@@ -86,7 +86,9 @@
              VerticalScrollBarVisibility="Auto"
              HorizontalScrollBarVisibility="Auto"
              TextChanged="ConsoleOut_TextChanged"
-             Grid.ColumnSpan="2" />
+             Grid.ColumnSpan="2"
+             FontFamily="Courier New"
+             FontSize="11" />
     <DockPanel Grid.Column="1"
                Grid.Row="2"
                Margin="2,2,2,2"

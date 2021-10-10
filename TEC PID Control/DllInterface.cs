@@ -11,6 +11,8 @@ namespace TEC_PID_Control
     double GetSetPoint();
     double GetSetPointOncePerChange();
     void SetSetPoint(double sp);
+    public void GetVIOnce(int channel, out double voltage, out double current);
+    public void GetVI(int channel, out double voltage, out double current);
   }
 
   class TECPIDdll32 : TECPIDdll
@@ -20,6 +22,20 @@ namespace TEC_PID_Control
     public double GetSetPoint() => DllInterface32.GetSetPoint();
     public double GetSetPointOncePerChange() => DllInterface32.GetSPOPC();
     public void SetSetPoint(double sp) => DllInterface32.SetSetPoint(sp);
+    public void GetVIOnce(int channel, out double voltage, out double current)
+    {
+      if (channel > 2 || channel < 1) throw new ArgumentException("Cannel can only be 1 or 2");
+      voltage = double.NaN;
+      current = double.NaN;
+      DllInterface32.GetVIOnce(channel, ref voltage, ref current);
+    }
+    public void GetVI(int channel, out double voltage, out double current)
+    {
+      if (channel > 2 || channel < 1) throw new ArgumentException("Cannel can only be 1 or 2");
+      voltage = double.NaN;
+      current = double.NaN;
+      DllInterface32.GetVI(channel, ref voltage, ref current);
+    }
   }
   class TECPIDdll64 : TECPIDdll
   {
@@ -28,6 +44,20 @@ namespace TEC_PID_Control
     public double GetSetPoint() => DllInterface64.GetSetPoint();
     public double GetSetPointOncePerChange() => DllInterface64.GetSPOPC();
     public void SetSetPoint(double sp) => DllInterface64.SetSetPoint(sp);
+    public void GetVIOnce(int channel, out double voltage, out double current)
+    {
+      if (channel > 2 || channel < 1) throw new ArgumentException("Cannel can only be 1 or 2");
+      voltage = double.NaN;
+      current = double.NaN;
+      DllInterface64.GetVIOnce(channel, ref voltage, ref current);
+    }
+    public void GetVI(int channel, out double voltage, out double current)
+    {
+      if (channel > 2 || channel < 1) throw new ArgumentException("Cannel can only be 1 or 2");
+      voltage = double.NaN;
+      current = double.NaN;
+      DllInterface64.GetVI(channel, ref voltage, ref current);
+    }
   }
   static class DllInterface32
   {
@@ -41,6 +71,10 @@ namespace TEC_PID_Control
     public static extern double GetSPOPC();
     [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetSetPoint(double sp);
+    [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GetVIOnce(int channel, ref double voltage, ref double current);
+    [DllImport("TEC-PID-dll-32.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GetVI(int channel, ref double voltage, ref double current);
   }
   static class DllInterface64
   {
@@ -54,5 +88,9 @@ namespace TEC_PID_Control
     public static extern double GetSPOPC();
     [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetSetPoint(double sp);
+    [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GetVIOnce(int channel, ref double voltage, ref double current);
+    [DllImport("TEC-PID-dll-64.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GetVI(int channel, ref double voltage, ref double current);
   }
 }

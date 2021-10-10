@@ -33,7 +33,7 @@ namespace Devices.GWI
             {GPD.IOut,          "IOUT<X>"},
             {GPD.VOut,          "VOUT<X>"},
             {GPD.TurnOn,        "OUT1"},
-            {GPD.TurnOff,        "OUT0"},
+            {GPD.TurnOff,       "OUT0"},
             {GPD.Status,        "STATUS"},
         };
     public GWPowerSupplyConnection(WaitHandle abortWaitHandle, string name) : base(abortWaitHandle, idlewait: 30, name) { }
@@ -47,6 +47,7 @@ namespace Devices.GWI
   public class GWPowerSupply : ASCIIDevice
   {
     new private protected GWPowerSupplyConnection iCI => (GWPowerSupplyConnection)base.iCI;
+    public override string DeviceName => nameof(GWPowerSupply);
     private protected override ConnectionBase InitSPI(string name) => new GWPowerSupplyConnection(EventAbort, name);
 
     public GWPowerSupply(string name = "GWPowerSupply") : base(name)
@@ -120,7 +121,7 @@ namespace Devices.GWI
         return;
       }
 
-      ChangeStatus($"Set Voltage: {V:N3}", State & ~SState.Error);
+      ChangeStatus($"Set Voltage: {V:N3}", State);
     }
     void SetI_AS(double I)
     {
@@ -132,7 +133,7 @@ namespace Devices.GWI
         return;
       }
 
-      ChangeStatus($"Set Current: {I:N3}", State & ~SState.Error);
+      ChangeStatus($"Set Current: {I:N3}", State);
     }
     void Out_AS(bool O)
     {
@@ -144,13 +145,13 @@ namespace Devices.GWI
         return;
       }
 
-      ChangeStatus($"Set Output: {(O ? "ON" : "OFF")}", State & ~SState.Error);
+      ChangeStatus($"Set Output: {(O ? "ON" : "OFF")}", State);
       Output = O;
     }
 
     void OnIdleTimeout(object sender, EventArgs ea)
     {
-      if (IsExperimentOn || !IdlePollEnable) return;
+      if (IsControlled || !IdlePollEnable) return;
 
       GetI_AS();
       GetV_AS();
@@ -159,9 +160,9 @@ namespace Devices.GWI
         res = iCI.Request(GPD.Status);
         Output = res[6] == '1';
       } catch (Exception e) {
-        ChangeStatus($"Error in GetI\n{e.Message}",
+        ChangeStatus($"Error in {nameof(OnIdleTimeout)}\n{e.Message}",
                   State | SState.Error);
-        IdlePollEnable = false;
+        //IdlePollEnable = false;
         return;
       }
     }

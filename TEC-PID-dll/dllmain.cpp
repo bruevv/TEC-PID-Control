@@ -25,12 +25,22 @@ public:
 	void ReleaseLock() { lock = 0; }
 };
 
+struct GWPSVoltageCurrent {
+	volatile double Voltage;
+	volatile double Current;
+
+	volatile bool SettingsAccessed;
+};
+
 struct MemStructure {
 	SpinLock spinlock;
 
 	volatile double CurrentTemperature;
 	volatile double SetPoint;
 	volatile bool SetPointAccessed;
+
+	GWPSVoltageCurrent Channel1;
+	GWPSVoltageCurrent Channel2;
 };
 
 #define SHMEMSIZE sizeof(MemStructure) 
@@ -185,6 +195,76 @@ extern "C" {
 
 		pSstr->spinlock.ReleaseLock();
 	}
+
+	__declspec(dllexport) void _cdecl SetOutVI(int channel, double voltage, double current)
+	{
+		MemStructure* pSstr = (MemStructure*)lpvMem;
+		pSstr->spinlock.GetLock();
+
+		if (channel == 1) {
+			pSstr->Channel1.Voltage = voltage;
+			pSstr->Channel1.Current = current;
+			pSstr->Channel1.SettingsAccessed = false;
+		} else if (channel == 2) {
+			pSstr->Channel2.Voltage = voltage;
+			pSstr->Channel2.Current = current;
+			pSstr->Channel2.SettingsAccessed = false;
+		}
+
+		pSstr->spinlock.ReleaseLock();
+	}
+	__declspec(dllexport) void _cdecl GetVIOnce(int channel, double& voltage, double& current)
+	{
+		MemStructure* pSstr = (MemStructure*)lpvMem;
+
+		pSstr->spinlock.GetLock();
+
+		if (channel == 1) {
+			if (pSstr->Channel1.SettingsAccessed) {
+				voltage = NAN;
+				current = NAN;
+			} else {
+				voltage = pSstr->Channel1.Voltage;
+				current = pSstr->Channel1.Current;
+				pSstr->Channel1.SettingsAccessed = true;
+			}
+		} else if (channel == 2) {
+			if (pSstr->Channel2.SettingsAccessed) {
+				voltage = NAN;
+				current = NAN;
+			} else {
+				voltage = pSstr->Channel2.Voltage;
+				current = pSstr->Channel2.Current;
+				pSstr->Channel2.SettingsAccessed = true;
+			}
+		} else {
+			voltage = NAN;
+			current = NAN;
+		}
+
+		pSstr->spinlock.ReleaseLock();
+	}
+
+	__declspec(dllexport) void _cdecl GetVI(int channel, double& voltage, double& current)
+	{
+		MemStructure* pSstr = (MemStructure*)lpvMem;
+
+		pSstr->spinlock.GetLock();
+
+		if (channel == 1) {
+				voltage = pSstr->Channel1.Voltage;
+				current = pSstr->Channel1.Current;
+		} else if (channel == 2) {
+				voltage = pSstr->Channel2.Voltage;
+				current = pSstr->Channel2.Current;
+		} else {
+			voltage = NAN;
+			current = NAN;
+		}
+
+		pSstr->spinlock.ReleaseLock();
+	}
+
 
 }
 

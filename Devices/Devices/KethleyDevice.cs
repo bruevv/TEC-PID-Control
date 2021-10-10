@@ -136,6 +136,7 @@ namespace Devices.Keithley
   public class Keithley2400 : KeithleyDevice
   {
     new private protected Keithley2400Con iCI => (Keithley2400Con)base.iCI;
+    public override string DeviceName => nameof(Keithley2400);
 
     double voltage = double.NaN;
     double current = double.NaN;
@@ -242,7 +243,7 @@ namespace Devices.Keithley
     }
     void OnIdleTimeout(object sender, EventArgs ea)
     {
-      if (IsExperimentOn || !IdlePollEnable || !Output) return;
+      if (IsControlled || !IdlePollEnable || !Output) return;
 
       MeasureConc_AS();
     }
@@ -258,7 +259,7 @@ namespace Devices.Keithley
                   State | SState.Error);
         goto finish;
       }
-      ChangeStatus($"K2400 Reset to Default state", State & ~SState.Error);
+      ChangeStatus($"K2400 Reset to Default state", State);
       Output = false;
       IsReset = true;
 
@@ -282,7 +283,7 @@ namespace Devices.Keithley
         Current = val;
         ChangeStatus($"Measure Current:{Current}A", State & ~SState.Error);
       } else {
-        ChangeStatus($"Measure Current Parse Failed", State & ~SState.Error);
+        ChangeStatus($"Measure Current Parse Failed", State | SState.Error);
       }
       Output = true;
 
@@ -306,7 +307,7 @@ namespace Devices.Keithley
         Voltage = val;
         ChangeStatus($"Measure Voltage:{Voltage}V", State & ~SState.Error);
       } else {
-        ChangeStatus($"Measure Voltage Parse Failed", State & ~SState.Error);
+        ChangeStatus($"Measure Voltage Parse Failed", State | SState.Error);
       }
       Output = true;
 
@@ -325,7 +326,7 @@ namespace Devices.Keithley
         goto finish;
       }
 
-      ChangeStatus($"Output Set:{(b ? "ON" : "OFF")}", State & ~SState.Error);
+      ChangeStatus($"Output Set:{(b ? "ON" : "OFF")}", State);
       Output = b;
 
     finish:
@@ -342,7 +343,7 @@ namespace Devices.Keithley
         iCI.Command(CK2400.Output, "1");
         res = iCI.Request(CK2400.Read);
       } catch (Exception e) {
-        ChangeStatus($"Error in MeasureI\n{e.Message}",
+        ChangeStatus($"Error in MeasureConc\n{e.Message}",
                   State | SState.Error);
         goto finish;
       }
@@ -354,7 +355,7 @@ namespace Devices.Keithley
         Status = (int)(double.Parse(spl[3], SG.NumberStyles.Float, SG.CultureInfo.InvariantCulture) + 0.5);
         ChangeStatus($"Measure:{Voltage}V,{Current}A", State & ~SState.Error);
       } catch (Exception e) {
-        ChangeStatus($"Measure Parse Failed\n{e.Message}", State & ~SState.Error);
+        ChangeStatus($"Measure Parse Failed\n{e.Message}", State | SState.Error);
       }
       Output = true;
 
@@ -396,7 +397,7 @@ namespace Devices.Keithley
         return;
       }
 
-      ChangeStatus($"Set Voltage: {V:G6}", State & ~SState.Error);
+      ChangeStatus($"Set Voltage: {V:G6}", State);
     }
     void SourceI_AS(double I, double VLim)
     {
@@ -411,7 +412,7 @@ namespace Devices.Keithley
         return;
       }
 
-      ChangeStatus($"Set Current: {I:G6}", State & ~SState.Error);
+      ChangeStatus($"Set Current: {I:G6}", State);
 
     }
 

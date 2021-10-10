@@ -13,14 +13,16 @@ namespace CSUtils
 
     public class LogFeedBEA : EventArgs
     {
-      public LogFeedBEA(string logMessage, Mode mode)
+      public LogFeedBEA(string logMessage, Mode mode, string source = null)
       {
         Message = logMessage;
         Mode = mode;
+        Source = source;
       }
 
       public string Message { get; private set; }
       public Mode Mode { get; private set; }
+      public string Source { get; private set; }
     }
 
     //   public delegate void LeggerFeedback(string message, Mode mode);
@@ -137,13 +139,13 @@ namespace CSUtils
         if (AttachedLogs.ContainsKey(source)) {
           foreach (EventHandler<LogFeedBEA> del in AttachedLogs[source].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
-              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode)); 
+              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode, source));
           }
         }
         if (AttachedLogs.ContainsKey("")) {
           foreach (EventHandler<LogFeedBEA> del in AttachedLogs[""].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
-              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode));
+              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode, source));
           }
         }
       } catch (Exception) { }

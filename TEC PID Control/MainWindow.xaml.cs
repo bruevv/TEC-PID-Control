@@ -35,21 +35,22 @@ namespace TEC_PID_Control
 
         TC = new TempSensor(usrCntrlK2400);
         TC.LoadCalibration();
-       
+
         TECPIDdll.DLL.SetSetPoint(10.0); // check if dll file present
 
         usrCntrlPID.Init(new TempSensorInterface(TC), new GWIPSControlInterface(usrCntrlGWPS));
         usrCntrlK2400.MeasurementCompleted += K2400_MC;
+        usrCntrlPID.UpdateVIs += DllUpdateVIs;
 
         logger?.log($"Trying to automatically connect to following devices:\n" +
                     $"Keithley 2400 Port:<{usrCntrlK2400.SelectedPort}>\n" +
                     $"GWI Power Supply Port:<{usrCntrlGWPS.SelectedPort}>",
                     Logger.Mode.AppState, nameof(MainWindow));
-        try { 
+        try {
           usrCntrlK2400.ConnectCommand();
           usrCntrlGWPS.ConnectCommand();
-        }catch(Exception e) {
-          logger?.log("Error trying to automatically connect", 
+        } catch (Exception e) {
+          logger?.log("Error trying to automatically connect",
             e, Logger.Mode.Error, nameof(MainWindow));
         }
       } catch (Exception e) {
@@ -59,9 +60,37 @@ namespace TEC_PID_Control
       }
     }
 
+    void DllUpdateVIs(object sender, UsrCntrlPID.UpdateVIsEA e)
+    {
+      UsrCntrlGWPS[] ucga = { usrCntrlGWPS, usrCntrlGWPS2 };
+      foreach (var ucg in ucga) {
+        if (ucg.GWPS.IsControlled) continue;
+
+        if (ucg.Channel == 1) {
+          if (e.V1 is double v1) {
+            ucg.OutputVoltage = v1;
+            ucg.GWPS.ScheduleSetV(v1);
+          }
+          if (e.I1 is double i1) {
+            ucg.OutputVoltage = i1;
+            ucg.GWPS.ScheduleSetI(i1);
+          }
+        } else if (ucg.Channel == 2) {
+          if (e.V2 is double v2) {
+            ucg.OutputVoltage = v2;
+            ucg.GWPS.ScheduleSetV(v2);
+          }
+          if (e.I2 is double i2) {
+            ucg.OutputVoltage = i2;
+            ucg.GWPS.ScheduleSetI(i2);
+          }
+        }
+      }
+    }
+
     void K2400_MC(object s, EventArgs e) => utbTemp.Value = TC.ConvertRtoT(KD.Resistance);
 
-    void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $">{e.Message}\n";
+    void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $"{e.Source.PadRight(15)}> {e.Message}\n";
 
     private void TextBox_KeyDown(object sender, KeyEventArgs e)
     {

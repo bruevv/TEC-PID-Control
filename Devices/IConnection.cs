@@ -69,9 +69,10 @@ namespace Devices
       get => state;
       set {
         if (state != value) {
+          SState previous = state;
           state = value;
           if (!state.HasFlag(SState.Error)) NumberOfErrors = 0;
-          StateChangedDelegate?.Invoke();
+          StateChangedEvent?.Invoke(previous);
         }
       }
     }
@@ -88,8 +89,8 @@ namespace Devices
       }
       return false;
     }
-
-    public Action StateChangedDelegate;
+    public delegate void StateChangedDelegate(SState previous);
+    public StateChangedDelegate StateChangedEvent;
 
     public bool IsConnected => (State & SState.Connected) == SState.Connected;
     public bool IsInitialized => (State & SState.Initialized) == SState.Initialized;

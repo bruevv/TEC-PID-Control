@@ -60,9 +60,7 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ToggleButton Content="Enable"
-                      IsChecked="{Binding IsControlEnabled}"
-                      Checked="ToggleButton_C_U"
-                      Unchecked="ToggleButton_C_U" />
+                      IsChecked="{Binding IsControlEnabled}"/>
         <TextBlock Text="SetPont:"
                    Grid.Column="2" />
         <w:UnitTextBox x:Name="utbSP"

@@ -69,19 +69,19 @@ namespace Calibration
     /// <param name="filename"></param>
     public TableCalibration(string filename = "Calibration.csv")
     {
-      if(!File.Exists(filename)) {
+      if (!File.Exists(filename)) {
         var files = Directory.GetFiles(".", "*.csv");
-        if((files?.Length ?? 0) == 0) throw new FileNotFoundException($"calibration in csv format missing ({filename})");
+        if ((files?.Length ?? 0) == 0) throw new FileNotFoundException($"calibration in csv format missing ({filename})");
         filename = files[0];
       }
       XX = new ValueArray();
       YY = new ValueArray();
-      using(var sr = new StreamReader(filename)) {
-        while(!sr.EndOfStream) {
+      using (var sr = new StreamReader(filename)) {
+        while (!sr.EndOfStream) {
           string line = sr.ReadLine();
           string[] words = line.Split(',');
-          if(words.Length >= 2) {
-            if(
+          if (words.Length >= 2) {
+            if (
               double.TryParse(words[0], out double x) &&
               double.TryParse(words[1], out double y)) {
               XX.Add(x);
@@ -89,10 +89,19 @@ namespace Calibration
             }
           }
         }
-        if(XX.Length < 2) throw new FileFormatException("Calibration csv File should have first two columns in numbeer format without commas");
+        if (XX.Length < 2) throw new FileFormatException("Calibration csv File should have first two columns in numbeer format without commas");
       }
+      //      if (!XX.IsSorted) ValueArray.Sort(XX, YY);
     }
-    public double Transform(double x) => YY[XX.GetIndexAprox(x - XOfset)] + YOfset;
-    public double TransformBack(double y) => XX[YY.GetIndexAprox(y - YOfset)] + XOfset;
+    public double Transform(double x)
+    {
+      if (!XX.IsSorted) ValueArray.Sort(XX, YY);
+      return YY[XX.GetIndexAprox(x - XOfset)] + YOfset;
+    }
+    public double TransformBack(double y)
+    {
+      if (!YY.IsSorted) ValueArray.Sort(YY, XX);
+      return XX[YY.GetIndexAprox(y - YOfset)] + XOfset;
+    }
   }
 }

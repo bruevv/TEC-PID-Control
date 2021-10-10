@@ -17,20 +17,28 @@ namespace Devices
      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 
     readonly private protected ConnectionBase iCI;
+    public virtual string DeviceName => nameof(Device);
     abstract private protected ConnectionBase InitSPI(string name);
     protected Device(string name)
     {
       iCI = InitSPI(name);
-      iCI.StateChangedDelegate += ICIStateChanged;
+      iCI.StateChangedEvent += ICIStateChanged;
     }
-    void ICIStateChanged()
+    void ICIStateChanged(SState prev)
     {
       OnPropertyChanged(nameof(State));
+      if ((prev & SState.ControlOn) != (State & SState.ControlOn))
+        OnPropertyChanged(nameof(IsControlled));
     }
     public SState State {
       get => iCI.State;
       protected set {
         if (iCI.State != value) {
+          if (iCI.State.HasFlag(SState.ControlOn) && !value.HasFlag(SState.ControlOn))
+            Logger.Log($"Leaving Controled State", Logger.Mode.NoAutoPoll, DeviceName);
+          else if (!iCI.State.HasFlag(SState.ControlOn) && value.HasFlag(SState.ControlOn))
+            Logger.Log($"Entering Controled State", Logger.Mode.NoAutoPoll, DeviceName);
+
           iCI.State = value;
         }
       }
@@ -41,13 +49,12 @@ namespace Devices
     public bool IsConnected => (State & SState.Ready) == SState.Ready;
     public bool HasError => (State & SState.Error) == SState.Error;
     protected bool IsAutopolling => (State & SState.AutoPollingOn) == SState.AutoPollingOn;
-    public bool IsExperimentOn {
+    public bool IsControlled {
       get => (State & SState.ControlOn) == SState.ControlOn;
       set {
-        if (IsExperimentOn != value) {
+        if (IsControlled != value) {
           if (value) State |= SState.ControlOn;
           else State &= ~SState.ControlOn;
-          OnPropertyChanged();
         }
       }
     }
@@ -61,13 +68,13 @@ namespace Devices
       ChangeStatus(ref str, state, e);
     protected virtual void ChangeStatus(ref string str, SState state, Exception e = null)
     {
-      if(state.HasFlag(SState.Error)) iCI.SetError();
-      
+      if (state.HasFlag(SState.Error)) iCI.SetError();
+
       State = (State | (state & ModifiableState)) & (state | ~ModifiableState);// better move to property
       Logger.Mode lm = HasError ?
-        Logger.Mode.Error : (IsAutopolling || IsExperimentOn) ?
+        Logger.Mode.Error : (IsAutopolling || IsControlled) ?
          Logger.Mode.Full : Logger.Mode.NoAutoPoll;
-      Logger.Log(ref str, e, lm, GetType().Name);
+      Logger.Log(ref str, e, lm, DeviceName);
       StatusStr = str ?? StatusStr;
 
       InContextInvoke(this, StatusChanged, new DevStatusChangedEA(str, state));
@@ -117,7 +124,7 @@ namespace Devices
         case EventSource.Abort:
           throw new AbortException("Wait for Idle Aborted");
         case EventSource.Timeout:
-          throw new TimeoutException($"{GetType().Name} not responding");
+          throw new TimeoutException($"{DeviceName} not responding");
       }
     }
 
@@ -159,6 +166,8 @@ namespace Devices
     void DisconnectedEvent(object o, EventArgs e)
     {
       iCI.State &= ~SState.Initialized;
+      if(iCI.IsConnected)
+        ChangeStatus($"Disconnected");
       OnDisconnectedFromDevice(this, EventArgs.Empty);
     }
     bool connecting = false;
@@ -218,14 +227,10 @@ namespace Devices
         ChangeStatus($"Error disconnecting\n{e.Message}");
         goto finish;
       }
-      ChangeStatus("Disconnected");
-
-      OnDisconnectedFromDevice(this, EventArgs.Empty);
 
       finish:
       ewh?.Set();
     }
-
     public void Connect(string port)
     {
       if (IsConnected) {

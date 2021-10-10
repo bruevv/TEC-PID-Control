@@ -204,7 +204,10 @@ namespace CSUtils
     }
 
   }
-
+  public static class EnumExtention
+  {
+    public static string GetName(this Enum e) => $"{e.GetType().Name}:{e}";
+  }
   public static class ByteCastExtension
   {
     public static byte LoByte(this ushort us) => (byte)us;
