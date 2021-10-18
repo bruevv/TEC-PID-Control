@@ -281,9 +281,9 @@ namespace Samples.Data
       int bs;
       if (IsSorted) {
         if (IsSortedUp)
-          bs = Array.BinarySearch(values, pos);
+          bs = Array.BinarySearch(values, 0, Length, pos);
         else
-          bs = Array.BinarySearch(values, pos, ReverseComparer<double>.Default);
+          bs = Array.BinarySearch(values, 0, Length, pos, ReverseComparer<double>.Default);
 
         if (bs >= 0) {
           return bs;

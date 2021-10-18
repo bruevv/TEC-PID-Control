@@ -136,7 +136,7 @@ namespace Devices.Keithley
   public class Keithley2400 : KeithleyDevice
   {
     new private protected Keithley2400Con iCI => (Keithley2400Con)base.iCI;
-    public override string DeviceName => nameof(Keithley2400);
+    public override string DeviceName => "K2400-SM";
 
     double voltage = double.NaN;
     double current = double.NaN;
@@ -243,9 +243,12 @@ namespace Devices.Keithley
     }
     void OnIdleTimeout(object sender, EventArgs ea)
     {
-      if (IsControlled || !IdlePollEnable || !Output) return;
+      if (IsControlled || !IdlePollEnable) return;
 
-      MeasureConc_AS();
+      if (!Output)
+        CheckOutput_AS();
+      else
+        MeasureConc_AS();
     }
 
     void Reset_AS()
@@ -312,6 +315,24 @@ namespace Devices.Keithley
       Output = true;
 
     finish:
+      ewh?.Set();
+    }
+    void CheckOutput_AS() => CheckOutput_AS(null);
+    void CheckOutput_AS(EventWaitHandle ewh)
+    {
+      string res;
+      try {
+        res = iCI.Request(CK2400.Output);
+      } catch (Exception e) {
+        ChangeStatus($"Error in CheckOutput\n{e.Message}",
+                  State | SState.Error);
+        goto finish;
+      }
+
+      if (res == "1" || res == "ON") Output = true;
+      else Output = false;
+
+      finish:
       ewh?.Set();
     }
 

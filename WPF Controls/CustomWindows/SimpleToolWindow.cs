@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace CustomWindows
 {
-  public class CustomWindow : Window
+  public class SimpleToolWindow : Window
   {
 
     #region DependancyProperties
@@ -16,7 +16,7 @@ namespace CustomWindows
 
     // Using a DependencyProperty as the backing store for CloseButtonVisible.  This enables animation, styling, binding, etc...
     public static readonly DependencyProperty MinimizeButtonVisibleProperty =
-        DependencyProperty.Register("MinimizeButtonVisible", typeof(bool), typeof(CustomWindow), new PropertyMetadata(true));
+        DependencyProperty.Register("MinimizeButtonVisible", typeof(bool), typeof(SimpleToolWindow), new PropertyMetadata(true));
 
     public bool CloseButtonVisible {
       get { return (bool)GetValue(CloseButtonVisibleProperty); }
@@ -25,13 +25,13 @@ namespace CustomWindows
 
     // Using a DependencyProperty as the backing store for CloseButtonVisible.  This enables animation, styling, binding, etc...
     public static readonly DependencyProperty CloseButtonVisibleProperty =
-        DependencyProperty.Register("CloseButtonVisible", typeof(bool), typeof(CustomWindow), new PropertyMetadata(true));
+        DependencyProperty.Register("CloseButtonVisible", typeof(bool), typeof(SimpleToolWindow), new PropertyMetadata(true));
     #endregion DependancyProperties
 
-    static CustomWindow()
+    static SimpleToolWindow()
     {
-      DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomWindow),
-          new FrameworkPropertyMetadata(typeof(CustomWindow)));
+      DefaultStyleKeyProperty.OverrideMetadata(typeof(SimpleToolWindow),
+          new FrameworkPropertyMetadata(typeof(SimpleToolWindow)));
     }
 
     public override void OnApplyTemplate()
@@ -57,8 +57,8 @@ namespace CustomWindows
         DragMove();
       }
     }
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-    void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+    protected void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    protected void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
     protected override void OnStateChanged(EventArgs e)
     {

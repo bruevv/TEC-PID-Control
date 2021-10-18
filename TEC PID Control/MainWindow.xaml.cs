@@ -13,7 +13,7 @@ namespace TEC_PID_Control
   using TEC_PID_Control.Controls;
   using TEC_PID_Control.PID;
 
-  public partial class MainWindow : CustomWindow
+  public partial class MainWindow : SimpleToolWindow
   {
     public Keithley2400 KD;
     public GWPowerSupply GWPS;
@@ -45,16 +45,16 @@ namespace TEC_PID_Control
         logger?.log($"Trying to automatically connect to following devices:\n" +
                     $"Keithley 2400 Port:<{usrCntrlK2400.SelectedPort}>\n" +
                     $"GWI Power Supply Port:<{usrCntrlGWPS.SelectedPort}>",
-                    Logger.Mode.AppState, nameof(MainWindow));
+                    Logger.Mode.AppState, "APP");
         try {
           usrCntrlK2400.ConnectCommand();
           usrCntrlGWPS.ConnectCommand();
         } catch (Exception e) {
           logger?.log("Error trying to automatically connect",
-            e, Logger.Mode.Error, nameof(MainWindow));
+            e, Logger.Mode.Error, "APP");
         }
       } catch (Exception e) {
-        logger?.log("Error Loading Application", e, Logger.Mode.Error, nameof(MainWindow));
+        logger?.log("Error Loading Application", e, Logger.Mode.Error, "APP");
         MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger.FileName}\n\nfor details", "Error");
         Application.Current.Shutdown();
       }
@@ -88,9 +88,15 @@ namespace TEC_PID_Control
       }
     }
 
-    void K2400_MC(object s, EventArgs e) => utbTemp.Value = TC.ConvertRtoT(KD.Resistance);
+    void K2400_MC(object s, EventArgs e)
+    {
+      double t = TC.ConvertRtoT(KD.Resistance);
+      utbTemp.Value = t;
+      if (!usrCntrlPID.IsControlEnabled)
+        usrCntrlPID.SetCurrentTemperature(t);
+    }
 
-    void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $"{e.Source.PadRight(15)}> {e.Message}\n";
+    void AddToLog(object s, Logger.LogFeedBEA e) => ConsoleOut.Text += $"{e.Source.PadRight(10)}> {e.Message}\n";
 
     private void TextBox_KeyDown(object sender, KeyEventArgs e)
     {
@@ -115,12 +121,26 @@ namespace TEC_PID_Control
       utbTemp.Value = T;
     }
 
-    private void Button_Click(object sender, RoutedEventArgs e)
+    void MiViewLog_Click(object s, RoutedEventArgs e)
     {
-      IMeasureParameter ki = new TempSensorInterface(TC);
-      ki.Init();
-      double d = ki.Measure();
-      d = ki.Measure();
+      ProcessStartInfo psi;
+      try {
+        var rk = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+          @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\notepad++.exe");
+        rk ??= Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+          @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\notepad++.exe");
+        if (rk?.GetValue("") is string path) {
+          psi = new(path, $"-n999999 \"{Logger.Default.FileName}\"");
+          var p = Process.Start(psi);
+        } else throw new InvalidOperationException();
+      } catch {
+        try {
+          psi = new("notepad.exe", Logger.Default.FileName);
+          Process.Start(psi);
+        } catch (Exception ex) {
+          MessageBox.Show("Cannot Open Log File\n" + ex.Message, "Warning");
+        }
+      }
     }
 
 

@@ -41,7 +41,7 @@ namespace Calibration
 
     public void InitfromXY(double X1, double X2, double Y1, double Y2)
     {
-      if(Y1 == Y2 || X1 == X2)
+      if (Y1 == Y2 || X1 == X2)
         throw new ArgumentException("Wrong points");
       ABfromXY(X1, X2, Y1, Y2);
     }
@@ -95,13 +95,17 @@ namespace Calibration
     }
     public double Transform(double x)
     {
-      if (!XX.IsSorted) ValueArray.Sort(XX, YY);
-      return YY[XX.GetIndexAprox(x - XOfset)] + YOfset;
+      try {
+        if (!XX.IsSorted) ValueArray.Sort(XX, YY);
+        return YY[XX.GetIndexAprox(x - XOfset)] + YOfset;
+      } catch { return double.NaN; }
     }
     public double TransformBack(double y)
     {
-      if (!YY.IsSorted) ValueArray.Sort(YY, XX);
-      return XX[YY.GetIndexAprox(y - YOfset)] + XOfset;
+      try {
+        if (!YY.IsSorted) ValueArray.Sort(YY, XX);
+        return XX[YY.GetIndexAprox(y - YOfset)] + XOfset;
+      } catch { return double.NaN; }
     }
   }
 }

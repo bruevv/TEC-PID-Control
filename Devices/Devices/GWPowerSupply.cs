@@ -47,7 +47,7 @@ namespace Devices.GWI
   public class GWPowerSupply : ASCIIDevice
   {
     new private protected GWPowerSupplyConnection iCI => (GWPowerSupplyConnection)base.iCI;
-    public override string DeviceName => nameof(GWPowerSupply);
+    public override string DeviceName => $"GWI-PS({Channel})";
     private protected override ConnectionBase InitSPI(string name) => new GWPowerSupplyConnection(EventAbort, name);
 
     public GWPowerSupply(string name = "GWPowerSupply") : base(name)
@@ -55,7 +55,7 @@ namespace Devices.GWI
       iCI.IdleTimeout += OnIdleTimeout;
     }
 
-    int channel = 0;
+    int channel = 1;
     double voltage = double.NaN;
     double current = double.NaN;
     public int Channel {

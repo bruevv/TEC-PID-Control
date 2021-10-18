@@ -1,18 +1,16 @@
 ﻿using CSUtils;
-using Devices;
 using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using System.Windows.Threading;
-//using System.Windows.Threading;
-using TEC_PID_Control.PID;
-using TEC_PID_Control.Properties;
 
 namespace TEC_PID_Control.PID
 {
+
   public interface IMeasureParameter
   {
     void Reset();
@@ -32,8 +30,22 @@ namespace TEC_PID_Control.PID
 
 namespace TEC_PID_Control.Controls
 {
+  using Devices;
+  using TEC_PID_Control.PID;
+  using TEC_PID_Control.Properties;
+
   public partial class UsrCntrlPID : UserControl, IDisposable
   {
+    [Flags]
+    public enum EState
+    {
+      Disabled = 1,
+      Enabled = 2,
+      ReachedSetpointBit = 4,
+      ReachedSetpoint = ReachedSetpointBit | Enabled,
+      Error = 8,
+    }
+
     #region DPBinding
     public static readonly DependencyProperty IsExpandedProperty =
         DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(true) { BindsTwoWayByDefault = true });
@@ -56,6 +68,7 @@ namespace TEC_PID_Control.Controls
         DependencyProperty.Register(nameof(MinCtrlPar), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, MinCtrlParCB) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty GlobalGainProperty =
         DependencyProperty.Register(nameof(GlobalGain), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, GlobalGainCB) { BindsTwoWayByDefault = true });
+
     public static readonly DependencyProperty TimeConstantProperty =
         DependencyProperty.Register(nameof(TimeConstant), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, TimeConstantCB) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty MaxIntegralErrorProperty =
@@ -66,8 +79,12 @@ namespace TEC_PID_Control.Controls
      DependencyProperty.Register(nameof(IsRampEnabled), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(false, IsRampEnabledCB) { BindsTwoWayByDefault = true });
 
     static readonly DependencyPropertyKey IsSetPointReachedKey =
-     DependencyProperty.RegisterReadOnly(nameof(IsSetPointReached), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(true/*, IsSetPointReachedCB*/));
+     DependencyProperty.RegisterReadOnly(nameof(IsSPReached), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(true, IsSetPointReachedCB));
     public static readonly DependencyProperty IsSetPointReachedProperty = IsSetPointReachedKey.DependencyProperty;
+
+    static readonly DependencyPropertyKey StateKey =
+      DependencyProperty.RegisterReadOnly(nameof(State), typeof(EState), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(EState.Disabled, StateCB));
+    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
 
 
     #endregion DPBinding
@@ -135,21 +152,26 @@ namespace TEC_PID_Control.Controls
     {
       var t = (UsrCntrlPID)o;
       bool b = t.IsControlEnabled;
-      if (t.isControlEnabled != b) {
-        lock (t.RCCLock) {
-          if (b) {
-            t.needInit = true;
-            Log($"PID Enabled", Logger.Mode.NoAutoPoll);
-            t.IsSetPointLostTime = DateTime.Now; 
-          } else {
-            Log($"PID Disabled", Logger.Mode.NoAutoPoll);
-            t.IsSetPointReached = false;
-          }
-          t.isControlEnabled = t.IsControlEnabled;
-        }
-        t.iM.ExpGoing = b;
-        t.iC.ExpGoing = b;
+      if (b) {
+        t.State = EState.Enabled;
+      } else {
+        t.State = (t.State | EState.Disabled) & ~(EState.Enabled | EState.ReachedSetpoint);
       }
+      lock (t.RCCLock) {
+        if (b) {
+          t.needInit = true;
+          Log($"PID Enabled", Logger.Mode.NoAutoPoll);
+          t.SetPointLostTime = DateTime.Now;
+        } else {
+          Log($"PID Disabled", Logger.Mode.NoAutoPoll);
+          t.IsSPReached = false;
+        }
+        t.isControlEnabled = t.IsControlEnabled;
+      }
+
+      t.iM.ExpGoing = b;
+      t.iC.ExpGoing = b;
+
     }
     static void IsRampEnabledCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
@@ -160,11 +182,32 @@ namespace TEC_PID_Control.Controls
         t.isRampEnabled = b;
       }
     }
-    //static void IsSetPointReachedCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    //{
-    //  var t = (UsrCntrlPID)o;
-
-    //}
+    static void IsSetPointReachedCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
+    {
+      var t = (UsrCntrlPID)o;
+      if (t.IsControlEnabled) {
+        t.State = t.IsSPReached ? EState.ReachedSetpoint : EState.Enabled;
+      }
+    }
+    static void StateCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
+    {
+      var t = (UsrCntrlPID)o;
+      switch (t.State) {
+        case EState.Disabled:
+          t.circle.Fill = Brushes.LightGray;
+          break;
+        case EState.Enabled:
+          t.circle.Fill = Brushes.Yellow;
+          break;
+        case EState.ReachedSetpoint:
+          t.circle.Fill = Brushes.LimeGreen;
+          break;
+        case EState.Error:
+        default:
+          t.circle.Fill = Brushes.Red;
+          break;
+      }
+    }
     #endregion DPCallBacks
     #region DProperties
     [Category("Appearance")]
@@ -188,17 +231,7 @@ namespace TEC_PID_Control.Controls
       get { return (double)GetValue(CRateProperty); }
       set { SetValue(CRateProperty, value); }
     }
-    //[Category("PID")]
-    //public double MeasureParameter {
-    //  get { return (double)GetValue(MeasureParameterProperty); }
-    //  set { SetValue(MeasureParameterProperty, value); }
-    //}
-    //[Category("PID")]
-    //public double ControlParameter {
-    //  get { return (double)GetValue(ControlParameterProperty); }
-    //  set { SetValue(ControlParameterProperty, value); }
-    //}
-    //[Category("PID")]
+    [Category("PID")]
     public double CtrlP {
       get { return (double)GetValue(CtrlPProperty); }
       set { SetValue(CtrlPProperty, value); }
@@ -250,9 +283,14 @@ namespace TEC_PID_Control.Controls
     }
 
     [Category("PID")]
-    public bool IsSetPointReached {
+    public bool IsSPReached {
       get { return (bool)GetValue(IsSetPointReachedProperty); }
       protected set { SetValue(IsSetPointReachedKey, value); }
+    }
+    [Category("PID")]
+    public EState State {
+      get => (EState)GetValue(StateProperty);
+      protected set => SetValue(StateKey, value);
     }
     #endregion DProperties
     #region IDisposable
@@ -304,16 +342,17 @@ namespace TEC_PID_Control.Controls
       get => Atomic.Read(ref controlParameter);
       set => Atomic.Write(ref controlParameter, value);
     }
-    double measureParameter = 0.0;
+    double measureParameter = double.NaN;
     public double MeasureParameter {
       get => Atomic.Read(ref measureParameter);
       set => Atomic.Write(ref measureParameter, value);
     }
-    double imSetPoint = 0.0;
+    double imSetPoint = double.NaN;
     public double ImSetPoint {
       get => Atomic.Read(ref imSetPoint);
       set => Atomic.Write(ref imSetPoint, value);
     }
+    Exception DispatcherException = null;
     void ControlCycle()
     {
       var cancellation = CTS.Token;
@@ -328,9 +367,13 @@ namespace TEC_PID_Control.Controls
       DispatcherOperation DO = null;
 
       try {
-
         while (!cancellation.IsCancellationRequested) {
           try {
+            if (DispatcherException != null) {
+              Exception e = DispatcherException;
+              DispatcherException = null;
+              throw e;
+            }
             if (!isControlEnabled) {
               if ((DO?.Status ?? DispatcherOperationStatus.Completed) == DispatcherOperationStatus.Completed)
                 DO = Dispatcher.BeginInvoke((Action)UpdateWithDll);
@@ -350,8 +393,7 @@ namespace TEC_PID_Control.Controls
                 isControlEnabled = false;
                 Dispatcher.BeginInvoke(() => { IsControlEnabled = false; });
                 string err = $"Unable to initialize the PID controller";
-                Log(ref err, e);
-                MessageBox.Show(err, "Error");
+                Log(ref err, e); Dispatcher.BeginInvoke(() => { MessageBox.Show(err, "Error"); });
                 continue;
               }
             }
@@ -414,57 +456,62 @@ namespace TEC_PID_Control.Controls
               averagecount = 0;
             }
           } catch (Exception e) when (e is not ThreadInterruptedException) {
-            Logger.Default.log("PID Control Exception", e, Logger.Mode.Error, nameof(UsrCntrlPID));
+            Logger.Default.log("PID Control Exception", e, Logger.Mode.Error, DeviceName);
             iM.Reset();
             iC.Reset();
             Dispatcher.Invoke(() => { IsControlEnabled = false; });
           }
         }
-        Logger.Default.log("PID Thread Cancelled", Logger.Mode.Full, nameof(UsrCntrlPID));
+        Logger.Default.log("PID Thread Cancelled", Logger.Mode.Full, DeviceName);
       } catch (ThreadInterruptedException ae) {
-        Logger.Default.log("PID Thread Aborted", ae, Logger.Mode.Error, nameof(UsrCntrlPID));
+        Logger.Default.log("PID Thread Aborted", ae, Logger.Mode.Error, DeviceName);
       }
     }
     float pbandw = 0.0f, ibandw = 0.0f, dbandw = 0.0f;
     void OnCycleDispatcherUpdate()
     {
-      utbMP.Value = MeasureParameter;
-      utbISP.Value = ImSetPoint;
-      if (pbandw >= 0) {
-        rPBandP.Rect = new Rect(0, 0, pbandw, 1);
-        rPBandN.Rect = new Rect(1, 0, 0, 1);
-      } else {
-        rPBandP.Rect = new Rect(0, 0, 0, 1);
-        rPBandN.Rect = new Rect(1 + pbandw, 0, -pbandw, 1);
-      }
-      if (ibandw >= 0) {
-        rIBandP.Rect = new Rect(0, 0, ibandw, 1);
-        rIBandN.Rect = new Rect(1, 0, 0, 1);
-      } else {
-        rIBandP.Rect = new Rect(0, 0, 0, 1);
-        rIBandN.Rect = new Rect(1 + ibandw, 0, -ibandw, 1);
-      }
-      if (dbandw >= 0) {
-        rDBandP.Rect = new Rect(0, 0, dbandw, 1);
-        rDBandN.Rect = new Rect(1, 0, 0, 1);
-      } else {
-        rDBandP.Rect = new Rect(0, 0, 0, 1);
-        rDBandN.Rect = new Rect(1 + dbandw, 0, -dbandw, 1);
-      }
-      double cp = (pbandw + ibandw + dbandw) * GlobalGain / MaxCtrlPar;
-      rSetP.Rect = new Rect(0, 0, cp > 0 ? cp : 0, 1);
+      try {
+        utbMP.Value = MeasureParameter;
+        utbISP.Value = ImSetPoint;
+        if (pbandw >= 0) {
+          rPBandP.Rect = new Rect(0, 0, pbandw, 1);
+          rPBandN.Rect = new Rect(1, 0, 0, 1);
+        } else {
+          rPBandP.Rect = new Rect(0, 0, 0, 1);
+          rPBandN.Rect = new Rect(1 + pbandw, 0, -pbandw, 1);
+        }
+        if (ibandw >= 0) {
+          rIBandP.Rect = new Rect(0, 0, ibandw, 1);
+          rIBandN.Rect = new Rect(1, 0, 0, 1);
+        } else {
+          rIBandP.Rect = new Rect(0, 0, 0, 1);
+          rIBandN.Rect = new Rect(1 + ibandw, 0, -ibandw, 1);
+        }
+        if (dbandw >= 0) {
+          rDBandP.Rect = new Rect(0, 0, dbandw, 1);
+          rDBandN.Rect = new Rect(1, 0, 0, 1);
+        } else {
+          rDBandP.Rect = new Rect(0, 0, 0, 1);
+          rDBandN.Rect = new Rect(1 + dbandw, 0, -dbandw, 1);
+        }
+        double cp = (pbandw + ibandw + dbandw) * GlobalGain / MaxCtrlPar;
+        rSetP.Rect = new Rect(0, 0, cp > 0 ? cp : 0, 1);
 
-      UpdateWithDll();
-      UpdateSetPointReached();
+        UpdateWithDll();
+        UpdateSetPointReached();
+      }catch(Exception e) {
+        DispatcherException = e;
+        return;
+      }
     }
     const float pbandC = 0.005f;
-    const float dbandC = 0.01f;
+    const float dbandC = 0.001f;
 
-    DateTime IsSetPointLostTime;
+    DateTime SetPointLostTime;
     public TimeSpan SetPointReachTime { get; set; } = TimeSpan.FromMinutes(5);
     void UpdateSetPointReached()
     {
-      bool oldispr = IsSetPointReached;
+      bool oldispr = IsSPReached;
       bool newispr;
       if (oldispr) {
         if (Math.Abs(pbandw) < 2 * pbandC && Math.Abs(dbandw) < 2 * dbandC) newispr = true;
@@ -474,15 +521,17 @@ namespace TEC_PID_Control.Controls
         else newispr = false;
       }
       if (newispr && !oldispr) {
-        IsSetPointReached = true;
+        IsSPReached = true;
       } else if (!newispr && oldispr) {
-        IsSetPointReached = false;
-        IsSetPointLostTime = DateTime.Now;
-      }else if (!newispr && !oldispr) {
-        if (DateTime.Now - IsSetPointLostTime > SetPointReachTime)
+        IsSPReached = false;
+        SetPointLostTime = DateTime.Now;
+      } else if (!newispr && !oldispr) {
+        if (DateTime.Now - SetPointLostTime > SetPointReachTime) {
+          State |= EState.Error;
           throw new TimeoutException(
             $"PID could not reach Setpoint ({SetPoint} °C)\n" +
-            $"after Period of ({SetPointReachTime})\n");
+            $"after Period of ({SetPointReachTime})");
+        }
       }
     }
     public event EventHandler<UpdateVIsEA> UpdateVIs;
@@ -534,12 +583,15 @@ namespace TEC_PID_Control.Controls
       resetRamp = true;
       Log($"PID is Reset", Logger.Mode.NoAutoPoll);
     }
+    public static string DeviceName => "PID-C";
     public UsrCntrlPID()
     {
       if (logger == null) logger = Logger.Default;
-      logger?.AttachLog(nameof(UsrCntrlPID), AddToLog, Logger.Mode.NoAutoPoll);
+      logger?.AttachLog(DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
 
       InitializeComponent();
+
+      title.Text = DeviceName;
 
       thread = new(ControlCycle);
 
@@ -547,8 +599,8 @@ namespace TEC_PID_Control.Controls
     }
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
 
-    static void Log(string txt, Logger.Mode mode) => logger?.log(txt, mode, nameof(UsrCntrlPID));
-    static void Log(ref string txt, Exception e) => logger?.log(ref txt, e, Logger.Mode.Error, nameof(UsrCntrlPID));
+    static void Log(string txt, Logger.Mode mode) => logger?.log(txt, mode, DeviceName);
+    static void Log(ref string txt, Exception e) => logger?.log(ref txt, e, Logger.Mode.Error, DeviceName);
     public void Init(IMeasureParameter im, IControlParameter ic)
     {
       iM = im; iC = ic;
@@ -583,6 +635,19 @@ namespace TEC_PID_Control.Controls
       ToggleButton tb = (ToggleButton)sender;
     }
     void bRRamp_Click(object sender, RoutedEventArgs e) => ResetRamp();
+
+    public void SetCurrentTemperature(double t)
+    {
+      if (IsControlEnabled) return;
+
+      utbMP.Value = t;
+      utbISP.Value = t;
+
+      lock (RCCLock) {
+        ImSetPoint = double.NaN;
+        resetRamp = true;
+      }
+    }
     public class UpdateVIsEA : EventArgs
     {
       public double? V1 { get; init; } = null;
@@ -632,7 +697,7 @@ namespace TEC_PID_Control.Controls
       if (!ucGWPS.GWPS.IsConnected)
         throw new DeviceDisconnectedException(
           $"{nameof(ucGWPS.GWPS)}GWIPS Device should be connected.\n" +
-          $"Correct port should be selected.\n");
+          $"Correct port should be selected.");
 
       ucGWPS.Dispatcher.Invoke(ucGWPS.SetUpCommand);
       if (!ucGWPS.GWPS.Output) ucGWPS.GWPS.ScheduleTurnOn();

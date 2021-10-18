@@ -18,14 +18,15 @@ namespace TEC_PID_Control.Controls
   {
     public GWPowerSupply GWPS;
 
-    #region Binding
+    #region DepProps
     public static readonly DependencyProperty IsExpandedProperty =
         DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(true) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty IsLogExpandedProperty =
         DependencyProperty.Register("IsLogExpanded", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty SelectedPortProperty =
         DependencyProperty.Register(nameof(SelectedPort), typeof(string), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata("", SelectedPortChanged) { BindsTwoWayByDefault = true });
-    static void SelectedPortChanged(DependencyObject o, DependencyPropertyChangedEventArgs ea) {
+    static void SelectedPortChanged(DependencyObject o, DependencyPropertyChangedEventArgs ea)
+    {
       var t = (UsrCntrlGWPS)o;
       if (!t.cbPort.Items.Contains(t.SelectedPort)) t.cbPort.Items.Add(t.SelectedPort);
       t.cbPort.SelectedItem = t.SelectedPort;
@@ -66,15 +67,8 @@ namespace TEC_PID_Control.Controls
        DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected));
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
     public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
-
-    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
-    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
-    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.Channel = (int)e.NewValue;
-    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
-    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).State = (SState)e.NewValue;
-    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
-    #endregion Binding
-
+    #endregion DepProps
+    #region DepPropsP
 
     [Category("Appearance")]
     public bool IsExpanded {
@@ -140,8 +134,28 @@ namespace TEC_PID_Control.Controls
       get { return (bool)GetValue(AutoPollProperty); }
       set { SetValue(AutoPollProperty, value); }
     }
+    #endregion DepPropsP
+    #region DepPropsCB
+    static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
+    static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
+    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlGWPS th = ((UsrCntrlGWPS)d);
+      th.GWPS.Channel = (int)e.NewValue;
+      th.title.Text = th.GWPS.DeviceName;
 
+      if (th.attachedLogName != null) Logger.Default.DetachLog(th.attachedLogName, th.AddToLog);
 
+      Logger.Default.AttachLog(th.GWPS.DeviceName, th.AddToLog, Logger.Mode.NoAutoPoll);
+      th.attachedLogName = th.GWPS.DeviceName;
+    }
+
+    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
+    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).State = (SState)e.NewValue;
+    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
+    #endregion DepPropsCB
+
+    string attachedLogName = null;
     public UsrCntrlGWPS()
     {
       InitializeComponent();
@@ -150,7 +164,12 @@ namespace TEC_PID_Control.Controls
       GWPS.ConnectedToDevice += ConnectedToDevice;
       GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
-      Logger.Default.AttachLog(nameof(GWPowerSupply), AddToLog, Logger.Mode.NoAutoPoll);
+      if (attachedLogName == null) {
+        Logger.Default.AttachLog(GWPS.DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
+        attachedLogName = GWPS.DeviceName;
+      }
+
+      title.Text = GWPS.DeviceName;
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(State_Prop, new Binding("State") { Source = GWPS, Mode = BindingMode.OneWay });
@@ -163,16 +182,16 @@ namespace TEC_PID_Control.Controls
     void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
       IsConnected = false;
- //     circle.Fill = Brushes.LightGray;
- //     circle.ToolTip = GWPS.State.ToString();
+      //     circle.Fill = Brushes.LightGray;
+      //     circle.ToolTip = GWPS.State.ToString();
     }
 
     private void ConnectedToDevice(object sender, EventArgs e)
     {
       IsConnected = true;
 
-//      circle.Fill = Brushes.LimeGreen;
-//      circle.ToolTip = GWPS.State.ToString();
+      //      circle.Fill = Brushes.LimeGreen;
+      //      circle.ToolTip = GWPS.State.ToString();
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => GWPS.Disconnect();
@@ -189,6 +208,7 @@ namespace TEC_PID_Control.Controls
 
       if (!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
         cbPort.SelectedItem = oldport;
+      else SelectedPort = "";
     }
     void cbPort_SelectionChanged(object s, EventArgs e)
     {
@@ -221,11 +241,6 @@ namespace TEC_PID_Control.Controls
       if (tb.Text.Length > 5000)
         tb.Text = "<Log trimmed>" + tb.Text.Substring(tb.Text.IndexOf('\n', 1000));
       tb.ScrollToEnd();
-    }
-
-    void cbChannel_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-      title.Text = $"GWI Power Supply (Channel {Channel})";
     }
   }
 }

@@ -148,7 +148,9 @@ namespace TEC_PID_Control.Controls
 
       utbResistance.DataContext = KD;
 
-      Logger.Default.AttachLog(nameof(Keithley2400), AddToLog, Logger.Mode.NoAutoPoll);
+      Logger.Default.AttachLog(KD.DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
+      
+      title.Text = KD.DeviceName;
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(State_Prop, new Binding("State") { Source = KD, Mode = BindingMode.OneWay });
@@ -161,15 +163,15 @@ namespace TEC_PID_Control.Controls
     void KD_DisconnectedFromDevice(object sender, EventArgs e)
     {
       IsConnected = false;
-//      circle.Fill = Brushes.LightGray;
-//      circle.ToolTip = KD.State.ToString();
+      //      circle.Fill = Brushes.LightGray;
+      //      circle.ToolTip = KD.State.ToString();
     }
 
     void KD_ConnectedToDevice(object sender, EventArgs e)
     {
       IsConnected = true;
-//      circle.Fill = Brushes.LimeGreen;
-//      circle.ToolTip = KD.State.ToString();
+      //      circle.Fill = Brushes.LimeGreen;
+      //      circle.ToolTip = KD.State.ToString();
     }
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => KD.Disconnect();
@@ -185,6 +187,7 @@ namespace TEC_PID_Control.Controls
 
       if (!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
         cbPort.SelectedItem = oldport;
+      else SelectedPort = "";
     }
     void cbPort_SelectionChanged(object s, EventArgs e)
     {

@@ -1,16 +1,60 @@
-﻿<cw:CustomWindow xmlns:cw="clr-namespace:CustomWindows;assembly=CustomWindows"
-                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                 xmlns:my="clr-namespace:WPFControls;assembly=WPFUtils"
-                 xmlns:c="clr-namespace:TEC_PID_Control.Controls"
-                 xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
-                 x:Name="customWindow"
-                 x:Class="TEC_PID_Control.MainWindow"
-                 Title="Temperature controller for AC-Hall"
-                 Height="664"
-                 Width="599">
+﻿<cw:SimpleToolWindow xmlns:cw="clr-namespace:CustomWindows;assembly=CustomWindows"
+                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:my="clr-namespace:WPFControls;assembly=WPFUtils"
+                     xmlns:c="clr-namespace:TEC_PID_Control.Controls"
+                     xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
+                     xmlns:local="clr-namespace:TEC_PID_Control"
+                     x:Name="customWindow"
+                     x:Class="TEC_PID_Control.MainWindow"
+                     Title="Temperature controller for AC-Hall"
+                     Height="664"
+                     Width="599"
+                     Background="Black">
+  <cw:SimpleToolWindow.Resources>
+    <Style x:Key="DropDownMenuItem"
+           TargetType="{x:Type MenuItem}">
+      <Setter Property="Background"
+              Value="Black" />
+      <Setter Property="Foreground"
+              Value="White" />
+
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type MenuItem}">
+            <Border x:Name="Bd"
+                    Padding="10,0,10,0"
+                    BorderBrush="{TemplateBinding Background}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    Background="{TemplateBinding Background}"
+                    SnapsToDevicePixels="True">
+              <ContentPresenter x:Name="ContentPresenter"
+                                Content="{TemplateBinding Header}"
+                                Grid.Column="1"
+                                ContentSource="Header"
+                                Margin="{TemplateBinding Padding}"
+                                RecognizesAccessKey="True"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted"
+                       Value="True">
+                <Setter Property="Background"
+                        TargetName="Bd"
+                        Value="#FF303030" />
+                <Setter Property="BorderBrush"
+                        TargetName="Bd"
+                        Value="LightGray" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </cw:SimpleToolWindow.Resources>
   <Grid>
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
       <RowDefinition />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
@@ -18,12 +62,32 @@
       <ColumnDefinition Width="Auto" />
       <ColumnDefinition Width="296*" />
     </Grid.ColumnDefinitions>
+    <Menu Grid.Row="0"
+          Grid.Column="0"
+          Grid.ColumnSpan="2"
+          BorderBrush="White"
+          BorderThickness="0,0,0,2"
+          Foreground="White">
+      <Menu.Background>
+        <ImageBrush />
+      </Menu.Background>
+      <MenuItem Style="{DynamicResource MenuItemStyle1}"
+                Header="_File"
+                BorderBrush="Transparent">
+        <MenuItem Header="_View Log-File"
+                  Click="MiViewLog_Click"
+                  Style="{StaticResource ResourceKey=DropDownMenuItem}" />
+        <MenuItem Header="_Exit"
+                  Style="{StaticResource ResourceKey=DropDownMenuItem}"
+                  Click="CloseButton_Click" />
+      </MenuItem>
+    </Menu>
     <ScrollViewer Margin="2"
-                  Grid.RowSpan="2">
-
-      <StackPanel >
+                  Grid.RowSpan="2"
+                  Grid.Row="1">
+      <StackPanel>
         <StackPanel Orientation="Horizontal">
-          <Button Content="Measure T"
+          <Button Content="SetUp and Measure T"
                   Margin="5,2"
                   Padding="5,0"
                   Click="bMeatureT_Click" />
@@ -71,16 +135,14 @@
                        MaxIntegralError="{Binding MaxIntegralError}"
                        CRate="{Binding CRate}"
                        IsRampEnabled="{Binding RampEnable}"
-                       SetPoint="20.0"/>
-        <Button Content="measure"
-                Click="Button_Click" />
+                       SetPoint="20.0" />
       </StackPanel>
     </ScrollViewer>
-
     <TextBox x:Name="ConsoleOut"
              Grid.Column="1"
              IsReadOnly="True"
              Margin="2"
+             Grid.Row="1"
              Grid.RowSpan="1"
              Background="#FFE2F2F4"
              VerticalScrollBarVisibility="Auto"
@@ -89,15 +151,5 @@
              Grid.ColumnSpan="2"
              FontFamily="Courier New"
              FontSize="11" />
-    <DockPanel Grid.Column="1"
-               Grid.Row="2"
-               Margin="2,2,2,2"
-               Grid.ColumnSpan="2">
-      <TextBlock Text="&gt;" />
-      <TextBox MaxLines="1"
-               KeyDown="TextBox_KeyDown" />
-
-    </DockPanel>
-
   </Grid>
-</cw:CustomWindow>
+</cw:SimpleToolWindow>

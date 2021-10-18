@@ -82,14 +82,21 @@ namespace TEC_PID_Control
 
       base.OnExit(e);
     }
+    bool ShutdDownInitiated = false;
 
     void App_DispatcherUnhandledException(object s, DispatcherUnhandledExceptionEventArgs e)
     {
+      if (ShutdDownInitiated) {
+        return;
+      }
+      ShutdDownInitiated = true;
       logger?.log($"Error - Application terminated", e.Exception, Logger.Mode.LogState);
-      MessageBox.Show($"{e.Exception.Message}\n\n" +
+      e.Dispatcher.Invoke(() => {
+        MessageBox.Show($"{e.Exception.Message}\n\n" +
         $"{e.Exception.InnerException?.Message}\n\n" +
         $"See Log File for Details\n{Logger.Default.FileName}",
         "Error - Application terminated");
+      });
     }
   }
 }

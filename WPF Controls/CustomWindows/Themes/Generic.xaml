@@ -3,7 +3,7 @@
                     xmlns:local="clr-namespace:CustomWindows">
 
   <!-- Tool Window style -->
-  <Style TargetType="{x:Type local:CustomWindow}">
+  <Style TargetType="{x:Type local:SimpleToolWindow}">
     <Setter Property="WindowStyle"
             Value="None" />
     <Setter Property="Background"
@@ -22,7 +22,7 @@
             Value="True" />
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="{x:Type local:CustomWindow}">
+        <ControlTemplate TargetType="{x:Type local:SimpleToolWindow}">
           <Border BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="{TemplateBinding BorderThickness}"
                   Background="{TemplateBinding Background}"
@@ -95,7 +95,7 @@
                             <Setter Property="Background"
                                     Value="Transparent" />
                           </Trigger>
-                          <DataTrigger Binding="{Binding CloseButtonVisible, RelativeSource={RelativeSource FindAncestor, AncestorType=local:CustomWindow}}"
+                          <DataTrigger Binding="{Binding CloseButtonVisible, RelativeSource={RelativeSource FindAncestor, AncestorType=local:SimpleToolWindow}}"
                                        Value="False">
                             <Setter Property="Visibility"
                                     Value="Collapsed" />
@@ -145,7 +145,7 @@
                             <Setter Property="Background"
                                     Value="Transparent" />
                           </Trigger>
-                          <DataTrigger Binding="{Binding MinimizeButtonVisible, RelativeSource={RelativeSource FindAncestor, AncestorType=local:CustomWindow}}"
+                          <DataTrigger Binding="{Binding MinimizeButtonVisible, RelativeSource={RelativeSource FindAncestor, AncestorType=local:SimpleToolWindow}}"
                                        Value="False">
                             <Setter Property="Visibility"
                                     Value="Collapsed" />

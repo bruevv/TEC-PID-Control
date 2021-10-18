@@ -46,11 +46,16 @@ namespace CSUtils
         AttachedLogs.Add(name, del);
       }
     }
-    public void DeattachLog(string name, EventHandler<LogFeedBEA> del)
+    public void DetachLog(string name, EventHandler<LogFeedBEA> del)
     {
-      AttachedLogModes.Remove(del);
-      AttachedLogs[name] -= del;
-      if (AttachedLogs[name] == null) AttachedLogs.Remove(name);
+      try {
+        if(AttachedLogModes.ContainsKey(del))
+          AttachedLogModes.Remove(del);
+        if (AttachedLogs.ContainsKey(name)) {
+          AttachedLogs[name] -= del;
+          if (AttachedLogs[name] == null) AttachedLogs.Remove(name);
+        }
+      } catch { }
     }
 
     public enum Mode

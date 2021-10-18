@@ -2,6 +2,9 @@
   "profiles": {
     "TEC PID Control": {
       "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "remoteDebugMachine": "128.6.229.50:4024",
+      "authenticationMode": "Windows",
       "nativeDebugging": true
     }
   }

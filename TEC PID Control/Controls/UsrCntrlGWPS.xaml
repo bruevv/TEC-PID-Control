@@ -59,8 +59,17 @@
                    Height="16"
                    DockPanel.Dock="Right"
                    Style="{StaticResource RectangleOnOff}" />
+        <TextBlock Text="{Binding Text, ElementName=utbVoltage}"
+                   DockPanel.Dock="Right"
+                   Width="75"
+                   Margin="0,0,5,0"
+                   FontSize="12" />
+        <TextBlock Text="{Binding Text, ElementName=utbCurrent}"
+                   DockPanel.Dock="Right"
+                   Width="75"
+                   FontSize="12" />
         <TextBlock x:Name="title"
-                   Text="GWI Power Supply" />
+                   Text="GWI-PS(-)" />
       </DockPanel>
     </w:AnimExpander.Header>
     <Grid x:Name="grid"
@@ -137,8 +146,7 @@
                   Margin="2"
                   ToolTip="1-Right, 2-Left"
                   HorizontalAlignment="Left"
-                  SelectedItem="{Binding Channel, FallbackValue=1}"
-                          SelectionChanged="cbChannel_SelectionChanged">
+                  SelectedItem="{Binding Channel, FallbackValue=1}">
           <System:Int32>1</System:Int32>
           <System:Int32>2</System:Int32>
         </ComboBox>

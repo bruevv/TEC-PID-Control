@@ -1,4 +1,5 @@
 ﻿<UserControl x:Class="TEC_PID_Control.Controls.UsrCntrlPID"
+             xmlns:tpn="clr-namespace:TEC_PID_Control.Controls"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -43,7 +44,26 @@
                   IsExpanded="{Binding IsExpanded, ElementName=usrCntrlPID, FallbackValue=true}"
                   DataContext="{Binding ElementName=usrCntrlPID}">
     <w:AnimExpander.Header>
-      <TextBlock Text="PID Control" />
+      <DockPanel x:Name="HeaderDock"
+                 Width="{Binding ActualWidth,ElementName=expander, Mode=OneWay}"
+                 LastChildFill="False">
+        <Ellipse x:Name="circle"
+                 Fill="LightGray"
+                 Stroke="Black"
+                 Width="14"
+                 Height="14"
+                 ToolTip="{Binding State}"
+                 DockPanel.Dock="Right"
+                 Margin="5,0,31,0" />
+        <TextBlock Text="{Binding Text, ElementName=utbMP}"
+                 DockPanel.Dock="Right"
+                 Width="75"
+                 Margin="0,0,21,0"
+                 FontSize="12" />
+
+      <TextBlock x:Name="title"
+                   Text="{x:Static tpn:UsrCntrlPID.DeviceName}" />
+      </DockPanel>
     </w:AnimExpander.Header>
     <StackPanel Background="#FFE6FFDC">
       <Grid x:Name="grid">
@@ -115,7 +135,8 @@
                        Grid.Row="1"
                        IsReadOnly="True"
                        NormalBackground="#FFEBEBEB"
-                       ValueFormat="N3" />
+                       ValueFormat="N3"
+                       Value="NaN"/>
         <TextBlock Text="Immediate SetPoint:"
                    Grid.Column="1"
                    Grid.ColumnSpan="2"
@@ -126,7 +147,8 @@
                        Grid.Row="2"
                        IsReadOnly="True"
                        NormalBackground="#FFEBEBEB"
-                       ValueFormat="N3" />
+                       ValueFormat="N3" 
+                       Value="NaN"/>
         <GroupBox Header="PID parameters"
                   Grid.Row="3"
                   Grid.ColumnSpan="10">

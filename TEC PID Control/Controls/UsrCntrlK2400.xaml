@@ -58,7 +58,17 @@
                    Height="16"
                    DockPanel.Dock="Right"
                    Style="{StaticResource RectangleOnOff}" />
-        <TextBlock Text="Keithley 2400" />
+        <TextBlock Text="{Binding Text, ElementName=utbVoltage}"
+                   DockPanel.Dock="Right"
+                   Width="75"
+                   Margin="0,0,5,0"
+                   FontSize="12" />
+        <TextBlock Text="{Binding Text, ElementName=utbCurrent}"
+                   DockPanel.Dock="Right"
+                   Width="75"
+                   FontSize="12" />
+        <TextBlock x:Name="title"
+                   Text="K2400-SM" />
       </DockPanel>
     </Expander.Header>
     <Grid x:Name="grid"
