@@ -1,11 +1,8 @@
-﻿using CSUtils;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.IO.Ports;
 using System.Text;
 using System.Threading;
-using ThreadQueuing;
 
 namespace Devices
 {
@@ -21,7 +18,9 @@ namespace Devices
 
 namespace SerialPorting
 {
+  using CSUtils;
   using Devices;
+  using WPFUtils;
 
   abstract class UARTConnectionBase : ConnectionBase
   {

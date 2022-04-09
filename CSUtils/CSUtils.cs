@@ -120,6 +120,13 @@ namespace CSUtils
         res += DATA[i];
       return res / DATA.Length;
     }
+
+    public static object GetDefault(Type type)
+    {
+      if (type.IsValueType) return Activator.CreateInstance(type);
+      else if (type == typeof(string)) return "";
+      return null;
+    }
   }
 
   public static class Atomic
@@ -204,10 +211,7 @@ namespace CSUtils
     }
 
   }
-  public static class EnumExtention
-  {
-    public static string GetName(this Enum e) => $"{e.GetType().Name}:{e}";
-  }
+
   public static class ByteCastExtension
   {
     public static byte LoByte(this ushort us) => (byte)us;

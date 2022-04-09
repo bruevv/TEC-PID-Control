@@ -7,7 +7,7 @@ using System.IO.Ports;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
+using TEC_PID_Control.Properties;
 
 namespace TEC_PID_Control.Controls
 {
@@ -19,100 +19,38 @@ namespace TEC_PID_Control.Controls
     public GWPowerSupply GWPS;
 
     #region DepProps
-    public static readonly DependencyProperty IsExpandedProperty =
-        DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(true) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty IsLogExpandedProperty =
-        DependencyProperty.Register("IsLogExpanded", typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty SelectedPortProperty =
-        DependencyProperty.Register(nameof(SelectedPort), typeof(string), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata("", SelectedPortChanged) { BindsTwoWayByDefault = true });
-    static void SelectedPortChanged(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlGWPS)o;
-      if (!t.cbPort.Items.Contains(t.SelectedPort)) t.cbPort.Items.Add(t.SelectedPort);
-      t.cbPort.SelectedItem = t.SelectedPort;
-    }
-    public static readonly DependencyProperty ChannelProperty =
-        DependencyProperty.Register("Channel", typeof(int), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1, ChannelChanged) { BindsTwoWayByDefault = true });
+    public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(GWPSS), typeof(UsrCntrlGWPS), new PropertyMetadata(GWPSS.Default));
 
     static readonly DependencyPropertyKey VoltageKey = DependencyProperty.RegisterReadOnly(nameof(Voltage), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
     static readonly DependencyPropertyKey CurrentKey = DependencyProperty.RegisterReadOnly(nameof(Current), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
+    static readonly DependencyPropertyKey IsConnectedKey = DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey IsOnKey = DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey StateKey = DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected));
 
     public static readonly DependencyProperty VoltageProperty = VoltageKey.DependencyProperty;
     public static readonly DependencyProperty CurrentProperty = CurrentKey.DependencyProperty;
+    public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
+    public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
+    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
 
     static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Voltage_PropChanged));
     static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN, Current_PropChanged));
-
-
-
-    public static readonly DependencyProperty OutputVoltageProperty =
-        DependencyProperty.Register(nameof(OutputVoltage), typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty OutputCurrentProperty =
-    DependencyProperty.Register(nameof(OutputCurrent), typeof(double), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty AutoPollProperty =
-        DependencyProperty.Register(nameof(AutoPoll), typeof(bool), typeof(UsrCntrlGWPS), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
-
-    static readonly DependencyPropertyKey IsConnectedKey =
-       DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
-    public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
-
-    static readonly DependencyProperty IsOn_Prop =
-      DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false, IsOn_PropChanged));
-    static readonly DependencyProperty State_Prop =
-      DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected, State_PropChanged));
-
-    static readonly DependencyPropertyKey IsOnKey =
-       DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
-    static readonly DependencyPropertyKey StateKey =
-       DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected));
-    public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
-    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
+    static readonly DependencyProperty IsOn_Prop = DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false, IsOn_PropChanged));
+    static readonly DependencyProperty State_Prop = DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected, State_PropChanged));
     #endregion DepProps
     #region DepPropsP
+    [Category("Common")]
+    public GWPSS Settings { get => (GWPSS)GetValue(SettingsProperty); set => SetValue(SettingsProperty, value); }
 
-    [Category("Appearance")]
-    public bool IsExpanded {
-      get { return (bool)GetValue(IsExpandedProperty); }
-      set { SetValue(IsExpandedProperty, value); }
-    }
-    [Category("Appearance")]
-    public bool IsLogExpanded {
-      get { return (bool)GetValue(IsLogExpandedProperty); }
-      set { SetValue(IsLogExpandedProperty, value); }
-    }
-
-    [Category("Device")]
-    public string SelectedPort {
-      get { return (string)GetValue(SelectedPortProperty); }
-      set { SetValue(SelectedPortProperty, value); }
-    }
-
-    [Category("Device")]
-    public int Channel {
-      get { return (int)GetValue(ChannelProperty); }
-      set { SetValue(ChannelProperty, value); }
-    }
-
-    [Category("Device")]
+    [Category("Common")]
     public double Voltage {
       get { return (double)GetValue(VoltageProperty); }
       protected set { SetValue(VoltageKey, value); }
     }
-    [Category("Device")]
+    [Category("Common")]
     public double Current {
       get { return (double)GetValue(CurrentProperty); }
       protected set { SetValue(CurrentKey, value); }
-    }
-
-    [Category("Device")]
-    public double OutputVoltage {
-      get { return (double)GetValue(OutputVoltageProperty); }
-      set { SetValue(OutputVoltageProperty, value); }
-    }
-    [Category("Device")]
-    public double OutputCurrent {
-      get { return (double)GetValue(OutputCurrentProperty); }
-      set { SetValue(OutputCurrentProperty, value); }
     }
     [Category("Device")]
     public bool IsConnected {
@@ -129,45 +67,32 @@ namespace TEC_PID_Control.Controls
       get { return (SState)GetValue(StateProperty); }
       protected set { SetValue(StateKey, value); }
     }
-    [Category("Device")]
-    public bool AutoPoll {
-      get { return (bool)GetValue(AutoPollProperty); }
-      set { SetValue(AutoPollProperty, value); }
-    }
     #endregion DepPropsP
     #region DepPropsCB
     static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Voltage = (double)e.NewValue;
     static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).Current = (double)e.NewValue;
-    static void ChannelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-      UsrCntrlGWPS th = ((UsrCntrlGWPS)d);
-      th.GWPS.Channel = (int)e.NewValue;
-      th.title.Text = th.GWPS.DeviceName;
 
-      if (th.attachedLogName != null) Logger.Default.DetachLog(th.attachedLogName, th.AddToLog);
-
-      Logger.Default.AttachLog(th.GWPS.DeviceName, th.AddToLog, Logger.Mode.NoAutoPoll);
-      th.attachedLogName = th.GWPS.DeviceName;
-    }
 
     static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
     static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).State = (SState)e.NewValue;
-    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).GWPS.IdlePollEnable = (bool)e.NewValue;
     #endregion DepPropsCB
 
     string attachedLogName = null;
     public UsrCntrlGWPS()
     {
-      InitializeComponent();
-
       GWPS = new GWPowerSupply();
-      GWPS.ConnectedToDevice += ConnectedToDevice;
-      GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
       if (attachedLogName == null) {
         Logger.Default.AttachLog(GWPS.DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
         attachedLogName = GWPS.DeviceName;
       }
+
+      InitializeComponent();
+
+      GWPS.ConnectedToDevice += ConnectedToDevice;
+      GWPS.DisconnectedFromDevice += KD_DisconnectedFromDevice;
+
+
 
       title.Text = GWPS.DeviceName;
 
@@ -179,41 +104,40 @@ namespace TEC_PID_Control.Controls
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += $">{e.Message}\n";
 
-    void KD_DisconnectedFromDevice(object sender, EventArgs e)
-    {
-      IsConnected = false;
-      //     circle.Fill = Brushes.LightGray;
-      //     circle.ToolTip = GWPS.State.ToString();
-    }
-
-    private void ConnectedToDevice(object sender, EventArgs e)
-    {
-      IsConnected = true;
-
-      //      circle.Fill = Brushes.LimeGreen;
-      //      circle.ToolTip = GWPS.State.ToString();
-    }
+    void KD_DisconnectedFromDevice(object sender, EventArgs e) => IsConnected = false;
+    void ConnectedToDevice(object sender, EventArgs e) => IsConnected = true;
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => GWPS.Disconnect();
     void bConnect_Click(object sender, RoutedEventArgs e) => ConnectCommand();
 
-    void UsrCntrlGWPS_Loaded(object sender, RoutedEventArgs e) => UpdateComboBox();
+    void UsrCntrlGWPS_Loaded(object sender, RoutedEventArgs e)
+    {
+      UpdateComboBox();
+
+      if (Settings.AutoConnect && !string.IsNullOrEmpty(Settings.Port)) {
+        try {
+          Logger.Default?.log($"Trying to automatically connect to GWI PS at port:" +
+            $"{Settings.Port}", Logger.Mode.NoAutoPoll, nameof(UsrCntrlGWPS));
+          ConnectCommand();
+        } catch (Exception ex) {
+          Logger.Default?.log("Error trying to automatically connect to GWI PS",
+            ex, Logger.Mode.Error, nameof(UsrCntrlGWPS));
+        }
+      }
+
+    }
+
     void UpdateComboBox()
     {
-      string oldport = SelectedPort;
+      string oldport = Settings.Port;
       cbPort.Items.Clear();
 
       foreach (string port in SerialPort.GetPortNames())
         cbPort.Items.Add(port);
 
-      if (!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
-        cbPort.SelectedItem = oldport;
-      else SelectedPort = "";
-    }
-    void cbPort_SelectionChanged(object s, EventArgs e)
-    {
-      string str = cbPort.SelectedItem as string;
-      if (!string.IsNullOrEmpty(str) && SelectedPort != str) SelectedPort = str;
+      if (!string.IsNullOrEmpty(oldport) && cbPort.Items.Contains(oldport))
+        Settings.Port = oldport;
+      else Settings.Port = "";
     }
 
     void cbPort_DropDownOpened(object sender, EventArgs e) => UpdateComboBox();
@@ -228,11 +152,11 @@ namespace TEC_PID_Control.Controls
 
     void bSetUp_Click(object s, RoutedEventArgs e) => SetUpCommand();
 
-    public void ConnectCommand() => GWPS.Connect(SelectedPort);
+    public void ConnectCommand() => GWPS.Connect(Settings.Port);
     public void SetUpCommand()
     {
-      GWPS.ScheduleSetV(OutputVoltage);
-      GWPS.ScheduleSetI(OutputCurrent);
+      GWPS.ScheduleSetV(Settings.OutputVoltage);
+      GWPS.ScheduleSetI(Settings.OutputCurrent);
     }
 
     void TbLog_TextChanged(object sender, TextChangedEventArgs e)
@@ -242,5 +166,18 @@ namespace TEC_PID_Control.Controls
         tb.Text = "<Log trimmed>" + tb.Text.Substring(tb.Text.IndexOf('\n', 1000));
       tb.ScrollToEnd();
     }
+
+    void Channel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      GWPS.Channel = (int)Settings.Channel;
+      title.Text = GWPS.DeviceName;
+
+      if (attachedLogName != null) Logger.Default.DetachLog(attachedLogName, AddToLog);
+
+      Logger.Default.AttachLog(GWPS.DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
+      attachedLogName = GWPS.DeviceName;
+    }
+
+    void AutoPoll_CheckedUnchecked(object o, RoutedEventArgs e) => GWPS.IdlePollEnable = Settings.AutoPoll;
   }
 }

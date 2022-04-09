@@ -10,7 +10,6 @@ using System.Windows.Threading;
 
 namespace TEC_PID_Control.PID
 {
-
   public interface IMeasureParameter
   {
     void Reset();
@@ -31,6 +30,7 @@ namespace TEC_PID_Control.PID
 namespace TEC_PID_Control.Controls
 {
   using Devices;
+  using System.ComponentModel.DataAnnotations;
   using TEC_PID_Control.PID;
   using TEC_PID_Control.Properties;
 
@@ -47,36 +47,12 @@ namespace TEC_PID_Control.Controls
     }
 
     #region DPBinding
-    public static readonly DependencyProperty IsExpandedProperty =
-        DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(true) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty IsLogExpandedProperty =
-        DependencyProperty.Register("IsLogExpanded", typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
+    public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(PIDSettings), typeof(UsrCntrlPID), new PropertyMetadata(PIDSettings.Default));
 
     public static readonly DependencyProperty SetPointProperty =
         DependencyProperty.Register(nameof(SetPoint), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, SetPointCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty CRateProperty =
-      DependencyProperty.Register(nameof(CRate), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, CRateCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty CtrlPProperty =
-        DependencyProperty.Register(nameof(CtrlP), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, CtrlPCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty CtrlIProperty =
-        DependencyProperty.Register(nameof(CtrlI), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, CtrlICB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty CtrlDProperty =
-        DependencyProperty.Register(nameof(CtrlD), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, CtrlDCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty MaxCtrlParProperty =
-    DependencyProperty.Register(nameof(MaxCtrlPar), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, MaxCtrlParCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty MinCtrlParProperty =
-        DependencyProperty.Register(nameof(MinCtrlPar), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, MinCtrlParCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty GlobalGainProperty =
-        DependencyProperty.Register(nameof(GlobalGain), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, GlobalGainCB) { BindsTwoWayByDefault = true });
-
-    public static readonly DependencyProperty TimeConstantProperty =
-        DependencyProperty.Register(nameof(TimeConstant), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, TimeConstantCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty MaxIntegralErrorProperty =
-        DependencyProperty.Register(nameof(MaxIntegralError), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, MaxIntegralErrorCB) { BindsTwoWayByDefault = true });
     public static readonly DependencyProperty IsControlEnabledProperty =
         DependencyProperty.Register(nameof(IsControlEnabled), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(false, IsControlEnabledCB) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty IsRampEnabledProperty =
-     DependencyProperty.Register(nameof(IsRampEnabled), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(false, IsRampEnabledCB) { BindsTwoWayByDefault = true });
 
     static readonly DependencyPropertyKey IsSetPointReachedKey =
      DependencyProperty.RegisterReadOnly(nameof(IsSPReached), typeof(bool), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(true, IsSetPointReachedCB));
@@ -89,12 +65,13 @@ namespace TEC_PID_Control.Controls
 
     #endregion DPBinding
     #region DPCallBacks
+    object setPointLock = new();
     static void SetPointCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
       var t = (UsrCntrlPID)o;
-      bool changed = false;
       double sp;
-      lock (t.RCCLock) {
+      bool changed = false;
+      lock (t.setPointLock) {
         sp = t.SetPoint;
         if (t.setPoint != sp) {
           t.setPoint = sp;
@@ -102,51 +79,7 @@ namespace TEC_PID_Control.Controls
         }
       }
       if (changed) Log($"SetPoint changed to {sp:N3} °C", Logger.Mode.NoAutoPoll);
-    }
-    static void CRateCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.cRate = t.CRate;
-    }
-    static void CtrlPCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.ctrlP = t.CtrlP;
-    }
-    static void CtrlICB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.ctrlI = t.CtrlI;
-    }
-    static void CtrlDCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.ctrlD = t.CtrlD;
-    }
-    static void MaxCtrlParCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.maxCtrlPar = t.MaxCtrlPar;
-    }
-    static void MinCtrlParCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.minCtrlPar = t.MinCtrlPar;
-    }
-    static void GlobalGainCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.globalGain = t.GlobalGain;
-    }
-    static void TimeConstantCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.timeConstant = t.TimeConstant;
-    }
-    static void MaxIntegralErrorCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      lock (t.RCCLock) t.maxIntegralError = t.MaxIntegralError;
+
     }
     static void IsControlEnabledCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
@@ -157,31 +90,20 @@ namespace TEC_PID_Control.Controls
       } else {
         t.State = (t.State | EState.Disabled) & ~(EState.Enabled | EState.ReachedSetpoint);
       }
-      lock (t.RCCLock) {
-        if (b) {
-          t.needInit = true;
-          Log($"PID Enabled", Logger.Mode.NoAutoPoll);
-          t.SetPointLostTime = DateTime.Now;
-        } else {
-          Log($"PID Disabled", Logger.Mode.NoAutoPoll);
-          t.IsSPReached = false;
-        }
-        t.isControlEnabled = t.IsControlEnabled;
+      if (b) {
+        t.needInit = true;
+        Log($"PID Enabled", Logger.Mode.NoAutoPoll);
+        t.SetPointLostTime = DateTime.Now;
+      } else {
+        Log($"PID Disabled", Logger.Mode.NoAutoPoll);
+        t.IsSPReached = false;
       }
+      t.isControlEnabled = t.IsControlEnabled;
 
       t.iM.ExpGoing = b;
       t.iC.ExpGoing = b;
+    }
 
-    }
-    static void IsRampEnabledCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
-    {
-      var t = (UsrCntrlPID)o;
-      bool b = t.IsRampEnabled;
-      lock (t.RCCLock) {
-        if (b) t.resetRamp = true;
-        t.isRampEnabled = b;
-      }
-    }
     static void IsSetPointReachedCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
       var t = (UsrCntrlPID)o;
@@ -210,78 +132,20 @@ namespace TEC_PID_Control.Controls
     }
     #endregion DPCallBacks
     #region DProperties
-    [Category("Appearance")]
-    public bool IsExpanded {
-      get { return (bool)GetValue(IsExpandedProperty); }
-      set { SetValue(IsExpandedProperty, value); }
-    }
-    [Category("Appearance")]
-    public bool IsLogExpanded {
-      get { return (bool)GetValue(IsLogExpandedProperty); }
-      set { SetValue(IsLogExpandedProperty, value); }
-    }
+    [Category("Common")]
+    public PIDSettings Settings { get => (PIDSettings)GetValue(SettingsProperty); set => SetValue(SettingsProperty, value); }
 
     [Category("PID")]
+    [Display(Name ="Set Point", Description = "Final SetPoint if Ramp is enabled")]
     public double SetPoint {
       get { return (double)GetValue(SetPointProperty); }
       set { SetValue(SetPointProperty, value); }
     }
     [Category("PID")]
-    public double CRate {
-      get { return (double)GetValue(CRateProperty); }
-      set { SetValue(CRateProperty, value); }
-    }
-    [Category("PID")]
-    public double CtrlP {
-      get { return (double)GetValue(CtrlPProperty); }
-      set { SetValue(CtrlPProperty, value); }
-    }
-    [Category("PID")]
-    public double CtrlI {
-      get { return (double)GetValue(CtrlIProperty); }
-      set { SetValue(CtrlIProperty, value); }
-    }
-    [Category("PID")]
-    public double CtrlD {
-      get { return (double)GetValue(CtrlDProperty); }
-      set { SetValue(CtrlDProperty, value); }
-    }
-    [Category("PID")]
-    public double MaxCtrlPar {
-      get { return (double)GetValue(MaxCtrlParProperty); }
-      set { SetValue(MaxCtrlParProperty, value); }
-    }
-    [Category("PID")]
-    public double MinCtrlPar {
-      get { return (double)GetValue(MinCtrlParProperty); }
-      set { SetValue(MinCtrlParProperty, value); }
-    }
-    [Category("PID")]
-    public double GlobalGain {
-      get { return (double)GetValue(GlobalGainProperty); }
-      set { SetValue(GlobalGainProperty, value); }
-    }
-    [Category("PID")]
-    public double TimeConstant {
-      get { return (double)GetValue(TimeConstantProperty); }
-      set { SetValue(TimeConstantProperty, value); }
-    }
-    [Category("PID")]
-    public double MaxIntegralError {
-      get { return (double)GetValue(MaxIntegralErrorProperty); }
-      set { SetValue(MaxIntegralErrorProperty, value); }
-    }
-
     public bool IsControlEnabled {
       get { return (bool)GetValue(IsControlEnabledProperty); }
       set { SetValue(IsControlEnabledProperty, value); }
     }
-    [Category("PID")]
-    public bool IsRampEnabled {
-      get { return (bool)GetValue(IsRampEnabledProperty); }
-      set { SetValue(IsRampEnabledProperty, value); }
-    }
-
     [Category("PID")]
     public bool IsSPReached {
       get { return (bool)GetValue(IsSetPointReachedProperty); }
@@ -321,14 +185,11 @@ namespace TEC_PID_Control.Controls
     public IMeasureParameter iM { get; set; }
     public IControlParameter iC { get; set; }
 
-    Thread thread;
+    readonly Thread thread;
     static Logger logger = null;
-
-    CancellationTokenSource CTS = new();
+    readonly CancellationTokenSource CTS = new();
 
     DateTime ControlIterationStamp;
-
-    object RCCLock = new();
 
     double ctrlP, ctrlI, ctrlD, globalGain, maxIntegralError, timeConstant;
     double setPoint, minCtrlPar, maxCtrlPar;
@@ -382,6 +243,8 @@ namespace TEC_PID_Control.Controls
               continue;
             }
 
+            CycleUpdateParameters();
+
             if (needInit) {
               needInit = false;
               try {
@@ -414,7 +277,8 @@ namespace TEC_PID_Control.Controls
             } else { numerrors = 0; }
 
             double tc;
-            lock (RCCLock) {
+
+            lock (setPointLock) {
               if (isRampEnabled) {
                 if (resetRamp) {
                   ImSetPoint = mp;
@@ -423,7 +287,6 @@ namespace TEC_PID_Control.Controls
                   dtm = 0.0;
                   resetRamp = false;
                 }
-
                 if (ImSetPoint > setPoint) {
                   ImSetPoint -= cRate * dtm;
                   if (ImSetPoint < setPoint) ImSetPoint = setPoint;
@@ -436,8 +299,8 @@ namespace TEC_PID_Control.Controls
                   lasterror = null;
                 ImSetPoint = setPoint;
               }
-              tc = timeConstant;
             }
+            tc = timeConstant;
 
             double error = mp - ImSetPoint;
             ierror += error * dtm;
@@ -467,6 +330,23 @@ namespace TEC_PID_Control.Controls
         Logger.Default.log("PID Thread Aborted", ae, Logger.Mode.Error, DeviceName);
       }
     }
+
+    void CycleUpdateParameters()
+    {
+      ctrlP = Settings.CtrlP;
+      ctrlI = Settings.CtrlI;
+      ctrlD = Settings.CtrlD;
+      globalGain = Settings.GlobalGain;
+      maxIntegralError = Settings.MaxIntegralError;
+      timeConstant = Settings.TimeConstant;
+      minCtrlPar = Settings.MinCtrlPar;
+      maxCtrlPar = Settings.MaxCtrlPar;
+      cRate = Settings.CRate;
+      bool newRE = Settings.RampEnable;
+      if (!isRampEnabled && newRE) resetRamp = true;
+      isRampEnabled = newRE;
+    }
+
     float pbandw = 0.0f, ibandw = 0.0f, dbandw = 0.0f;
     void OnCycleDispatcherUpdate()
     {
@@ -494,12 +374,12 @@ namespace TEC_PID_Control.Controls
           rDBandP.Rect = new Rect(0, 0, 0, 1);
           rDBandN.Rect = new Rect(1 + dbandw, 0, -dbandw, 1);
         }
-        double cp = (pbandw + ibandw + dbandw) * GlobalGain / MaxCtrlPar;
+        double cp = (pbandw + ibandw + dbandw) * globalGain / maxCtrlPar;
         rSetP.Rect = new Rect(0, 0, cp > 0 ? cp : 0, 1);
 
         UpdateWithDll();
         UpdateSetPointReached();
-      }catch(Exception e) {
+      } catch (Exception e) {
         DispatcherException = e;
         return;
       }
@@ -537,12 +417,9 @@ namespace TEC_PID_Control.Controls
     public event EventHandler<UpdateVIsEA> UpdateVIs;
     public void UpdateWithDll()
     {
-
       double sp = TECPIDdll.DLL.GetSetPointOncePerChange();
       if (!double.IsNaN(sp)) SetPoint = sp;
       TECPIDdll.DLL.SetTemperature(MeasureParameter);
-
-      var set = MainSettings.Default;
 
       TECPIDdll.DLL.GetVIOnce(1, out double v1, out double i1);
       TECPIDdll.DLL.GetVIOnce(2, out double v2, out double i2);
@@ -566,15 +443,14 @@ namespace TEC_PID_Control.Controls
 
       MeasureParameter = error + ImSetPoint;
 
-      lock (RCCLock) {
-        GUtils.Limit(ref errorint, -maxIntegralError * ctrlI, +maxIntegralError * ctrlI);
+      GUtils.Limit(ref errorint, -maxIntegralError * ctrlI, +maxIntegralError * ctrlI);
 
-        output = globalGain * /*Math.Sqrt*/(error / ctrlP + errorint / ctrlI + errorder / ctrlD);
-        pbandw = (float)(error / ctrlP);
-        ibandw = (float)(errorint / ctrlI);
-        dbandw = (float)(errorder / ctrlD);
-        GUtils.Limit(ref output, minCtrlPar, maxCtrlPar);
-      }
+      output = globalGain * /*Math.Sqrt*/(error / ctrlP + errorint / ctrlI + errorder / ctrlD);
+      pbandw = (float)(error / ctrlP);
+      ibandw = (float)(errorint / ctrlI);
+      dbandw = (float)(errorder / ctrlD);
+      GUtils.Limit(ref output, minCtrlPar, maxCtrlPar);
+
       ControlParameter = output;
       iC.Control(output);
     }
@@ -643,10 +519,9 @@ namespace TEC_PID_Control.Controls
       utbMP.Value = t;
       utbISP.Value = t;
 
-      lock (RCCLock) {
-        ImSetPoint = double.NaN;
-        resetRamp = true;
-      }
+      ImSetPoint = double.NaN;
+      resetRamp = true;
+
     }
     public class UpdateVIsEA : EventArgs
     {

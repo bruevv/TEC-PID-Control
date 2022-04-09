@@ -1,9 +1,0 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TEC_PID_Control.Properties" GeneratedClassName="Interface">
-  <Profiles />
-  <Settings>
-    <Setting Name="PIDCRUnit" Type="System.String" Scope="User">
-      <Value Profile="(Default)">TemperatureCPerS:C/s</Value>
-    </Setting>
-  </Settings>
-</SettingsFile>

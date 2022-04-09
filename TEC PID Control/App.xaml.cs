@@ -1,9 +1,11 @@
 ﻿using CSUtils;
 using System;
+using System.Configuration;
 using System.Globalization;
 using System.Reflection;
 using System.Threading;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using TEC_PID_Control.Properties;
 
@@ -17,6 +19,12 @@ namespace TEC_PID_Control
     const string AppGuid = "63580DDD-8C2F-46ED-8A87-C5111FD7511E";
     public string Version { get; private set; } = null;
 
+    Settings Sets;
+
+
+    public static ApplicationSettingsBase[] SettingsList;
+    //  public static new App Current => (App)Application.Current;
+
 #if DEBUG
     public bool IsDebugMode => true;
 #else
@@ -29,34 +37,26 @@ namespace TEC_PID_Control
       DispatcherUnhandledException += App_DispatcherUnhandledException;
       if (!mutex_AppGuid.WaitOne(0, false)) throw new Exception("Instance already running");
 
+      try {
+        Sets = Settings.Instance;
+      } catch {
+      }
+
+
       // ClickOnce-Related
       //if (ApplicationDeployment.IsNetworkDeployed) {
       //  Version = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
       //} else {
-      Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-      if (Settings.Default.UpgradeRequired) {
-        try {
-          Settings.Default.Upgrade();
-          MainSettings.Default.Upgrade();
-          PIDSettings.Default.Upgrade();
-          Interface.Default.Upgrade();
-        } catch {
-          Settings.Default.Reset();
-          MainSettings.Default.Reset();
-          PIDSettings.Default.Reset();
-          Interface.Default.Reset();
-        }
-        Settings.Default.UpgradeRequired = false;
-      }
-      //}
+      Version = Assembly.GetExecutingAssembly().GetName().Version.ToString() 
+        + (IsDebugMode ? " - debug" : "");
 
-      MainSettings.Default.LogMode = Logger.Mode.NoAutoPoll;
+      //}
 
       CultureInfo ci = (CultureInfo)CultureInfo.InvariantCulture.Clone();
       ci.NumberFormat.NumberGroupSeparator = "";
       CultureInfo.CurrentCulture = ci;
       try {
-        logger = new Logger(MainSettings.Default.LogFile, MainSettings.Default.LogMode);
+        logger = new Logger(Settings.Instance.LogFile, Sets.LogMode);
       } catch (Exception ex) {
         MessageBox.Show(ex.Message, "Cannot Start Log");
         logger = null;
@@ -73,10 +73,8 @@ namespace TEC_PID_Control
       logger?.log($"Application Closing", Logger.Mode.LogState);
       logger?.Dispose();
 
-      Settings.Default.Save();
-      MainSettings.Default.Save();
-      PIDSettings.Default.Save();
-      Interface.Default.Save();
+      Settings.Instance.FirstRun = false;
+      Settings.Instance.Save();
 
       mutex_AppGuid.Dispose();
 
@@ -97,6 +95,14 @@ namespace TEC_PID_Control
         $"See Log File for Details\n{Logger.Default.FileName}",
         "Error - Application terminated");
       });
+    }
+
+    void SetupApplicationCommands()
+    {
+      ApplicationCommands.Open.InputGestures.Clear();
+      ApplicationCommands.Open.InputGestures.Add(new KeyGesture(Key.L, ModifierKeys.Control));
+      ApplicationCommands.Open.Text = "Load Settings...";
+      ApplicationCommands.Save.Text = "Save Settings...";
     }
   }
 }

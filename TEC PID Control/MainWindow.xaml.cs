@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace TEC_PID_Control
@@ -9,9 +12,9 @@ namespace TEC_PID_Control
   using CustomWindows;
   using Devices.GWI;
   using Devices.Keithley;
-  using System.Diagnostics;
   using TEC_PID_Control.Controls;
-  using TEC_PID_Control.PID;
+  using TEC_PID_Control.Properties;
+  using WPFUtils.Adorners;
 
   public partial class MainWindow : SimpleToolWindow
   {
@@ -19,16 +22,32 @@ namespace TEC_PID_Control
     public GWPowerSupply GWPS;
 
     TempSensor TC;
+
+    //    _Settings Sets = _Settings.Instance;
+
     public MainWindow()
     {
-      var logger = Logger.Default;
-
+      Logger logger = null;
       try {
+        logger = Logger.Default;
+
+        ToolTipService.ShowDurationProperty.OverrideMetadata(typeof(DependencyObject),
+          new FrameworkPropertyMetadata(20000));
+        ToolTipService.PlacementProperty.OverrideMetadata(typeof(DependencyObject),
+          new FrameworkPropertyMetadata(PlacementMode.Top));
+
         InitializeComponent();
 
         Dispatcher.ShutdownStarted += (o, e) => usrCntrlPID.Dispose();
 
         logger?.AttachLog(null, AddToLog, Logger.Mode.NoAutoPoll);
+
+        UpdateSettings();
+
+        SimpleCircleAdorner.ShowHelpMarkers = () => Settings.Instance.ShowHelpMarkers;
+        SimpleCircleAdorner.IconBrush = (System.Windows.Media.Brush)FindResource("InfoIcon");
+
+        EnableHelpMarkerAdorners();
 
         KD = usrCntrlK2400.KD;
         GWPS = usrCntrlGWPS.GWPS;
@@ -42,22 +61,18 @@ namespace TEC_PID_Control
         usrCntrlK2400.MeasurementCompleted += K2400_MC;
         usrCntrlPID.UpdateVIs += DllUpdateVIs;
 
-        logger?.log($"Trying to automatically connect to following devices:\n" +
-                    $"Keithley 2400 Port:<{usrCntrlK2400.SelectedPort}>\n" +
-                    $"GWI Power Supply Port:<{usrCntrlGWPS.SelectedPort}>",
-                    Logger.Mode.AppState, "APP");
-        try {
-          usrCntrlK2400.ConnectCommand();
-          usrCntrlGWPS.ConnectCommand();
-        } catch (Exception e) {
-          logger?.log("Error trying to automatically connect",
-            e, Logger.Mode.Error, "APP");
-        }
       } catch (Exception e) {
         logger?.log("Error Loading Application", e, Logger.Mode.Error, "APP");
-        MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger.FileName}\n\nfor details", "Error");
+        MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger?.FileName ?? "<N/A>"}\n\nfor details", "Error");
         Application.Current.Shutdown();
+        //  Application.Current.Shutdown();
       }
+    }
+
+    void EnableHelpMarkerAdorners()
+    {
+      SimpleCircleAdorner.AddToAllChilderenWithTooltip<TextBlock>(this);
+      SimpleCircleAdorner.AddToAllChilderenWithTooltip<ToggleButton>(this);
     }
 
     void DllUpdateVIs(object sender, UsrCntrlPID.UpdateVIsEA e)
@@ -66,22 +81,22 @@ namespace TEC_PID_Control
       foreach (var ucg in ucga) {
         if (ucg.GWPS.IsControlled) continue;
 
-        if (ucg.Channel == 1) {
+        if (ucg.Settings.Channel == GWPSChannel.A) {
           if (e.V1 is double v1) {
-            ucg.OutputVoltage = v1;
+            ucg.Settings.OutputVoltage = v1;
             ucg.GWPS.ScheduleSetV(v1);
           }
           if (e.I1 is double i1) {
-            ucg.OutputVoltage = i1;
+            ucg.Settings.OutputVoltage = i1;
             ucg.GWPS.ScheduleSetI(i1);
           }
-        } else if (ucg.Channel == 2) {
+        } else if (ucg.Settings.Channel == GWPSChannel.B) {
           if (e.V2 is double v2) {
-            ucg.OutputVoltage = v2;
+            ucg.Settings.OutputVoltage = v2;
             ucg.GWPS.ScheduleSetV(v2);
           }
           if (e.I2 is double i2) {
-            ucg.OutputVoltage = i2;
+            ucg.Settings.OutputVoltage = i2;
             ucg.GWPS.ScheduleSetI(i2);
           }
         }
@@ -125,13 +140,13 @@ namespace TEC_PID_Control
     {
       ProcessStartInfo psi;
       try {
-        var rk = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+        RegistryKey rk = Registry.LocalMachine.OpenSubKey(
           @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\notepad++.exe");
-        rk ??= Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+        rk ??= Registry.LocalMachine.OpenSubKey(
           @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\notepad++.exe");
         if (rk?.GetValue("") is string path) {
           psi = new(path, $"-n999999 \"{Logger.Default.FileName}\"");
-          var p = Process.Start(psi);
+          Process p = Process.Start(psi);
         } else throw new InvalidOperationException();
       } catch {
         try {
@@ -143,6 +158,52 @@ namespace TEC_PID_Control
       }
     }
 
+    void SaveSettings(object sender, RoutedEventArgs e)
+    {
+      SaveFileDialog saveDialog = new() {
+        AddExtension = true,
+        Filter = "Settings (.settings) | *.settings",
+        CheckPathExists = true,
+        OverwritePrompt = true,
+        DefaultExt = ".settings",
+        ValidateNames = true,
+        FileName = DateTime.Today.ToString("yy.MM.dd"),
+      };
+      bool? res = saveDialog.ShowDialog(this);
+
+      if (res == true) Settings.Instance.Save(saveDialog.FileName);
+    }
+
+    private void LoadSettings(object sender, ExecutedRoutedEventArgs e)
+    {
+      OpenFileDialog openDialog = new() {
+        Filter = "Settings (.settings) | *.settings",
+        CheckPathExists = true,
+        DefaultExt = ".settings",
+        ValidateNames = true
+      };
+      bool? res = openDialog.ShowDialog(this);
+
+      if (res == true) Settings.Instance.Load(openDialog.FileName);
+    }
+
+    void Exit(object sender, ExecutedRoutedEventArgs e) => Close();
+
+    void RefreshInterface(object s, RoutedEventArgs e) => SimpleCircleAdorner.RefreshAllSCA();
+
+    void EditSettings(object s, ExecutedRoutedEventArgs e)
+    {
+      EditProperties ep = new(Settings.Instance, Settings.Default);
+      ep.Owner = this;
+      ep.ShowDialog();
+      Settings.Instance.Save();
+      UpdateSettings();
+      RefreshInterface(s, e);
+    }
+    void UpdateSettings()
+    {
+      SimpleCircleAdorner.InactiveOppacity = Settings.Instance.Interface.HelpMarkersOpacity;
+    }
 
     //async void Set_Voltage_Click(object sender, RoutedEventArgs e)
     //{

@@ -129,23 +129,11 @@ namespace ThreadQueuing
         return null;
     }
     public object Owner { get; } = null;
-    // TODO make isolated enumerator
     List<object> userObjects = new List<object>();
     public IEnumerable<object> UserObjects {
       get { foreach (object o in userObjects) { yield return o; } }
     }
     public string Name { get; }
-    /*TODO public ThreadQueue ChangeNameOrThis(string newname)
-     {
-       if(name == newname) return this;
-
-       if(insts.ContainsKey(value))
-         throw new Exception("ThreadQueue with this name already exists");
-       if(UserObjects.)
-         insts.Remove(name);
-       name = value;
-       insts.Add(name, this);
-     }*/
 
     /// <summary> Find the ThreadQueue with the same name or create new </summary>
     /// <param name="threadInit">Only runs if new ThreadQueue is created</param>

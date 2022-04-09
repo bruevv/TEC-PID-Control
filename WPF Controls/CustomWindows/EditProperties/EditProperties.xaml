@@ -1,0 +1,239 @@
+﻿<cw:SimpleToolWindow x:Name="simpleToolWindow"
+                     x:Class="CustomWindows.EditProperties"
+                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:cw="clr-namespace:CustomWindows"
+                     xmlns:s="clr-namespace:System;assembly=mscorlib"
+                     xmlns:i="clr-namespace:CustomWindows.InternalClasses"
+                     xmlns:wc="clr-namespace:WPFControls;assembly=WPFUtils"
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                     xmlns:w="clr-namespace:WPFUtils;assembly=WPFUtils"
+                     Title="EditProperties" Height="600" Width="625" MinWidth="410" MinHeight="250"
+                     mc:Ignorable="d"
+                     Background="Black" ShowInTaskbar="False" Foreground="White"
+                     MinimizeButtonVisible="False">
+  <cw:SimpleToolWindow.Resources>
+    <!--<w:VisibilityConverter FalseVisibility="Collapsed" x:Key="VisibilityConverter"/>-->
+    <Style TargetType="wc:DoubleTextBox">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="NormalBackground" Value="Black"/>
+      <Setter Property="ErrorBackground" Value ="#FF350000"/>
+      <Setter Property="CorrectBackground" Value ="#FF083500"/>
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+    </Style>
+    <Style TargetType="wc:UnitTextBox">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="NormalBackground" Value="Black"/>
+      <Setter Property="ErrorBackground" Value ="#FF350000"/>
+      <Setter Property="CorrectBackground" Value ="#FF083500"/>
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+    </Style>
+    <Style TargetType="wc:IntTextBox">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="NormalBackground" Value="Black"/>
+      <Setter Property="ErrorBackground" Value ="#FF350000"/>
+      <Setter Property="CorrectBackground" Value ="#FF083500"/>
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+    </Style>
+    <Style TargetType="TextBox">
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="Black"/>
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+    </Style>
+    <Style TargetType="CheckBox">
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <DataTemplate x:Key="StringTemplate" DataType="{x:Type i:PropertyEntry}">
+      <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" 
+               Width="235" Tag="{Binding}" GotFocus="EditE_GotFocus"/>
+    </DataTemplate>
+    <DataTemplate x:Key="DoubleTemplate" DataType="{x:Type i:PropertyEntry}">
+      <wc:DoubleTextBox Value="{Binding Value}" Width="150" GotFocus="EditE_GotFocus"
+                        MinValue="{Binding MinValue, TargetNullValue={x:Static s:Double.NaN}}"
+                        MaxValue="{Binding MaxValue, TargetNullValue={x:Static s:Double.NaN}}"
+                        Tag="{Binding}" ValueFormat="N7" />
+    </DataTemplate>
+    <DataTemplate x:Key="UnitBoxTemplate" DataType="{x:Type i:PropertyEntry}">
+      <wc:UnitTextBox Value="{Binding Value}" Unit="{Binding Unit, Mode=OneTime}"
+                      Width="150" Tag="{Binding}" GotFocus="EditE_GotFocus" 
+                      MinValue="{Binding MinValue, TargetNullValue={x:Static s:Double.NaN}}"
+                      MaxValue="{Binding MaxValue, TargetNullValue={x:Static s:Double.NaN}}" 
+                      ValueFormat="{Binding Format, TargetNullValue=N7, Mode=OneTime}" />
+    </DataTemplate>
+    <DataTemplate x:Key="IntTemplate" DataType="{x:Type i:PropertyEntry}">
+      <wc:IntTextBox Value="{Binding Value}" Width="150" Tag="{Binding}" GotFocus="EditE_GotFocus" 
+                     MinValue="{Binding MinValue, TargetNullValue={x:Static s:Int32.MinValue}}"
+                     MaxValue="{Binding MaxValue, TargetNullValue={x:Static s:Int32.MaxValue}}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="UnitClassTemplate" DataType="{x:Type i:PropertyEntry}">
+      <ComboBox SelectedItem="{Binding Value}" ItemsSource="{Binding Unit.AllUniqueVariants}"
+                MinWidth="150" Tag="{Binding}" GotFocus="EditE_GotFocus"/>
+    </DataTemplate>
+    <DataTemplate x:Key="BoolTemplate" DataType="{x:Type i:PropertyEntry}">
+      <CheckBox IsChecked="{Binding Value}" MinWidth="150" Tag="{Binding}" GotFocus="EditE_GotFocus">
+        <TextBlock  x:Name="cbTB" Text="{Binding Name}"/>
+      </CheckBox>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding HasChanged}" Value="True">
+          <Setter TargetName="cbTB" Property="TextDecorations" Value="Underline"/>
+          <Setter TargetName="cbTB" Property="Foreground" Value="Pink"/>
+          <Setter TargetName="cbTB" Property="ToolTip" Value="This property has been modified"/>
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+    <DataTemplate x:Key="EnumTemplate" DataType="{x:Type i:PropertyEntry}">
+      <ComboBox SelectedItem="{Binding EnumValue}" ItemsSource="{Binding EnumValue.EnumDecorations}"
+                Width="150" Tag="{Binding}" GotFocus="EditE_GotFocus" HorizontalContentAlignment="Stretch">
+        <ComboBox.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding Name}" ToolTip="{Binding Description}" ToolTipService.Placement="Top"/>
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+    </DataTemplate>
+    <i:PropertyTypeSelector x:Key="PropertyTypeSelector"
+                            StringTemplate="{StaticResource StringTemplate}"
+                            DoubleTemplate="{StaticResource DoubleTemplate}"
+                            UnitBoxTemplate="{StaticResource UnitBoxTemplate}"
+                            BoolTemplate="{StaticResource BoolTemplate}"
+                            EnumTemplate="{StaticResource EnumTemplate}"
+                            UnitClassTemplate="{StaticResource UnitClassTemplate}"
+                            IntTemplate="{StaticResource IntTemplate}"/>
+    <HierarchicalDataTemplate DataType="{x:Type i:PropertyBundle}"                           
+                              ItemsSource="{Binding PropertyBundles}">
+      <TextBlock Text="{Binding BundleName}" 
+                 ToolTip="{Binding BundleDescription}" ToolTipService.Placement="Top"/>
+    </HierarchicalDataTemplate>
+    <HierarchicalDataTemplate DataType="{x:Type i:PropertyCollection}">
+      <TextBlock Text="General"/>
+    </HierarchicalDataTemplate>
+    <RoutedUICommand x:Key="UndoAllChanges" Text="_Undo Changes" />
+    <RoutedUICommand x:Key="UndoChange" Text="_Undo Change" />
+    <RoutedUICommand x:Key="RevertAllToDefault" Text="_Restore Defaults" />
+    <RoutedUICommand x:Key="RevertToDefault" Text="_Restore Default" />
+    <RoutedUICommand x:Key="ApplyChange" Text="_Apply Change" />
+  </cw:SimpleToolWindow.Resources>
+  <cw:SimpleToolWindow.CommandBindings>
+    <CommandBinding Command="ApplicationCommands.Save" 
+                    Executed="SaveExecuted" CanExecute="SaveCanExecute"/>
+    <CommandBinding Command="ApplicationCommands.Close" Executed="CloseExecuted"/>
+    <CommandBinding Command="{StaticResource UndoAllChanges}" CanExecute="SaveCanExecute" 
+                    Executed="UndoAllExecuted"/>
+    <CommandBinding Command="{StaticResource RevertAllToDefault}" Executed="RevertAllExecuted"/>
+    <CommandBinding Command="{StaticResource UndoChange}" Executed="UndoChangeExecuted"
+                    CanExecute="PropertyChangedCE" />
+    <CommandBinding Command="{StaticResource ApplyChange}" Executed="ApplyExecuted"
+                    CanExecute="PropertyChangedCE" />
+    <CommandBinding Command="{StaticResource RevertToDefault}" Executed="RevertExecuted"
+                    CanExecute="PropertyNotDefaultCE" />
+  </cw:SimpleToolWindow.CommandBindings>
+  <cw:SimpleToolWindow.InputBindings>
+    <KeyBinding Command="ApplicationCommands.Save" Gesture="Ctrl+S"/>
+    <KeyBinding Command="ApplicationCommands.Close" Gesture="Esc"/>
+  </cw:SimpleToolWindow.InputBindings>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" MinWidth="110"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <TreeView x:Name="treeView" Grid.Row="0" Grid.Column="0"
+              Background="#FF3E3232" Foreground="White" BorderBrush="Black" 
+              HorizontalContentAlignment="Stretch">
+      <TreeView.ItemContainerStyle>
+        <Style TargetType="TreeViewItem" BasedOn="{StaticResource DarkTreeViewItem}">
+          <!--<Style.Triggers>
+            <DataTrigger Binding="{Binding Path=BundleName}" Value="PID">
+              <Setter Property="Foreground" Value="Red" />
+            </DataTrigger>
+          </Style.Triggers>-->
+        </Style>
+      </TreeView.ItemContainerStyle>
+    </TreeView>
+    <ListBox x:Name="listBox" Grid.Row="0" Grid.Column="1"
+             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+             ItemsSource="{Binding ElementName=treeView, Path=SelectedItem.Properties}"
+             Background="#FF32323E" Foreground="White" BorderBrush="Black"
+             IsTextSearchEnabled="True" TextSearch.TextPath="Name">
+      <ListBox.ContextMenu>
+        <ContextMenu>
+          <MenuItem Command="{StaticResource ApplyChange}"/>
+          <MenuItem Command="{StaticResource UndoChange}"/>
+          <MenuItem Command="{StaticResource RevertToDefault}"/>
+        </ContextMenu>
+      </ListBox.ContextMenu>
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <WrapPanel>
+            <TextBlock x:Name="tbName" Text="{Binding Name,StringFormat={}{0}: }" Width="150"
+                       Foreground="White" />
+            <ContentPresenter ContentTemplateSelector="{StaticResource PropertyTypeSelector}"
+                              MinWidth="75"/>
+          </WrapPanel>
+          <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Type}" Value="{x:Type s:Boolean}">
+              <Setter TargetName="tbName" Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HasChanged}" Value="True">
+              <Setter TargetName="tbName" Property="TextDecorations" Value="Underline"/>
+              <Setter TargetName="tbName" Property="Foreground" Value="Pink"/>
+              <Setter TargetName="tbName" Property="ToolTip" Value="This property has been modified"/>
+            </DataTrigger>
+          </DataTemplate.Triggers>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+    <GroupBox x:Name="descBox" Header="Description" Grid.ColumnSpan="2" Grid.Row="1" Height="71" 
+              BorderThickness="0.5">
+      <StackPanel>
+        <StackPanel.Resources>
+          <w:VisibilityConverter x:Key="VC1" FalseVisibility="Visible" TrueVisibility="Collapsed"/>
+          <w:VisibilityConverter x:Key="VC2" FalseVisibility="Collapsed" TrueVisibility="Visible"/>
+        </StackPanel.Resources>
+        <TextBlock Text="{Binding ElementName=listBox, Path=SelectedItem.Description}"
+                   ToolTip="{Binding ElementName=listBox, Path=SelectedItem.Description}"
+                   TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" MaxHeight="32"
+                   Visibility="{Binding ElementName=listBox, Path=SelectedItem, Converter={StaticResource VC2}}"/>
+        <TextBlock Text="{Binding ElementName=treeView, Path=SelectedItem.BundleDescription}"
+                   TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" MaxHeight="32"
+                   Visibility="{Binding ElementName=listBox, Path=SelectedItem, Converter={StaticResource VC1}}"/>
+        <TextBlock Visibility="{Binding ElementName=listBox, Path=SelectedItem, Converter={StaticResource VC2}}">
+          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.DefaultValue, TargetNullValue={x:Static s:String.Empty},
+                     Mode=OneWay, StringFormat='Default: &quot;{0}&quot;'}"/>
+          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.MinValue, TargetNullValue='',
+                     Mode=OneWay, StringFormat=' Min: &quot;{0}&quot;'}"/>
+          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.MaxValue, TargetNullValue={x:Static s:String.Empty},
+                     Mode=OneWay, StringFormat=' Max: &quot;{0}&quot;'}"/>
+        </TextBlock>
+      </StackPanel>
+    </GroupBox>
+    <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0,13,0" LastChildFill="False">
+      <Button DockPanel.Dock="Right" Width="50" Content="_Close" Command="ApplicationCommands.Close"/>
+      <Rectangle DockPanel.Dock="Right" Width="1" Fill="White" Margin="2,0,2,0"/>
+      <Button DockPanel.Dock="Right" Width="50" Content="_Apply" Command="ApplicationCommands.Save"/>
+      <Button DockPanel.Dock="Right" Width="105" Content="_Undo All Changes"  
+              Command="{StaticResource UndoAllChanges}" HorizontalContentAlignment="Left"/>
+      <Button DockPanel.Dock="Right" Content="Revert All to _Default" 
+              Command="{StaticResource RevertAllToDefault}" Padding="5,0"/>
+      <ToggleButton DockPanel.Dock="Left" Content="Show All Menus"
+                    Margin="2" Padding="5,0"
+                    IsChecked="{Binding ShowAllMenus}" Visibility="Collapsed"/>
+      <ToggleButton DockPanel.Dock="Left" Content="Show All Properties"
+                    Margin="2" Padding="5,0"  Visibility="Collapsed"
+                    IsChecked="{Binding ShowAllProperties}"/>
+    </DockPanel>
+  </Grid>
+</cw:SimpleToolWindow>

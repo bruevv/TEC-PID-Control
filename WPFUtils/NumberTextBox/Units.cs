@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace WPFControls
@@ -11,11 +14,14 @@ namespace WPFControls
   using static WPFControls;
 
   [TypeConverter(typeof(UnitToStringConverter))]
-  public abstract class Unit : IEnumerable<string>
+  public abstract class Unit : IXmlSerializable
   {
+    public static Unit NoUnit => global::WPFControls.NoUnit.Default;
+    public bool IsUnit => GetType() != typeof(NoUnit);
     public static Unit FromType(Type utype, string des = null)
     {
-      if(des == null) {
+      if (utype == typeof(NoUnit)) return NoUnit;
+      if (des == null) {
         ConstructorInfo ci = utype.GetConstructor(new Type[] { });
         return (Unit)ci.Invoke(new object[] { });
 
@@ -27,7 +33,7 @@ namespace WPFControls
     static UnitToStringConverter utsc = null;
     public static Unit FromString(string des)
     {
-      if(utsc == null) utsc = new UnitToStringConverter();
+      utsc ??= new();
       return (Unit)utsc.ConvertFromString(des);
     }
 
@@ -36,7 +42,7 @@ namespace WPFControls
     /// <summary>
     /// The one should have value of "1"
     /// </summary>
-    protected abstract string Invariant { get; }
+    internal protected abstract string Invariant { get; }
 
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Category("Common")]
@@ -60,16 +66,34 @@ namespace WPFControls
     [EditorBrowsable(EditorBrowsableState.Never)]
     public double DefVal { get; protected set; }
 
-    protected abstract Dictionary<string, double> dic { get; }
+    internal protected abstract Dictionary<string, double> dic { get; }
 
-    public IEnumerator<string> GetEnumerator() => dic.Keys.GetEnumerator();
-    IEnumerator IEnumerable.GetEnumerator() => dic.Keys.GetEnumerator();
+    public IEnumerator<string> GetEnumerator() => dic?.Keys?.GetEnumerator();
 
+    public IEnumerable<Unit> AllUniqueVariants => GetAllUniqueVariants(true);
+    IEnumerable<Unit> GetAllUniqueVariants(bool incOther = false)
+    {
+      if (!IsUnit) yield break;
+      double? d = null;
+      foreach (string udes in this) {
+        double nd = this[udes];
+        if (nd != d) {
+          d = nd;
+          yield return Copy(udes);
+        }
+      }
+      if (incOther) {
+        if (HasConverters == null) InitUnitsToConvertFrom();
+        foreach (Unit ou in UnipPairs[GetType()]) {
+          foreach (Unit oudes in ou.GetAllUniqueVariants()) yield return oudes;
+        }
+      }
+    }
     public double this[string s] => dic[s];
     public string this[double d] {
       get {
-        foreach(var item in dic) {
-          if(item.Value == d) return item.Key;
+        foreach (var item in dic) {
+          if (item.Value == d) return item.Key;
         }
         return null;
       }
@@ -80,6 +104,7 @@ namespace WPFControls
 
     protected Unit()
     {
+      if (GetType() == typeof(NoUnit)) return;
       defid = Invariant;
       DefVal = dic[defid];
     }
@@ -89,7 +114,7 @@ namespace WPFControls
       try {
         defid = this[this[def]];
         DefVal = dic[defid];
-      } catch(KeyNotFoundException e) {
+      } catch (KeyNotFoundException e) {
         throw new ArgumentException("Wrong Default Designator", e);
       }
     }
@@ -131,7 +156,7 @@ namespace WPFControls
 
     static bool? CheckConverters(Type to)
     {
-      if(!UnipPairs.ContainsKey(to)) return null;
+      if (!UnipPairs.ContainsKey(to)) return null;
       return UnipPairs[to].Count != 0;
     }
 
@@ -144,7 +169,7 @@ namespace WPFControls
 
       var atrs = to.GetCustomAttributes(typeof(ConvertsFromAttribute));
 
-      foreach(ConvertsFromAttribute atr in atrs) {
+      foreach (ConvertsFromAttribute atr in atrs) {
         Type from = atr.Unit;
         UnipPairs[to].Add(GetDefaulUnit(from));
         MethodInfo mi = to.GetMethod(atr.CName);
@@ -154,12 +179,13 @@ namespace WPFControls
     }
     string ConvertOwnUnits(string ExpWithUnits)
     {
+      if (!IsUnit) return ExpWithUnits;
       string unitp = "";
-      foreach(string u in this) {
-        if(ExpWithUnits.EndsWith(u) && u.Length > unitp.Length)
+      foreach (string u in this) {
+        if (ExpWithUnits.EndsWith(u) && u.Length > unitp.Length)
           unitp = u;
       }
-      if(unitp != "") {
+      if (unitp != "") {
         string sout = ExpWithUnits.Substring(0, ExpWithUnits.LastIndexOf(unitp));
         return $"{sout}*{ConvertToInvariant(this[unitp]):R}";
       }
@@ -170,16 +196,16 @@ namespace WPFControls
     {
       Unit unit = null;
       string unitp = "";
-      if(HasConverters == null) InitUnitsToConvertFrom();
-      foreach(Unit unitfrom in UnipPairs[this.GetType()]) {
-        foreach(string u in unitfrom) {
-          if(ExpWithUnits.EndsWith(u) && u.Length > unitp.Length) {
+      if (HasConverters == null) InitUnitsToConvertFrom();
+      foreach (Unit unitfrom in UnipPairs[this.GetType()]) {
+        foreach (string u in unitfrom) {
+          if (ExpWithUnits.EndsWith(u) && u.Length > unitp.Length) {
             unitp = u;
             unit = unitfrom;
           }
         }
       }
-      if(unitp != "") {
+      if (unitp != "") {
         string sout = unit.FormatUnit(ExpWithUnits);
         Converter c = Converters[new UnitPair(unit.GetType(), this.GetType())];
         double res = c(mathParser.Parse(sout));
@@ -190,21 +216,23 @@ namespace WPFControls
 
     public double ConvertFromOtherUnits(double val, Type other)
     {
-      if(HasConverters == null) InitUnitsToConvertFrom();
+      if (!IsUnit) return val;
+      if (HasConverters == null) InitUnitsToConvertFrom();
       UnitPair up = new UnitPair(other, this.GetType());
       try {
         return Converters[up].Invoke(ConvertFromInvariant(val));
-      } catch(KeyNotFoundException e) {
-        throw new Exception($"No conversion exists from {other} to {this.GetType()}", e);
+      } catch (KeyNotFoundException e) {
+        throw new Exception($"No conversion exists from {other} to {GetType()}", e);
       }
     }
     public double ConvertToOtherUnits(double val, Type other)
     {
-      if(CheckConverters(other) == null) InitUnitsToConvertFrom(other);
+      if (!IsUnit) return val;
+      if (CheckConverters(other) == null) InitUnitsToConvertFrom(other);
       UnitPair up = new UnitPair(this.GetType(), other);
       try {
         return ConvertToInvariant(Converters[up].Invoke(val));
-      } catch(KeyNotFoundException e) {
+      } catch (KeyNotFoundException e) {
         throw new Exception($"No conversion exists to {other} from {this.GetType()}", e);
       }
     }
@@ -217,15 +245,15 @@ namespace WPFControls
       ExpWithUnits = ExpWithUnits.TrimEnd();
       string sout;
       sout = ConvertOwnUnits(ExpWithUnits);
-      if(sout != null) return sout;
+      if (sout != null) return sout;
       sout = ConvertOtherUnits(ExpWithUnits);
-      if(sout != null) return sout;
+      if (sout != null) return sout;
       return ExpWithUnits;
     }
     public string UnFormat(string ExpWithoutUnits, string u = null)
     {
-      if(string.IsNullOrEmpty(u)) u = defid;
-      if(ExpWithoutUnits == "NaN") return "NaN";
+      if (string.IsNullOrEmpty(u)) u = defid;
+      if (ExpWithoutUnits == "NaN") return "NaN";
       else return $"{ExpWithoutUnits} {u}";
     }
 
@@ -241,13 +269,28 @@ namespace WPFControls
     public override int GetHashCode()
     {
       var hashCode = 290876591;
-      hashCode = hashCode * -1521134295 + defid.GetHashCode();
-      hashCode = hashCode * -1521134295 + Name.GetHashCode();
+      hashCode = hashCode * -1521134295 + defid?.GetHashCode() ?? 94838190;
+      hashCode = hashCode * -1521134295 + Name?.GetHashCode() ?? 402570209;
       return hashCode;
     }
 
+    public XmlSchema GetSchema() => null;
+    public void ReadXml(XmlReader reader) => throw new NotImplementedException();
+    public void WriteXml(XmlWriter writer) => writer.WriteString(ToString());
+
     public static bool operator ==(Unit unit1, Unit unit2) => EqualityComparer<Unit>.Default.Equals(unit1, unit2);
     public static bool operator !=(Unit unit1, Unit unit2) => !(unit1 == unit2);
+  }
+
+  [Designators("NoUnit")]
+  public class NoUnit : Unit
+  {
+    public static readonly NoUnit Default = new NoUnit();
+
+    private NoUnit() : base() { }
+
+    internal protected override string Invariant => "";
+    internal protected override Dictionary<string, double> dic => null;
   }
   [AttributeUsage(AttributeTargets.Class)]
   internal class DesignatorsAttribute : Attribute
@@ -273,83 +316,80 @@ namespace WPFControls
 
   public class UnitBoxAttribute : Attribute
   {
-    public Type Unit { get; }
-    public string Designator;
-    public double MinValue;
-    public double MaxValue;
+    public Type Unit { get; init; }
+    public string Designator { get; init; }
+    public double MinValue { get; init; }
+    public double MaxValue { get; init; }
+    public string Format { get; init; }
 
     public UnitBoxAttribute(Type unit, string designator,
-      double min = double.MinValue, double max = double.MaxValue)
+      double min = double.MinValue, double max = double.MaxValue, string format = null)
     {
       Unit = unit;
       Designator = designator;
       MinValue = min;
       MaxValue = max;
+      Format = format;
     }
   }
 
   public class UnitToStringConverter : TypeConverter
   {
-    static Dictionary<string, Type> UnitClasses = new Dictionary<string, Type>();
+    static readonly Dictionary<string, Type> UnitClasses = new();
 
     static UnitToStringConverter()
     {
       List<Type> lUnitClasses = new List<Type>();
 
       Assembly assembly = typeof(Unit).Assembly;
-      foreach(Type type in assembly.GetTypes()) {
-        if(type.IsSubclassOf(typeof(Unit)))
+      foreach (Type type in assembly.GetTypes()) {
+        if (type.IsSubclassOf(typeof(Unit)))
           lUnitClasses.Add(type);
       }
 
-      foreach(Type ut in lUnitClasses) {
+      foreach (Type ut in lUnitClasses) {
         UnitClasses.Add(ut.Name, ut);
         UnitClasses.Add(ut.FullName, ut);
         var atr = (DesignatorsAttribute)ut.GetCustomAttribute(typeof(DesignatorsAttribute));
-        foreach(string name in atr.Names) {
+        foreach (string name in atr.Names) {
           try {
             UnitClasses.Add(name, ut);
-          } catch(ArgumentException) { }
+          } catch (ArgumentException) { }
         }
       }
     }
 
     public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
     {
-      if(!(value is string strval))
+      if (!(value is string strval))
         return base.ConvertFrom(context, culture, value);
       try {
         string[] spl = strval.Split(':');
-        if(spl.Length == 1 || string.IsNullOrEmpty(spl[1]))
-          return UnitClasses[spl[0]]
-              .GetConstructor(Type.EmptyTypes)
-              .Invoke(null);
-        else if(spl.Length == 2)
-          return UnitClasses[spl[0]]
-              .GetConstructor(new Type[] { typeof(string) })
-              .Invoke(new object[] { spl[1] });
+        if (spl.Length == 1 || string.IsNullOrEmpty(spl[1].Trim()))
+          return Unit.FromType(UnitClasses[spl[0].Trim()]);
+        else if (spl.Length == 2)
+          return Unit.FromType(UnitClasses[spl[0].Trim()], spl[1].Trim());
         else return null;
-      } catch(Exception) {
+      } catch (Exception) {
         return null;
       }
-
     }
     public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
     {
-      if(destinationType == typeof(string) && value is Unit ut)
+      if (destinationType == typeof(string) && value is Unit ut)
         return ut.ToString();
 
       return base.ConvertTo(context, culture, value, destinationType);
     }
     public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
     {
-      if(sourceType == typeof(string))
+      if (sourceType == typeof(string))
         return true;
       return base.CanConvertFrom(context, sourceType);
     }
     public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
     {
-      if(destinationType == typeof(string))
+      if (destinationType == typeof(string))
         return true;
       return base.CanConvertTo(context, destinationType);
     }

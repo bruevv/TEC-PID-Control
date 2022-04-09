@@ -3,44 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:w="clr-namespace:WPFControls;assembly=WPFUtils"
-             xmlns:WPFUtils="clr-namespace:WPFUtils;assembly=WPFUtils"
+             xmlns:wu="clr-namespace:WPFUtils;assembly=WPFUtils"
              xmlns:Dev="clr-namespace:Devices;assembly=Devices"
-             xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
              x:Class="TEC_PID_Control.Controls.UsrCntrlK2400"
              mc:Ignorable="d"
-             x:Name="usrCntrlK2400"
-             Width="300"
-             Loaded="usrCntrlK2400_Loaded">
+             x:Name="usrCntrlK2400" Width="300"
+             Loaded="usrCntrlK2400_Loaded" >
   <UserControl.Resources>
-    <WPFUtils:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-    <WPFUtils:WidthReductorConverter x:Key="WidthReductor" />
-    <WPFUtils:ResistanceConverter x:Key="ResistanceConverter" />
+    <wu:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    <wu:WidthReductorConverter x:Key="WidthReductor" />
+    <wu:ResistanceConverter x:Key="ResistanceConverter" />
     <Dev:StateBrushesConverter x:Key="StateBrushesConverter" />
-    
     <Style TargetType="{x:Type TextBlock}">
-      <Setter Property="FontSize"
-              Value="14" />
-      <Setter Property="VerticalAlignment"
-              Value="Center" />
-      <Setter Property="TextAlignment"
-              Value="Right" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextAlignment" Value="Right" />
+    </Style>
+    <Style TargetType="{x:Type Label}">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="HorizontalContentAlignment" Value="Right" />
+      <Setter Property="Padding" Value="0" />
     </Style>
     <Style TargetType="{x:Type Button}">
-      <Setter Property="Margin"
-              Value="2" />
+      <Setter Property="Margin" Value="2" />
     </Style>
     <Style TargetType="{x:Type Separator}">
-      <Setter Property="Margin"
-              Value="2" />
+      <Setter Property="Margin" Value="2" />
     </Style>
 
   </UserControl.Resources>
   <w:AnimExpander x:Name="expander"
-                  Background="#FFFFC6C6"
-                  BorderBrush="Black"
-                  Width="300"
-                  VerticalAlignment="Stretch"
-                  IsExpanded="{Binding IsExpanded, ElementName=usrCntrlK2400, FallbackValue=true}"
+                  Background="#FFFFC6C6" BorderBrush="Black" Width="300" d:IsExpanded="True"
+                  IsExpanded="{Binding  Settings.Interface.IsExpanded}"
                   DataContext="{Binding ElementName=usrCntrlK2400}">
     <Expander.Header>
       <DockPanel x:Name="HeaderDock"
@@ -48,66 +43,20 @@
                  LastChildFill="False">
         <Ellipse x:Name="circle"
                  Fill="{Binding State, Converter={StaticResource StateBrushesConverter}}"
-                 Stroke="Black"
-                 Width="14"
-                 Height="14"
-                 ToolTip="{Binding State}"
-                 DockPanel.Dock="Right"
-                 Margin="5,0,31,0" />
-        <Rectangle Width="16"
-                   Height="16"
-                   DockPanel.Dock="Right"
+                 Stroke="Black" Width="14" Height="14" DockPanel.Dock="Right" Margin="5,0,31,0"
+                 ToolTip="{Binding State}"/>
+        <Rectangle Width="16" Height="16" DockPanel.Dock="Right"
                    Style="{StaticResource RectangleOnOff}" />
         <TextBlock Text="{Binding Text, ElementName=utbVoltage}"
-                   DockPanel.Dock="Right"
-                   Width="75"
-                   Margin="0,0,5,0"
-                   FontSize="12" />
+                   DockPanel.Dock="Right" Width="75" Margin="0,0,5,0" FontSize="12" />
         <TextBlock Text="{Binding Text, ElementName=utbCurrent}"
-                   DockPanel.Dock="Right"
-                   Width="75"
-                   FontSize="12" />
-        <TextBlock x:Name="title"
-                   Text="K2400-SM" />
+                   DockPanel.Dock="Right" Width="75" FontSize="12" />
+        <TextBlock x:Name="title" Text="K2400-SM" />
       </DockPanel>
     </Expander.Header>
-    <Grid x:Name="grid"
-          Background="#FFFFDCDC">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="10*" />
-        <ColumnDefinition Width="15*" />
-        <ColumnDefinition Width="10*" />
-        <ColumnDefinition Width="15*" />
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
-      <TextBlock Text="Port:" />
-      <ComboBox x:Name="cbPort"
-                Grid.Column="1"
-                SelectedIndex="0"
-                SelectionChanged="cbPort_SelectionChanged"
-                IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}, ElementName=usrCntrlK2400}"
-                DropDownOpened="cbPort_DropDownOpened"
-                VerticalAlignment="Stretch"
-                HorizontalAlignment="Stretch"
-                Margin="2" />
-      <Button x:Name="bConnect"
-              Content="Connect"
-              Grid.Column="2"
-              Click="bConnect_Click"
-              IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}, ElementName=usrCntrlK2400}" />
-      <Button x:Name="bDisconnect"
-              Content="Disconnect"
-              Grid.Column="3"
-              Click="bDisconnect_Click"
-              IsEnabled="{Binding IsConnected}" />
+    <AdornerDecorator>
 
-      <Grid Grid.Row="1"
-            Grid.ColumnSpan="5"
-            IsEnabled="{Binding IsConnected}">
+      <Grid x:Name="grid" Background="#FFFFDCDC">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="10*" />
           <ColumnDefinition Width="15*" />
@@ -118,127 +67,96 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Separator Grid.Row="1"
-                   Grid.ColumnSpan="5" />
-        <Button Content="Output"
-                Grid.Row="2"
-                Click="bOutput_Click" />
-        <Button Content="Reset"
-                Grid.Row="2"
-                Grid.Column="2"
-                Click="bReset_Click" />
-        <Rectangle Width="18"
-                   Height="18"
-                   Grid.Row="2"
-                   Grid.Column="1"
-                   HorizontalAlignment="Left"
-                   Margin="5,0,0,0"
-                   Style="{StaticResource RectangleOnOff}"
-                   Visibility="Visible" />
-        <ToggleButton Content="Auto Poll"
-                      Grid.Row="2"
-                      Grid.Column="3"
-                      Margin="2"
-                      IsChecked="{Binding AutoPoll}" />
-        <TextBlock Text="Voltage:"
-                   Grid.Row="3" />
-        <w:UnitTextBox x:Name="utbVoltage"
-                       Value="{Binding Voltage, Mode=OneWay}"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=K2400MVFormat}"
-                       ValueFormat="N5"
-                       IsReadOnly="True"
-                       Grid.Row="3"
-                       Grid.Column="1"
-                       NormalBackground="#FFEBEBEB" />
-        <TextBlock Text="Current:"
-                   Grid.Row="3"
-                   Grid.Column="2" />
-        <w:UnitTextBox x:Name="utbCurrent"
-                       Value="{Binding Current, Mode=OneWay}"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=K2400MCFormat}"
-                       ValueFormat="N5"
-                       IsReadOnly="True"
-                       Grid.Row="3"
-                       Grid.Column="3"
-                       NormalBackground="#FFEBEBEB" />
+        <TextBlock Text="Port:" ToolTip="{wu:Description Settings.Port}"/>
+        <ComboBox x:Name="cbPort" Grid.Column="1" DropDownOpened="cbPort_DropDownOpened" Margin="2" 
+                IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"
+                SelectedItem="{Binding Settings.Port}" ToolTip="{wu:Description Settings.Port}"/>
+        <Button x:Name="bConnect" Content="Connect" Grid.Column="2" Click="bConnect_Click"
+              IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}" />
+        <Button x:Name="bDisconnect" Content="Disconnect" Grid.Column="3" Click="bDisconnect_Click"
+              IsEnabled="{Binding IsConnected}" />
 
-        <Separator Grid.Row="4"
-                   Grid.ColumnSpan="4" />
-        <TextBlock Text="Resistance Measurement"
-                   HorizontalAlignment="Left"
-                   Grid.Row="4"
-                   Grid.ColumnSpan="4"
-                   Margin="5,0,0,4"
-                   Background="{Binding Background, ElementName=grid}"
-                   Padding="3,2,3,0" />
+        <Grid Grid.Row="1" Grid.ColumnSpan="5" IsEnabled="{Binding IsConnected}">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10*" />
+            <ColumnDefinition Width="15*" />
+            <ColumnDefinition Width="10*" />
+            <ColumnDefinition Width="15*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Separator Grid.Row="1" Grid.ColumnSpan="5" />
+          <Button Content="Output" Grid.Row="2" Click="bOutput_Click" />
+          <Button Content="Reset" Grid.Row="2" Grid.Column="2" Click="bReset_Click" />
+          <Rectangle Width="18" Height="18" Grid.Row="2" Grid.Column="1"
+                   HorizontalAlignment="Left" Margin="5,0,0,0" d:Visibility="Visible"
+                   Style="{StaticResource RectangleOnOff}" />
+          <ToggleButton Content="Auto Poll" Grid.Row="2" Grid.Column="3" Margin="2" 
+                      IsChecked="{Binding Settings.AutoPoll}" 
+                      Checked="AutoPollChanged" Unchecked="AutoPollChanged" 
+                      ToolTip="{wu:Description Settings.AutoPoll}"/>
+          <TextBlock Text="Voltage:" Grid.Row="3" />
+          <w:UnitTextBox x:Name="utbVoltage" NormalBackground="#FFEBEBEB"
+                         ValueFormat="{Binding Settings.Interface.MVFormat}"
+                         Value="{Binding Voltage, Mode=OneWay}" OutputUnits="{x:Type w:UnitVoltage}"
+                         Unit="{Binding Settings.Interface.MVUnit}"
+                         IsReadOnly="True" Grid.Row="3" Grid.Column="1" />
+          <TextBlock Text="Current:" Grid.Row="3" Grid.Column="2" ToolTip="{wu:Description Current}" />
+          <w:UnitTextBox x:Name="utbCurrent" OutputUnits="{x:Type w:UnitCurrent}"
+                         ValueFormat="{Binding Settings.Interface.MCFormat}"
+                         Value="{Binding Current, Mode=OneWay, ElementName=usrCntrlK2400}"
+                         Unit="{Binding Settings.Interface.MCUnit}" NormalBackground="#FFEBEBEB" 
+                         IsReadOnly="True" Grid.Row="3" Grid.Column="3"/>
+          <Separator Grid.Row="4" Grid.ColumnSpan="4" />
+          <TextBlock Text="Resistance Measurement" HorizontalAlignment="Left"
+                   Grid.Row="4" Grid.ColumnSpan="4" Margin="5,0,0,4" Padding="3,2,3,0"
+                   Background="{Binding Background, ElementName=grid}"/>
+          <TextBlock x:Name="tb" Text="Voltage:" Grid.Row="5" ToolTip="{wu:Description Settings.OutputVoltage}"/>
+          <w:UnitTextBox x:Name="utbSetVoltage" Grid.Row="5" Grid.Column="1"
+                         ValueFormat="{Binding Settings.Interface.OVFormat}"
+                         Unit="{Binding Settings.Interface.OVUnit}" 
+                         Value="{Binding Settings.OutputVoltage}" OutputUnits="{x:Type w:UnitVoltage}"/>
+          <TextBlock Text="Current:" Grid.Row="5" Grid.Column="2" 
+                   ToolTip="{wu:Description Settings.OutputCurrent}" />
+          <w:UnitTextBox x:Name="utbSetCurrent" Grid.Row="5" Grid.Column="3"
+                         ValueFormat="{Binding Settings.Interface.OCFormat}"
+                         Unit="{Binding Settings.Interface.OCUnit}" 
+                         Value="{Binding Settings.OutputCurrent}" OutputUnits="{x:Type w:UnitCurrent}"/>
+          <Button Grid.Row="6" Content="SetUp I" Height="21" VerticalAlignment="Top" 
+                Click="bSetUpI_Click" />
+          <Button Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Padding="5,2" 
+                Content="Measure Resistance" Click="bMesRes_Click" HorizontalAlignment="Right" />
+          <w:UnitTextBox x:Name="utbResistance" Grid.Row="6" Grid.Column="3"
+                         ValueFormat="{Binding Settings.Interface.RFormat}"
+                         Unit="{Binding Settings.Interface.RUnit}" 
+                         OutputUnits="{x:Type w:UnitResistance}"
+                         IsReadOnly="True" NormalBackground="#FFEBEBEB">
+            <w:UnitTextBox.Value>
+              <MultiBinding Converter="{StaticResource ResistanceConverter}" Mode="OneWay">
+                <Binding Path="Voltage"/>
+                <Binding Path="Current"/>
+              </MultiBinding>
+            </w:UnitTextBox.Value>
+          </w:UnitTextBox>
 
-
-        <TextBlock Text="Voltage:"
-                   Grid.Row="5" />
-        <w:UnitTextBox x:Name="utbSetVoltage"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=K2400OVFormat}"
-                       ValueFormat="N5"
-                       Grid.Row="5"
-                       Grid.Column="1"
-                       Value="{Binding OutputVoltage}" />
-        <TextBlock Text="Current:"
-                   Grid.Row="5"
-                   Grid.Column="2" />
-        <w:UnitTextBox x:Name="utbSetCurrent"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=K2400OCFormat}"
-                       ValueFormat="N5"
-                       Grid.Row="5"
-                       Grid.Column="3"
-                       Value="{Binding OutputCurrent}" />
-        <Button Grid.Row="6"
-                Content="SetUp I"
-                Click="bSetUpI_Click"
-                        Height="21"
-                        Margin="2,2,2,0"
-                        VerticalAlignment="Top" />
-        <Button Grid.Row="6"
-                Content="Measure Resistance"
-                Grid.Column="1"
-                Grid.ColumnSpan="2"
-                Click="bMesRes_Click" />
-        <w:UnitTextBox x:Name="utbResistance"
-                       Unit="{Binding Source={x:Static prop:MainSettings.Default}, Path=K2400RFormat}"
-                       ValueFormat="N5"
-                       IsReadOnly="True"
-                       Grid.Row="6"
-                       Grid.Column="3"
-                       NormalBackground="#FFEBEBEB">
-          <w:UnitTextBox.Value>
-            <MultiBinding Converter="{StaticResource ResistanceConverter}"
-                          Mode="OneWay">
-              <Binding Path="Voltage"/>
-              <Binding Path="Current" />
-            </MultiBinding>
-          </w:UnitTextBox.Value>
-        </w:UnitTextBox>
-
+        </Grid>
+        <w:AnimExpander Grid.ColumnSpan="4" Grid.Row="7" Header="Log" d:IsExpanded="True"
+                      IsExpanded="{Binding Settings.Interface.LogExpanded}">
+          <TextBox x:Name="tbLog" Margin="2,0,2,2" MinHeight="100" MaxHeight="300"
+                 IsReadOnly="True" Background="#7FFFFFFF" TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Visible" TextChanged="tbLog_TextChanged" />
+        </w:AnimExpander>
       </Grid>
-      <w:AnimExpander Grid.ColumnSpan="4"
-                      Grid.Row="7"
-                      Header="Log"
-                      IsExpanded="{Binding IsLogExpanded, ElementName=usrCntrlK2400}">
-        <TextBox x:Name="tbLog"
-                 Margin="2,0,2,2"
-                 MinHeight="100"
-                 MaxHeight="300"
-                 IsReadOnly="True"
-                 Background="#7FFFFFFF"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Visible"
-                 TextChanged="tbLog_TextChanged" />
-      </w:AnimExpander>
-    </Grid>
+    </AdornerDecorator>
   </w:AnimExpander>
 
 </UserControl>

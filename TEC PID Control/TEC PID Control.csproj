@@ -5,17 +5,22 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <RootNamespace>TEC_PID_Control</RootNamespace>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWindowsForms>false</UseWindowsForms>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>false</Deterministic> 
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile></DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>C:\Archive\OneDrive\Documents\Visual Studio Projects\TEC-PID-Control\TEC PID Control\TEC PID Control.xml</DocumentationFile>
+    <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
 
   <!--<ItemGroup>
@@ -39,9 +44,8 @@
  
 
   <ItemGroup>
-    <PackageReference Include="RawInput.Sharp" Version="0.0.3" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
-    <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />
+    <!--<PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Windows.Forms.DataVisualization" Version="1.0.0-prerelease.20110.1" />-->
   </ItemGroup>
 
   <ItemGroup>
@@ -59,45 +63,6 @@
     <Compile Update="Controls\UsrCntrlK2400.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Properties\Interface.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Interface.settings</DependentUpon>
-    </Compile>
-    <Compile Update="Properties\MainSettings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MainSettings.settings</DependentUpon>
-    </Compile>
-    <Compile Update="Properties\PIDSettings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>PIDSettings.settings</DependentUpon>
-    </Compile>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Properties\Interface.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Interface.Designer.cs</LastGenOutput>
-    </None>
-    <None Update="Properties\MainSettings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>MainSettings.Designer.cs</LastGenOutput>
-    </None>
-    <None Update="Properties\PIDSettings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>PIDSettings.Designer.cs</LastGenOutput>
-    </None>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

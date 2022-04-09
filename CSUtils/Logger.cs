@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace CSUtils
 {
@@ -49,7 +51,7 @@ namespace CSUtils
     public void DetachLog(string name, EventHandler<LogFeedBEA> del)
     {
       try {
-        if(AttachedLogModes.ContainsKey(del))
+        if (AttachedLogModes.ContainsKey(del))
           AttachedLogModes.Remove(del);
         if (AttachedLogs.ContainsKey(name)) {
           AttachedLogs[name] -= del;
@@ -60,8 +62,20 @@ namespace CSUtils
 
     public enum Mode
     {
-      None = 0, LogState = 9, Error = 10, AppState = 14,
-      NoAutoPoll = 17, Full = 20, Debug = 30
+      [Display(Name = "No Logging", Description = "Logging Disabled")]
+      None = 0,
+      [Display(Name = "State of Logger Only", Description = "Logging only the state of the Logger")]
+      LogState = 9,
+      [Display(Name = "Errors Only", Description = "Logging only the Errors and the state")]
+      Error = 10,
+      [Display(Name = "App/State", Description = "Logging Errors and application state")]
+      AppState = 14,
+      [Display(Name = "Except AutoPoll", Description = "Logging everything except automatical poling (such as polling voltage/current)")]
+      NoAutoPoll = 17,
+      [Display(Name = "Full Loging", Description = "Logging everything")]
+      Full = 20,
+      [Display(Name = "Debug Loging", Description = "Logging everything plus special debugging information")]
+      Debug = 30
     }
 
     System.Timers.Timer FlushTimer;
@@ -82,6 +96,7 @@ namespace CSUtils
       if (def == null) def = this;
       LoggerMode = mode;
       if (mode == Mode.None) return;
+      if (def.LoggerMode == Mode.None) def = this;
 
       FileName = Path.GetFullPath(filename ?? DefaultFilename);
       bool newfile = false;
@@ -121,6 +136,14 @@ namespace CSUtils
     {
       if (mode == Mode.None) throw new ArgumentException("Message Mode cannot be 'None'");
 
+      if (LoggerMode == Mode.None) {
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine("Log: " + mode.ToString() + " " + logMessage);
+#endif
+        return;
+      }
+
+
       lock (Lock) {
         UpdateAttachedLogs(logMessage, mode, source);
 
@@ -141,7 +164,7 @@ namespace CSUtils
     void UpdateAttachedLogs(string logMessage, Mode mode, string source)
     {
       try {
-        if (AttachedLogs.ContainsKey(source)) {
+        if (source != null && AttachedLogs.ContainsKey(source)) {
           foreach (EventHandler<LogFeedBEA> del in AttachedLogs[source].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
               Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode, source));
@@ -150,7 +173,7 @@ namespace CSUtils
         if (AttachedLogs.ContainsKey("")) {
           foreach (EventHandler<LogFeedBEA> del in AttachedLogs[""].GetInvocationList()) {
             if (AttachedLogModes[del] >= mode)
-              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode, source));
+              Invoke.InContextInvoke(this, del, new LogFeedBEA(logMessage, mode, source ?? ""));
           }
         }
       } catch (Exception) { }

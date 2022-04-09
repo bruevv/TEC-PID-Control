@@ -10,7 +10,6 @@ using System.Windows.Media;
 
 namespace WPFControls
 {
-  using System.Windows.Data;
   using static WPFControls;
 
   public class ValueChangingEventArgs<T> : EventArgs
@@ -124,22 +123,24 @@ namespace WPFControls
       get => null;
       set => throw new NotImplementedException();
     }
-    protected T MinVal {
+    public virtual T MinValue {
       get => minValue;
       set {
-        minValue = value;
-        if (maxValue.CompareTo(minValue) < 0)
-          maxValue = minValue;
-        LimitValue(ref val);
+        if (!minValue.Equals(value)) {
+          minValue = value;
+  //        if (maxValue.CompareTo(minValue) < 0) maxValue = NaN;
+          LimitValue(ref val);
+        }
       }
     }
-    protected T MaxVal {
+    public virtual T MaxValue {
       get => maxValue;
       set {
-        maxValue = value;
-        if (maxValue.CompareTo(minValue) < 0)
-          minValue = maxValue;
-        LimitValue(ref val);
+        if (!maxValue.Equals(value)) {
+          maxValue = value;
+  //        if (maxValue.CompareTo(minValue) < 0) minValue = NaN;
+          LimitValue(ref val);
+        }
       }
     }
 
@@ -244,6 +245,8 @@ namespace WPFControls
       CI = new System.Globalization.CultureInfo("");
       CI.NumberFormat.NumberGroupSeparator = "";
     }
+    protected NumberTextBox() => InitValues();
+
     protected void SetMathText(T v)
     {
       if (IsNaNVal(v))
@@ -317,6 +320,7 @@ namespace WPFControls
             val = (T)Convert.ChangeType(mathParser.Parse(mathText), typeof(T));
             toolTip.Content = CalculationResultsPreview;
             toolTip.Background = CorrectBackground;
+            toolTip.Foreground = Foreground;
             ToolTip = toolTip;
             if (!suppressToolTip) toolTip.IsOpen = true;
             State = NTBState.Correct;
@@ -327,6 +331,7 @@ namespace WPFControls
             else
               toolTip.Content = $"{e1.Message}\n{e2.Message}";
             toolTip.Background = ErrorBackground;
+            toolTip.Foreground = Foreground;
             ToolTip = toolTip;
             if (!suppressToolTip) toolTip.IsOpen = true;
 
@@ -349,17 +354,20 @@ namespace WPFControls
 
     T GetDefaulVal(string prop)
     {
-      MemberInfo mi = this?.GetType()?.GetMember(prop)[0];
+      MemberInfo mi = this?.GetType()?.GetMember(prop)?[0];
       DefaultValueAttribute dva = null;
       if (mi != null)
         dva = (DefaultValueAttribute)Attribute.GetCustomAttribute(mi, typeof(DefaultValueAttribute));
       return (T)((dva?.Value) ?? new T());
     }
-
+    static T? S_MinValue = null;
+    static T? S_MaxValue = null;
     protected void InitValues()
     {
-      MinVal = GetDefaulVal("MinValue");
-      MaxVal = GetDefaulVal("MaxValue");
+      S_MinValue ??= GetDefaulVal("MinValue");
+      S_MaxValue ??= GetDefaulVal("MaxValue");
+      minValue = (T)S_MinValue;
+      maxValue = (T)S_MaxValue;
     }
   }
 
@@ -394,30 +402,55 @@ namespace WPFControls
       get { return (string)GetValue(ValueFormatProperty); }
       set { SetValue(ValueFormatProperty, value); }
     }
-    #endregion
 
     [EditorBrowsable(EditorBrowsableState.Always)]
-    [Category("Common")]
-    [DefaultValue(double.NaN)]
-    public double MinValue { get => base.MinVal; set => base.MinVal = value; }
-    [DefaultValue(double.NaN)]
+    [Category("Common"), DefaultValue(double.NaN)]
+    public override double MinValue {
+      get { return (double)GetValue(MinValueProperty); }
+      set { SetValue(MinValueProperty, value); }
+    }
     [EditorBrowsable(EditorBrowsableState.Always)]
-    [Category("Common")]
-    public double MaxValue { get => base.MaxVal; set => base.MaxVal = value; }
+    [Category("Common"), DefaultValue(double.NaN)]
+    public override double MaxValue {
+      get { return (double)GetValue(MaxValueProperty); }
+      set { SetValue(MaxValueProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for MinValue.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty MinValueProperty =
+        DependencyProperty.Register("MinValue", typeof(double), typeof(DoubleTextBox),
+          new PropertyMetadata(double.NaN, MinValueChanged));
+
+    // Using a DependencyProperty as the backing store for MinValue.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty MaxValueProperty =
+        DependencyProperty.Register("MaxValue", typeof(double), typeof(DoubleTextBox),
+          new PropertyMetadata(double.NaN, MaxValueChanged));
+    void SetMinValue(double val) => base.MinValue = val;
+    void SetMaxValue(double val) => base.MaxValue = val;
+    static void MinValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      ((DoubleTextBox)d).SetMinValue((double)e.NewValue);
+    }
+    static void MaxValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      ((DoubleTextBox)d).SetMaxValue((double)e.NewValue);
+    }
+
+
+    #endregion
+
     protected override double NaN => double.NaN;
     protected override bool IsNaNVal(double v) => double.IsNaN(v);
 
     static void ValueFormatChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       DoubleTextBox ntb = (DoubleTextBox)d;
-      ntb.ChangeValue(ntb.Value);
+      ntb.ChangeValue(ntb.value);
     }
 
     public DoubleTextBox() : base()
     {
       Text = "0.0";
-      MinVal = double.MinValue;
-      MaxVal = double.MaxValue;
     }
   }
   [DefaultEvent("ValueChanged")]
@@ -440,24 +473,47 @@ namespace WPFControls
     }
 
     protected override int value { get => Value; set => Value = value; }
+
+    [EditorBrowsable(EditorBrowsableState.Always)]
+    [Category("Common"), DefaultValue(int.MinValue)]
+    public override int MinValue {
+      get { return (int)GetValue(MinValueProperty); }
+      set { SetValue(MinValueProperty, value); }
+    }
+    [EditorBrowsable(EditorBrowsableState.Always)]
+    [Category("Common"), DefaultValue(int.MaxValue)]
+    public override int MaxValue {
+      get { return (int)GetValue(MaxValueProperty); }
+      set { SetValue(MaxValueProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for MinValue.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty MinValueProperty =
+        DependencyProperty.Register("MinValue", typeof(int), typeof(IntTextBox),
+          new PropertyMetadata(int.MinValue, MinValueChanged));
+
+    // Using a DependencyProperty as the backing store for MinValue.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty MaxValueProperty =
+        DependencyProperty.Register("MaxValue", typeof(int), typeof(IntTextBox),
+          new PropertyMetadata(int.MaxValue, MaxValueChanged));
+    void SetMinValue(int val) => base.MinValue = val;
+    void SetMaxValue(int val) => base.MaxValue = val;
+    static void MinValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      ((IntTextBox)d).SetMinValue((int)e.NewValue);
+    }
+    static void MaxValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      ((IntTextBox)d).SetMaxValue((int)e.NewValue);
+    }
     #endregion
 
-    [DefaultValue(int.MinValue)]
-    [EditorBrowsable(EditorBrowsableState.Always)]
-    [Category("Common")]
-    public int MinValue { get => base.MinVal; set => base.MinVal = value; }
-    [EditorBrowsable(EditorBrowsableState.Always)]
-    [Category("Common")]
-    [DefaultValue(int.MaxValue)]
-    public int MaxValue { get => base.MaxVal; set => base.MaxVal = value; }
     protected override int NaN => int.MinValue;
     protected override bool IsNaNVal(int v) => v == NaN;
 
     public IntTextBox() : base()
     {
       Text = "0";
-      MinVal = int.MinValue;
-      MaxVal = int.MaxValue;
     }
   }
 
@@ -470,10 +526,10 @@ namespace WPFControls
          = DependencyProperty.Register("Unit",
          typeof(Unit),
          typeof(UnitTextBox),
-         new FrameworkPropertyMetadata(new UnitTime(), UnitChanged) { BindsTwoWayByDefault = true });
+         new FrameworkPropertyMetadata(Unit.NoUnit, UnitChanged) { BindsTwoWayByDefault = true });
 
     [EditorBrowsable(EditorBrowsableState.Always)]
-    [Category("Common")]
+    [Category("Common"), DefaultValue("NoUnit")]
     [Bindable(true, BindingDirection.TwoWay)]
     public Unit Unit {
       get => (Unit)GetValue(UnitProperty);
@@ -486,6 +542,10 @@ namespace WPFControls
     }
     Type outputUnits = null;
 
+    /// <summary>
+    /// OutputUnits parameter define the Unit type to convert the value
+    /// if Unit paramter set to another units during initialization
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Category("Common")]
     [DefaultValue(null)]
@@ -496,8 +556,10 @@ namespace WPFControls
         if (value.BaseType != unitt)
           throw new ArgumentException($"{nameof(OutputUnits)} should be type derived from {unitt.FullName}");
         outputUnits = value;
+        if (UnitUnset) Unit = Unit.FromType(outputUnits);
       }
     }
+    bool UnitUnset = true;
     static protected void UnitChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       UnitTextBox ntb = (UnitTextBox)d;
@@ -506,7 +568,15 @@ namespace WPFControls
       ntb.suppressToolTip = true;
       ntb.ChangeValue(ntb.value);
       ntb.suppressToolTip = b;
-      if (ntb.OutputUnits == null) ntb.OutputUnits = e.NewValue.GetType();
+      ntb.UnitUnset = false;
+      if (ntb.OutputUnits == null) {
+        //if (BindingOperations.IsDataBound(d, e.Property)) {
+        //  var bnd = BindingOperations.GetBinding(d, e.Property);
+        //  Type t = bnd.Source.GetType().GetProperty(bnd.Source;
+        //  if ()
+        //}
+        ntb.OutputUnits = e.NewValue.GetType();
+      }
     }
     protected override double ValueFromInvariant(double from)
     {
@@ -528,7 +598,7 @@ namespace WPFControls
       get => ValueFromInvariant(Value);
       set => Value = ValueToInvariant(value);
     }
-    double oldval = 0; // TODO why not to use OldValue from argument?!
+    double oldval = 0; // TODO check: why not to use OldValue from argument?!
     protected override void OnValueChanging(ValueChangingEventArgs<double> vcea)
     {
       var nea = new ValueChangingEventArgs<double>(ValueToInvariant(vcea.NewVal), oldval);

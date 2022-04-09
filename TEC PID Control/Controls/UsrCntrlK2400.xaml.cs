@@ -2,11 +2,15 @@
 using Devices;
 using Devices.Keithley;
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.IO.Ports;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using TEC_PID_Control.Properties;
+using WPFUtils.Adorners;
 
 namespace TEC_PID_Control.Controls
 {
@@ -15,81 +19,60 @@ namespace TEC_PID_Control.Controls
   /// </summary>
   public partial class UsrCntrlK2400 : UserControl
   {
-    public Keithley2400 KD;
+    public Keithley2400 KD { get; private init; }
 
     #region Binding
-    public static readonly DependencyProperty IsExpandedProperty =
-        DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(true) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty IsLogExpandedProperty =
-        DependencyProperty.Register("IsLogExpanded", typeof(bool), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(false) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty SelectedPortProperty =
-        DependencyProperty.Register("SelectedPort", typeof(string), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata("") { BindsTwoWayByDefault = true });
+    public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(K2400S), typeof(UsrCntrlK2400), new PropertyMetadata(K2400S.Default, K2400S_PropChanged));
 
     static readonly DependencyPropertyKey VoltageKey = DependencyProperty.RegisterReadOnly(nameof(Voltage), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN));
     static readonly DependencyPropertyKey CurrentKey = DependencyProperty.RegisterReadOnly(nameof(Current), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN));
+    static readonly DependencyPropertyKey IsConnectedKey = DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey IsOnKey = DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey StateKey = DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected));
 
     public static readonly DependencyProperty VoltageProperty = VoltageKey.DependencyProperty;
     public static readonly DependencyProperty CurrentProperty = CurrentKey.DependencyProperty;
+    public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
+    public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
+    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
 
     static readonly DependencyProperty Voltage_Prop = DependencyProperty.Register(nameof(Voltage_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Voltage_PropChanged));
     static readonly DependencyProperty Current_Prop = DependencyProperty.Register(nameof(Current_Prop), typeof(double), typeof(UsrCntrlK2400), new PropertyMetadata(double.NaN, Current_PropChanged));
+    static readonly DependencyProperty IsOn_Prop = DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false, IsOn_PropChanged));
+    static readonly DependencyProperty State_Prop = DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected, State_PropChanged));
 
+    static void K2400S_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      //UsrCntrlK2400 o = (UsrCntrlK2400)d;
+      //o.expander.DataContext = e.NewValue;
+    }
     static void Voltage_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       UsrCntrlK2400 This = (UsrCntrlK2400)d;
       This.Voltage = (double)e.NewValue;
       This.OnMeasurementCompleted();
     }
-
     static void Current_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
       UsrCntrlK2400 This = (UsrCntrlK2400)d;
       This.Current = (double)e.NewValue;
       if (This.KD.MeasureMode == Mode.CURR) This.OnMeasurementCompleted();
     }
+    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlK2400 This = (UsrCntrlK2400)d;
+      This.IsOn = (bool)e.NewValue;
+    }
+    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlK2400 This = (UsrCntrlK2400)d;
+      This.State = (SState)e.NewValue;
+    }
 
-    public static readonly DependencyProperty OutputVoltageProperty =
-        DependencyProperty.Register("OutputVoltage", typeof(double), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(1.0) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty OutputCurrentProperty =
-    DependencyProperty.Register("OutputCurrent", typeof(double), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(1.0e-4) { BindsTwoWayByDefault = true });
-    public static readonly DependencyProperty AutoPollProperty =
-    DependencyProperty.Register("AutoPoll", typeof(bool), typeof(UsrCntrlK2400), new FrameworkPropertyMetadata(false, AutoPollChanged) { BindsTwoWayByDefault = true });
-    static readonly DependencyPropertyKey IsConnectedKey =
-       DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
-    public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
-
-    static readonly DependencyProperty IsOn_Prop =
-      DependencyProperty.Register(nameof(IsOn_Prop), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false, IsOn_PropChanged));
-    static readonly DependencyProperty State_Prop =
-   DependencyProperty.Register(nameof(State_Prop), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected, State_PropChanged));
-
-    static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).IsOn = (bool)e.NewValue;
-    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).State = (SState)e.NewValue;
-
-    static readonly DependencyPropertyKey IsOnKey =
-       DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlK2400), new PropertyMetadata(false));
-    static readonly DependencyPropertyKey StateKey =
-     DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlK2400), new PropertyMetadata(SState.Disconnected));
-    public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
-    public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
     #endregion Binding
-
-    [Category("Appearance")]
-    public bool IsExpanded {
-      get { return (bool)GetValue(IsExpandedProperty); }
-      set { SetValue(IsExpandedProperty, value); }
-    }
-    [Category("Appearance")]
-    public bool IsLogExpanded {
-      get { return (bool)GetValue(IsLogExpandedProperty); }
-      set { SetValue(IsLogExpandedProperty, value); }
-    }
-
-    [Category("Device")]
-    public string SelectedPort {
-      get { return (string)GetValue(SelectedPortProperty); }
-      set { SetValue(SelectedPortProperty, value); }
-    }
+    #region DProperties
+    [Category("Common")]
+    public K2400S Settings { get => (K2400S)GetValue(SettingsProperty); set => SetValue(SettingsProperty, value); }
 
     [Category("Device")]
     public double Voltage {
@@ -100,17 +83,6 @@ namespace TEC_PID_Control.Controls
     public double Current {
       get { return (double)GetValue(CurrentProperty); }
       protected set { SetValue(CurrentKey, value); }
-    }
-
-    [Category("Device")]
-    public double OutputVoltage {
-      get { return (double)GetValue(OutputVoltageProperty); }
-      set { SetValue(OutputVoltageProperty, value); }
-    }
-    [Category("Device")]
-    public double OutputCurrent {
-      get { return (double)GetValue(OutputCurrentProperty); }
-      set { SetValue(OutputCurrentProperty, value); }
     }
     [Category("Device")]
     public bool IsConnected {
@@ -127,29 +99,24 @@ namespace TEC_PID_Control.Controls
       get { return (SState)GetValue(StateProperty); }
       protected set { SetValue(StateKey, value); }
     }
-    [Category("Device")]
-    public bool AutoPoll {
-      get { return (bool)GetValue(AutoPollProperty); }
-      set { SetValue(AutoPollProperty, value); }
-    }
-    static void AutoPollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlK2400)d).KD.IdlePollEnable = (bool)e.NewValue;
+    #endregion DProperties
+
+    void AutoPollChanged(object o, RoutedEventArgs e) => KD.IdlePollEnable = (o as ToggleButton)?.IsChecked ?? false;
 
     public event EventHandler MeasurementCompleted;
 
     void OnMeasurementCompleted() => MeasurementCompleted?.Invoke(this, EventArgs.Empty);
-
     public UsrCntrlK2400()
     {
+      KD = new Keithley2400();
+
       InitializeComponent();
 
-      KD = new Keithley2400();
       KD.ConnectedToDevice += KD_ConnectedToDevice;
       KD.DisconnectedFromDevice += KD_DisconnectedFromDevice;
 
-      utbResistance.DataContext = KD;
-
       Logger.Default.AttachLog(KD.DeviceName, AddToLog, Logger.Mode.NoAutoPoll);
-      
+
       title.Text = KD.DeviceName;
 
       SetBinding(IsOn_Prop, new Binding("Output") { Source = KD, Mode = BindingMode.OneWay });
@@ -157,6 +124,8 @@ namespace TEC_PID_Control.Controls
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = KD, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = KD, Mode = BindingMode.OneWay });
     }
+
+
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += ">" + e.Message + "\n";
 
@@ -176,23 +145,37 @@ namespace TEC_PID_Control.Controls
 
     void bDisconnect_Click(object sender, RoutedEventArgs e) => KD.Disconnect();
     void bConnect_Click(object sender, RoutedEventArgs e) => ConnectCommand();
-    void usrCntrlK2400_Loaded(object sender, RoutedEventArgs e) => UpdateComboBox();
+    void usrCntrlK2400_Loaded(object sender, RoutedEventArgs e)
+    {
+      UpdateComboBox();
+
+      if (Settings.AutoConnect && !string.IsNullOrEmpty(Settings.Port)) {
+        try {
+          Logger.Default?.log($"Trying to automatically connect to Keithley 2400 SM at port:" +
+            $"{Settings.Port}", Logger.Mode.NoAutoPoll, nameof(UsrCntrlK2400));
+          ConnectCommand();
+        } catch (Exception ex) {
+          Logger.Default?.log("Error trying to automatically connect to Keithley 2400",
+            ex, Logger.Mode.Error, nameof(UsrCntrlK2400));
+        }
+      }
+    }
     void UpdateComboBox()
     {
-      string oldport = SelectedPort;
+      string oldport = Settings.Port;
       cbPort.Items.Clear();
 
       foreach (string port in SerialPort.GetPortNames())
         cbPort.Items.Add(port);
 
-      if (!string.IsNullOrEmpty(SelectedPort) && cbPort.Items.Contains(SelectedPort))
+      if (!string.IsNullOrEmpty(Settings.Port) && cbPort.Items.Contains(Settings.Port))
         cbPort.SelectedItem = oldport;
-      else SelectedPort = "";
+      else Settings.Port = "";
     }
     void cbPort_SelectionChanged(object s, EventArgs e)
     {
       string str = cbPort.SelectedItem as string;
-      if (!string.IsNullOrEmpty(str)) SelectedPort = str;
+      if (!string.IsNullOrEmpty(str)) Settings.Port = str;
     }
 
     void cbPort_DropDownOpened(object sender, EventArgs e) => UpdateComboBox();
@@ -221,8 +204,13 @@ namespace TEC_PID_Control.Controls
     }
 
     public void SetUpICommand() => KD.SourceI(utbSetCurrent.Value, Math.Abs(utbSetVoltage.Value));
-    public void ConnectCommand() => KD.Connect(SelectedPort);
+    public void ConnectCommand() => KD.Connect(Settings.Port);
 
     void bReset_Click(object sender, RoutedEventArgs e) => KD.ScheduleReset();
+
+  }
+  public static class LocalValueEnumeratorExtention
+  {
+    public static IEnumerator GetEnumerator(this LocalValueEnumerator lve) => lve;
   }
 }

@@ -4,54 +4,50 @@
                      xmlns:my="clr-namespace:WPFControls;assembly=WPFUtils"
                      xmlns:c="clr-namespace:TEC_PID_Control.Controls"
                      xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
-                     xmlns:local="clr-namespace:TEC_PID_Control"
-                     x:Name="customWindow"
-                     x:Class="TEC_PID_Control.MainWindow"
-                     Title="Temperature controller for AC-Hall"
-                     Height="664"
-                     Width="599"
-                     Background="Black">
+                     xmlns:w="clr-namespace:WPFUtils;assembly=WPFUtils"
+                     xmlns:av="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="av"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                     xmlns:s="clr-namespace:System;assembly=System.Runtime"
+                     x:Name="customWindow" x:Class="TEC_PID_Control.MainWindow" Background="Black"
+                     DataContext="{x:Static prop:Settings.Instance}"
+                     Title="{Binding Version, StringFormat=Temperature controller for AC-Hall (Version: \{0\}), Source={x:Static Application.Current}}"
+                     Height="{Binding Interface.WindowHeight, Mode=TwoWay}" MinHeight="330"
+                     Width="{Binding Interface.WindowWidth, Mode=TwoWay}" MinWidth="330" 
+                     Opacity="{Binding Interface.WindowOpacity}">
   <cw:SimpleToolWindow.Resources>
-    <Style x:Key="DropDownMenuItem"
-           TargetType="{x:Type MenuItem}">
-      <Setter Property="Background"
-              Value="Black" />
-      <Setter Property="Foreground"
-              Value="White" />
-
-      <Setter Property="Template">
-        <Setter.Value>
-          <ControlTemplate TargetType="{x:Type MenuItem}">
-            <Border x:Name="Bd"
-                    Padding="10,0,10,0"
-                    BorderBrush="{TemplateBinding Background}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    Background="{TemplateBinding Background}"
-                    SnapsToDevicePixels="True">
-              <ContentPresenter x:Name="ContentPresenter"
-                                Content="{TemplateBinding Header}"
-                                Grid.Column="1"
-                                ContentSource="Header"
-                                Margin="{TemplateBinding Padding}"
-                                RecognizesAccessKey="True"
-                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-            </Border>
-            <ControlTemplate.Triggers>
-              <Trigger Property="IsHighlighted"
-                       Value="True">
-                <Setter Property="Background"
-                        TargetName="Bd"
-                        Value="#FF303030" />
-                <Setter Property="BorderBrush"
-                        TargetName="Bd"
-                        Value="LightGray" />
-              </Trigger>
-            </ControlTemplate.Triggers>
-          </ControlTemplate>
-        </Setter.Value>
-      </Setter>
-    </Style>
+    <RoutedUICommand x:Key="LoadSettings" Text="_Load Settings..." >
+      <RoutedUICommand.InputGestures>
+        <KeyGesture>Ctrl+L</KeyGesture>
+      </RoutedUICommand.InputGestures>
+    </RoutedUICommand>
+    <RoutedUICommand x:Key="SaveSettings" Text="_Save Settings..." >
+      <RoutedUICommand.InputGestures>
+        <KeyGesture>Ctrl+S</KeyGesture>
+      </RoutedUICommand.InputGestures>
+    </RoutedUICommand>
+    <RoutedUICommand x:Key="Exit" Text="E_xit" >
+      <RoutedUICommand.InputGestures>
+        <KeyGesture>Alt+F4</KeyGesture>
+      </RoutedUICommand.InputGestures>
+    </RoutedUICommand>
+    <RoutedUICommand x:Key="EditSettings" Text="_Edit Settings..." >
+      <RoutedUICommand.InputGestures>
+        <KeyGesture>F4</KeyGesture>
+      </RoutedUICommand.InputGestures>
+    </RoutedUICommand>
+    <w:CommandGestureConverter x:Key="CGConverter"/>
+    <s:Boolean x:Key="ShowHelpMarkers">false</s:Boolean>
   </cw:SimpleToolWindow.Resources>
+  <cw:SimpleToolWindow.CommandBindings>
+    <CommandBinding Command="{StaticResource SaveSettings}" Executed="SaveSettings"/>
+    <CommandBinding Command="{StaticResource LoadSettings}" Executed="LoadSettings"/>
+    <CommandBinding Command="{StaticResource EditSettings}" Executed="EditSettings"/>
+    <CommandBinding Command="{StaticResource Exit}" Executed="Exit"/>
+    <CommandBinding Command="NavigationCommands.Refresh" Executed="RefreshInterface"/>
+  </cw:SimpleToolWindow.CommandBindings>
+  <cw:SimpleToolWindow.InputBindings>
+    <KeyBinding Command="ApplicationCommands.Open" Gesture="CTRL+L"/>
+  </cw:SimpleToolWindow.InputBindings>
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -62,94 +58,39 @@
       <ColumnDefinition Width="Auto" />
       <ColumnDefinition Width="296*" />
     </Grid.ColumnDefinitions>
-    <Menu Grid.Row="0"
-          Grid.Column="0"
-          Grid.ColumnSpan="2"
-          BorderBrush="White"
-          BorderThickness="0,0,0,2"
-          Foreground="White">
-      <Menu.Background>
-        <ImageBrush />
-      </Menu.Background>
-      <MenuItem Style="{DynamicResource MenuItemStyle1}"
-                Header="_File"
-                BorderBrush="Transparent">
-        <MenuItem Header="_View Log-File"
-                  Click="MiViewLog_Click"
-                  Style="{StaticResource ResourceKey=DropDownMenuItem}" />
-        <MenuItem Header="_Exit"
-                  Style="{StaticResource ResourceKey=DropDownMenuItem}"
-                  Click="CloseButton_Click" />
+    <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+          BorderBrush="White" BorderThickness="0,0,0,2"
+          Foreground="White" Background="Transparent">
+      <MenuItem Style="{DynamicResource DarkMenu}" Header="_File">
+        <MenuItem Command="{StaticResource SaveSettings}"/>
+        <MenuItem Command="{StaticResource LoadSettings}"/>
+        <MenuItem Command="{StaticResource EditSettings}"/>
+        <Separator/>
+        <MenuItem Header="_View Log-File" Click="MiViewLog_Click" />
+        <MenuItem Command="{StaticResource Exit}"/>
+      </MenuItem>
+      <MenuItem Style="{DynamicResource DarkMenu}" Header="_Help">
+        <MenuItem Style="{DynamicResource DarkMenu}"
+                  IsCheckable="True" IsChecked="{Binding ShowHelpMarkers}"
+                  Click="RefreshInterface" Header="_Show Help Markers"/>
       </MenuItem>
     </Menu>
-    <ScrollViewer Margin="2"
-                  Grid.RowSpan="2"
-                  Grid.Row="1">
+    <ScrollViewer Margin="2" Grid.RowSpan="2" Grid.Row="1">
       <StackPanel>
         <StackPanel Orientation="Horizontal">
-          <Button Content="SetUp and Measure T"
-                  Margin="5,2"
-                  Padding="5,0"
-                  Click="bMeatureT_Click" />
-          <my:UnitTextBox x:Name="utbTemp"
-                          Width="100"
-                          Unit="TemperatureC:°C"
-                          ValueFormat="N6"
-                          IsReadOnly="True" />
+          <Button Content="SetUp and Measure T" Margin="5,2" Padding="5,0" Click="bMeatureT_Click" />
+          <my:UnitTextBox x:Name="utbTemp" Width="100"
+                          Unit="TemperatureC:°C" ValueFormat="N6" IsReadOnly="True" />
         </StackPanel>
-        <c:UsrCntrlK2400 x:Name="usrCntrlK2400"
-                         DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                         OutputCurrent="{Binding K2400OutputCurrent}"
-                         OutputVoltage="{Binding K2400OutputVoltage}"
-                         IsLogExpanded="{Binding K2400LogExpanded}"
-                         SelectedPort="{Binding K2400Port}"
-                         IsExpanded="{Binding K2400Expanded}"
-                         AutoPoll="{Binding K2400AutoPoll}" />
-        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS"
-                        DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                        OutputCurrent="{Binding GWPSOutputCurrent}"
-                        OutputVoltage="{Binding GWPSOutputVoltage}"
-                        IsLogExpanded="{Binding GWPSLogExpanded}"
-                        SelectedPort="{Binding GWPSPort}"
-                        IsExpanded="{Binding GWPSExpanded}"
-                        Channel="{Binding GWPSChannel1}"
-                        AutoPoll="{Binding GWPSAutoPoll1}" />
-        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS2"
-                        DataContext="{Binding Source={x:Static prop:MainSettings.Default}}"
-                        OutputCurrent="{Binding GWPSOutputCurrent2}"
-                        OutputVoltage="{Binding GWPSOutputVoltage2}"
-                        IsLogExpanded="{Binding GWPSLogExpanded2}"
-                        SelectedPort="{Binding GWPSPort}"
-                        IsExpanded="{Binding GWPSExpanded2}"
-                        Channel="{Binding GWPSChannel2}"
-                        AutoPoll="{Binding GWPSAutoPoll2}" />
-        <c:UsrCntrlPID x:Name="usrCntrlPID"
-                       DataContext="{Binding Source={x:Static prop:PIDSettings.Default}}"
-                       CtrlP="{Binding CtrlP}"
-                       CtrlI="{Binding CtrlI}"
-                       CtrlD="{Binding CtrlD}"
-                       GlobalGain="{Binding GlobalGain}"
-                       TimeConstant="{Binding TimeConstant}"
-                       MinCtrlPar="{Binding MinCtrlPar}"
-                       MaxCtrlPar="{Binding MaxCtrlPar}"
-                       MaxIntegralError="{Binding MaxIntegralError}"
-                       CRate="{Binding CRate}"
-                       IsRampEnabled="{Binding RampEnable}"
-                       SetPoint="20.0" />
+        <c:UsrCntrlK2400 x:Name="usrCntrlK2400" Settings="{Binding K2400}"/>
+        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS" Settings="{Binding GWPS1}"/>
+        <c:UsrCntrlGWPS x:Name="usrCntrlGWPS2" Settings="{Binding GWPS2}"/>
+        <c:UsrCntrlPID x:Name="usrCntrlPID" Settings="{Binding PID}" SetPoint="10.0" />
       </StackPanel>
     </ScrollViewer>
-    <TextBox x:Name="ConsoleOut"
-             Grid.Column="1"
-             IsReadOnly="True"
-             Margin="2"
-             Grid.Row="1"
-             Grid.RowSpan="1"
-             Background="#FFE2F2F4"
-             VerticalScrollBarVisibility="Auto"
-             HorizontalScrollBarVisibility="Auto"
-             TextChanged="ConsoleOut_TextChanged"
-             Grid.ColumnSpan="2"
-             FontFamily="Courier New"
-             FontSize="11" />
+    <TextBox x:Name="ConsoleOut" Grid.Column="1" Grid.Row="1" Grid.RowSpan="1" Grid.ColumnSpan="2"
+             IsReadOnly="True" Margin="2" Background="#FFE2F2F4"
+             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+             TextChanged="ConsoleOut_TextChanged" FontFamily="Courier New" FontSize="11" />
   </Grid>
 </cw:SimpleToolWindow>

@@ -53,7 +53,8 @@ namespace Calibration
   {
     ValueArray XX = null;
     ValueArray YY = null;
-    private string filename;
+    private string filename = "";
+    public string FileName => filename;
 
     public double XOfset { get; set; } = 0;
     public double YOfset { get; set; } = 0;
@@ -66,17 +67,17 @@ namespace Calibration
     /// <summary>
     /// csv file
     /// </summary>
-    /// <param name="filename"></param>
-    public TableCalibration(string filename = "Calibration.csv")
+    /// <param name="fn"></param>
+    public TableCalibration(string fn = "Calibration.csv")
     {
-      if (!File.Exists(filename)) {
+      if (!File.Exists(fn)) {
         var files = Directory.GetFiles(".", "*.csv");
-        if ((files?.Length ?? 0) == 0) throw new FileNotFoundException($"calibration in csv format missing ({filename})");
-        filename = files[0];
+        if ((files?.Length ?? 0) == 0) throw new FileNotFoundException($"calibration in csv format missing ({fn})");
+        fn = files[0];
       }
       XX = new ValueArray();
       YY = new ValueArray();
-      using (var sr = new StreamReader(filename)) {
+      using (var sr = new StreamReader(fn)) {
         while (!sr.EndOfStream) {
           string line = sr.ReadLine();
           string[] words = line.Split(',');
@@ -91,6 +92,7 @@ namespace Calibration
         }
         if (XX.Length < 2) throw new FileFormatException("Calibration csv File should have first two columns in numbeer format without commas");
       }
+      filename = fn;
       //      if (!XX.IsSorted) ValueArray.Sort(XX, YY);
     }
     public double Transform(double x)

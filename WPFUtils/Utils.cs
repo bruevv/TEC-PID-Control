@@ -1,8 +1,12 @@
 ﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -67,26 +71,22 @@ namespace WPFUtils
       else return DependencyProperty.UnsetValue;
     }
   }
-  public class VisibilityHiddenConverter : IValueConverter
+  public class VisibilityConverter : IValueConverter
   {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      return (Visibility)value == Visibility.Visible;
-    }
+    ///<summary>Visibility returned for False or null. Default: <c>Visibility.Hidden</c></summary>
+    public Visibility FalseVisibility { get; set; } = Visibility.Hidden;
+    ///<summary>Visibility returned for True or not null. Default: <c>Visibility.Visible</c></summary>
+    public Visibility TrueVisibility { get; set; } = Visibility.Visible;
+
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      return ((bool)value) ? Visibility.Visible : Visibility.Hidden;
-    }
-  }
-  public class VisibilityCollapsedConverter : IValueConverter
-  {
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      return (Visibility)value == Visibility.Visible;
+      return (Visibility)value == TrueVisibility;
     }
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      return ((bool)value) ? Visibility.Visible : Visibility.Collapsed;
+      if (value is bool b)
+        return b ? TrueVisibility : FalseVisibility;
+      return value == null ? FalseVisibility : TrueVisibility;
     }
   }
   public class ColorConverter : IValueConverter
@@ -132,7 +132,7 @@ namespace WPFUtils
       }
     }
   }
-  public class IconFromDrawing : IValueConverter
+  public class IconFromBrush : IValueConverter
   {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -144,7 +144,7 @@ namespace WPFUtils
     }
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-      return (value as Rectangle)?.Fill as Brush;
+      return (value as Rectangle)?.Fill;
     }
   }
   public class BrushFromBool : IValueConverter
@@ -206,4 +206,74 @@ namespace WPFUtils
 
     public object[] ConvertBack(object v, Type[] tt, object p, CultureInfo c) => throw new NotImplementedException();
   }
+  public class CommandGestureConverter : IValueConverter
+  {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+      var gestures = (value as RoutedCommand)?.InputGestures;
+      if (gestures != null) {
+        foreach (var ges in gestures) {
+          if (ges is KeyGesture kg)
+            return kg.GetDisplayStringForCulture(CultureInfo.InvariantCulture);
+        }
+      }
+
+      return null;
+    }
+    public object ConvertBack(object v, Type tt, object p, CultureInfo c)
+      => throw new NotImplementedException();
+  }
+
+  public class DescriptionExtension : MarkupExtension
+  {
+    public object Source { get; set; }
+    public string Path { get; set; }
+
+    public DescriptionExtension() { }
+    public DescriptionExtension(string path) => Path = path;
+
+    string description = "";
+
+    public override object ProvideValue(IServiceProvider serviceProvider)
+    {
+      if (description != "") return description;
+
+      if (serviceProvider.GetService(typeof(IProvideValueTarget)) is IProvideValueTarget ipvt
+        && ipvt.TargetObject is FrameworkElement fe) {
+
+        if (DesignerProperties.GetIsInDesignMode(fe)) goto returnnull;
+        object s;
+
+        if (Source != null) s = Source;
+        else if (fe.DataContext != null) s = fe.DataContext;
+        else goto returnnull;
+
+        ICustomAttributeProvider icap;
+
+        if (string.IsNullOrEmpty(Path?.Trim()) || Path.Trim() == ".") {
+          icap = s.GetType();
+        } else {
+          string[] paths = Path.Split(".");
+          int i;
+          for (i = 0; i < paths.Length - 1; i++) {
+            s = s.GetType().GetProperty(paths[i]).GetValue(s);
+          }
+          icap = s.GetType().GetProperty(paths[i]);
+        }
+        object[] attr = icap.GetCustomAttributes(typeof(DisplayAttribute), false);
+        if (attr?.Length > 0) {
+          DisplayAttribute da = (DisplayAttribute)attr[0];
+          description = da.Description;
+        } else {
+          attr = icap.GetCustomAttributes(typeof(DescriptionAttribute), false);
+          if (attr?.Length > 0) description = ((DescriptionAttribute)attr[0]).Description;
+          else goto returnnull;
+        }
+        return description;
+      }
+      returnnull:
+      return description = null;
+    }
+  }
+
 }
