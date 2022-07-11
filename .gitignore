@@ -353,4 +353,3 @@ TEC PID Control/Dll/*
 
 # Click-Once directory
 !publish/*
-!TEC PID Control/bin/publish/*
