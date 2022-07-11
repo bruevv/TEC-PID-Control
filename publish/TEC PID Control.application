@@ -8,7 +8,7 @@
         <beforeApplicationStartup />
       </update>
     </subscription>
-    <deploymentProvider codebase="https://raw.github.com/bruevv/TEC-PID-Control/main/publish/TEC%20PID%20Control.application" />
+    <deploymentProvider codebase="https://raw.githubusercontent.com/bruevv/TEC-PID-Control/main/publish/TEC%20PID%20Control.application" />
   </deployment>
   <compatibleFrameworks xmlns="urn:schemas-microsoft-com:clickonce.v2">
     <framework targetVersion="4.5" profile="Full" supportedRuntime="4.0.30319" />
@@ -21,7 +21,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>+FEXnSWYXBCC4112JhyBMYZCT2Td+Vu8jGshJXXaSwQ=</dsig:DigestValue>
+        <dsig:DigestValue>pJl3uqEpM57TAuxoKkdmKLy6TjNAhwvExGVr0p/+p9o=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

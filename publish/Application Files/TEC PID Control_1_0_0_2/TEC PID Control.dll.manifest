@@ -104,7 +104,7 @@
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>glfm5/bIw3IiJm6POdATOzLxr9h7T38TrzumvvyylFg=</dsig:DigestValue>
+      <dsig:DigestValue>667vyratnG/UYWB4fV8A/Q3dltJTP+tHAgTJbbuZigQ=</dsig:DigestValue>
     </hash>
   </file>
   <file name="TEC PID Control.xml" size="2224" writeableType="applicationData">
