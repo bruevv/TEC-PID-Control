@@ -81,6 +81,15 @@
       <dsig:DigestValue>m7jSSKcRDfGhoVvBgmYn+v53TjPbkZQarEEQeYFQ/9g=</dsig:DigestValue>
     </hash>
   </file>
+  <file name="Dll\TEC-PID-dll-32.dll" size="10240">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>5Q26tLiaOc2lz0xypddGpm9wywmYKYq9wxvYJQYusM0=</dsig:DigestValue>
+    </hash>
+  </file>
   <file name="MathParserTK.pdb" size="22016">
     <hash>
       <dsig:Transforms>
@@ -96,7 +105,7 @@
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>oGk+v4Pq1a34CZVHnucYiZuwj20G+Kec2v612jj09/U=</dsig:DigestValue>
+      <dsig:DigestValue>4YKEhmEJR7kkft9zFDx/d6Q+ZOp1rr3TiF5pz5kCyrA=</dsig:DigestValue>
     </hash>
   </file>
   <file name="TEC PID Control.xml" size="2224" writeableType="applicationData">

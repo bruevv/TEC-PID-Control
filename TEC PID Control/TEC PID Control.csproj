@@ -84,6 +84,12 @@
     <PDBFiles Include="..\publish\*.pdb" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Dll\TEC-PID-dll-32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="DeletePDBAfterPublish" AfterTargets="CopyFilesPublish">
     <Delete Files="@(PDBFiles)">
       <Output TaskParameter="DeletedFiles" ItemName="DeletedList" />
