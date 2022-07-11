@@ -5,14 +5,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Web.UI.WebControls;
-using System.Windows.Data;
 using System.Windows.Markup;
-using System.Windows.Media;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -67,7 +63,6 @@ namespace CSSettings
           newSettings = new S();
         }
       } else {
-        //        throw new IOException($"File <{filename}> do not exist");
         newSettings = new S();
       }
 
@@ -77,14 +72,7 @@ namespace CSSettings
       return newSettings;
     }
 
-    static string GetDefaultSaveFileName(Type T)
-    {
-      string path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-      string appname = Process.GetCurrentProcess().ProcessName;
-      string settingsname = T.Name;
-
-      return Path.Combine(path, appname, settingsname + ".settings");
-    }
+    static string GetDefaultSaveFileName(Type T) => GUtils.GenerateProgramDataFileName(T.Name + ".settings");
     protected internal abstract IEnumerable<(PropertyInfo pi, SettingsBase o)> GetRecursiveProperties();
     public void Save(string filename = "")
     {
@@ -98,9 +86,12 @@ namespace CSSettings
         Indent = true,
         NewLineOnAttributes = false,
       };
+      bool newFile = !File.Exists(filename);
       using (XmlWriter xw = XmlWriter.Create(filename, xws)) {
         ser.Serialize(xw, this);
+        Logger.Log($"Settings File {(newFile ? "created" : "updated")}:\n{filename}", Logger.Mode.AppState, "APP");
       }
+      if (newFile) GUtils.SetProgramDataFilePermissions(filename);
     }
 
     [XmlIgnore]
@@ -214,7 +205,7 @@ namespace CSSettings
               }
             } else {
               object converter = GetConverter(pa.PI);
-              TypeConverterSwitch:
+TypeConverterSwitch:
               switch (converter) {
                 case null:
                   o = Convert.ChangeType(reader.ReadElementContentAsString(), t);
@@ -285,7 +276,7 @@ namespace CSSettings
           ixml.WriteXml(writer);
         } else {
           object converter = GetConverter(pa.PI);
-          TypeConverterSwitch:
+TypeConverterSwitch:
           switch (converter) {
             case null:
               writer.WriteString(prop?.ToString() ?? "");

@@ -111,13 +111,15 @@
           <ComboBox Grid.Row="2" Grid.Column="2" Margin="2" HorizontalAlignment="Left"
                     ToolTip="{wu:Description Settings.Channel}"
                     SelectedItem="{Binding Settings.Channel}" d:SelectedIndex="1" 
-                    SelectionChanged="Channel_SelectionChanged">
+                    SelectionChanged="Channel_SelectionChanged" 
+                    IsEnabled="{Binding IsControlled, Converter={StaticResource InverseBooleanConverter}}">
             <pr:GWPSChannel>A</pr:GWPSChannel>
             <pr:GWPSChannel>B</pr:GWPSChannel>
           </ComboBox>
           <ToggleButton Content="Auto Poll" Grid.Row="2" Grid.Column="3" Margin="2"
-                      ToolTip="{wu:Description Settings.AutoPoll}"
-                      IsChecked="{Binding Settings.AutoPoll, Mode=TwoWay}" Checked="AutoPoll_CheckedUnchecked" Unchecked="AutoPoll_CheckedUnchecked" />
+                        ToolTip="{wu:Description Settings.AutoPoll}" IsChecked="{Binding Settings.AutoPoll, Mode=TwoWay}" 
+                        IsEnabled="{Binding IsControlled, Converter={StaticResource InverseBooleanConverter}}"
+                        Checked="AutoPoll_CheckedUnchecked" Unchecked="AutoPoll_CheckedUnchecked" />
           <TextBlock Text="Voltage:" Grid.Row="3" ToolTip="Measured Voltage" />
           <w:UnitTextBox x:Name="utbVoltage"  IsReadOnly="True" Grid.Row="3" Grid.Column="1"
                        Value="{Binding Voltage, Mode=OneWay}" OutputUnits="{x:Type w:UnitVoltage}"
@@ -140,10 +142,11 @@
           <TextBlock Text="Current:" Grid.Row="6" Grid.Column="2"
                      ToolTip="{wu:Description Settings.OutputCurrent}"/>
           <w:UnitTextBox x:Name="utbSetCurrent"
-                       Unit="{Binding Settings.Interface.OCUnit}" OutputUnits="{x:Type w:UnitCurrent}"
-                       ValueFormat="{Binding Settings.Interface.OCFormat}"
-                       Grid.Row="6" Grid.Column="3" MaxValue="3.2" MinValue="0"
-                       Value="{Binding Settings.OutputCurrent}"/>
+                         Unit="{Binding Settings.Interface.OCUnit}" OutputUnits="{x:Type w:UnitCurrent}"
+                         ValueFormat="{Binding Settings.Interface.OCFormat}"
+                         Grid.Row="6" Grid.Column="3" MaxValue="3.2" MinValue="0"
+                         Value="{Binding Settings.OutputCurrent}"
+                         IsReadOnly="{Binding IsControlled}"/>
           <Button Grid.Row="7" Content="SetUp" Click="bSetUp_Click" />
           <TextBlock Text="Eff. Res.:" Grid.Row="4" Grid.Column="0" 
                      ToolTip="R (Ohm) = U (V) / I (A)"/>

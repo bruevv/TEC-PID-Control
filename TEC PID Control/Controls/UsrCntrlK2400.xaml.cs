@@ -20,6 +20,7 @@ namespace TEC_PID_Control.Controls
   public partial class UsrCntrlK2400 : UserControl
   {
     public Keithley2400 KD { get; private init; }
+    public new string Name => title?.Text ?? "";
 
     #region Binding
     public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(K2400S), typeof(UsrCntrlK2400), new PropertyMetadata(K2400S.Default, K2400S_PropChanged));

@@ -6,6 +6,7 @@
                      xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
                      xmlns:w="clr-namespace:WPFUtils;assembly=WPFUtils"
                      xmlns:av="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="av"
+                     xmlns:idd="clr-namespace:InteractiveDataDisplay.WPF;assembly=InteractiveDataDisplay.WPF"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                      xmlns:s="clr-namespace:System;assembly=System.Runtime"
                      x:Name="customWindow" x:Class="TEC_PID_Control.MainWindow" Background="Black"
@@ -71,8 +72,13 @@
       </MenuItem>
       <MenuItem Style="{DynamicResource DarkMenu}" Header="_Help">
         <MenuItem Style="{DynamicResource DarkMenu}"
-                  IsCheckable="True" IsChecked="{Binding ShowHelpMarkers}"
+                  IsCheckable="True" IsChecked="{Binding ShowHelpMarkers}" IsEnabled="{Binding ShowToolTips}"
                   Click="RefreshInterface" Header="_Show Help Markers"/>
+        <MenuItem Style="{DynamicResource DarkMenu}"
+                  IsCheckable="True" IsChecked="{Binding ShowToolTips}" Header="_Show Help Tooltips" 
+                  Checked="EnableTooltipsMI_Checked" Unchecked="EnableTooltipsMI_Checked" />
+        <MenuItem Style="{DynamicResource DarkMenu}" Header="_Even Better Help than Tooltips"
+                  Click="EBHMI_Click" />
       </MenuItem>
     </Menu>
     <ScrollViewer Margin="2" Grid.RowSpan="2" Grid.Row="1">
@@ -88,9 +94,11 @@
         <c:UsrCntrlPID x:Name="usrCntrlPID" Settings="{Binding PID}" SetPoint="10.0" />
       </StackPanel>
     </ScrollViewer>
-    <TextBox x:Name="ConsoleOut" Grid.Column="1" Grid.Row="1" Grid.RowSpan="1" Grid.ColumnSpan="2"
-             IsReadOnly="True" Margin="2" Background="#FFE2F2F4"
-             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-             TextChanged="ConsoleOut_TextChanged" FontFamily="Courier New" FontSize="11" />
+    <TextBox x:Name="ConsoleOut"
+             Grid.Column="1" Grid.Row="1" Grid.RowSpan="1"
+             Grid.ColumnSpan="2" IsReadOnly="True" Margin="2"
+             Background="#FFE2F2F4" VerticalScrollBarVisibility="Auto"
+             HorizontalScrollBarVisibility="Auto" TextChanged="ConsoleOut_TextChanged"
+             FontFamily="Courier New" FontSize="11" />
   </Grid>
 </cw:SimpleToolWindow>

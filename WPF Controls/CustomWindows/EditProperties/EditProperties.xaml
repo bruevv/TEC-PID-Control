@@ -211,12 +211,14 @@
                    TextWrapping="WrapWithOverflow" TextTrimming="CharacterEllipsis" MaxHeight="32"
                    Visibility="{Binding ElementName=listBox, Path=SelectedItem, Converter={StaticResource VC1}}"/>
         <TextBlock Visibility="{Binding ElementName=listBox, Path=SelectedItem, Converter={StaticResource VC2}}">
-          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.DefaultValue, TargetNullValue={x:Static s:String.Empty},
-                     Mode=OneWay, StringFormat='Default: &quot;{0}&quot;'}"/>
-          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.MinValue, TargetNullValue='',
-                     Mode=OneWay, StringFormat=' Min: &quot;{0}&quot;'}"/>
-          <Run Text="{Binding ElementName=listBox, Path=SelectedItem.MaxValue, TargetNullValue={x:Static s:String.Empty},
-                     Mode=OneWay, StringFormat=' Max: &quot;{0}&quot;'}"/>
+          <TextBlock.Text>
+            <MultiBinding  StringFormat="Default: &quot;{0}{3}&quot; Min: &quot;{1}{3}&quot; Max: &quot;{2}{3}&quot;">
+              <Binding ElementName="listBox" Path="SelectedItem.DefaultValue" TargetNullValue="N/A"/>
+              <Binding ElementName="listBox" Path="SelectedItem.MinValue" TargetNullValue="N/A"/>
+              <Binding ElementName="listBox" Path="SelectedItem.MaxValue" TargetNullValue="N/A"/>
+              <Binding ElementName="listBox" Path="SelectedItem.UnitDes" TargetNullValue=""/>
+            </MultiBinding>
+          </TextBlock.Text>
         </TextBlock>
       </StackPanel>
     </GroupBox>

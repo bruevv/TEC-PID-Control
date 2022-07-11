@@ -2,6 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Threading;
@@ -76,6 +80,39 @@ namespace CSUtils
         i++;
       }
       return name;
+    }
+
+    public static string GetProgramDataPath()
+    {
+      string path = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+      string appname = Process.GetCurrentProcess().ProcessName;
+      return Path.Combine(path, appname);
+    }
+    public static string GenerateProgramDataFileName(string filename = "")
+    {
+      string path = GetProgramDataPath();
+      return Path.Combine(path, filename);
+    }
+
+    public static bool SetProgramDataFilePermissions(string filename)
+    {
+      try {
+        Logger.Instance?.log($"Trying to add file permissions for all Users", Logger.Mode.AppState, "APP");
+        AddFileSecurity(filename, FileSystemRights.FullControl, AccessControlType.Allow);
+        Logger.Instance?.log($"Successful", Logger.Mode.AppState, "APP");
+        return true;
+      } catch (Exception e) {
+        Logger.Instance?.log(e, Logger.Mode.AppState, "APP");
+        return false;
+      }
+    }
+    static void AddFileSecurity(string fileName, FileSystemRights rights, AccessControlType controlType)
+    {
+      FileInfo fi = new FileInfo(fileName);
+      FileSecurity fSecurity = FileSystemAclExtensions.GetAccessControl(fi);
+      SecurityIdentifier group = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+      fSecurity.AddAccessRule(new FileSystemAccessRule(group, rights, controlType));
+      FileSystemAclExtensions.SetAccessControl(fi, fSecurity);
     }
 
     /// <summary>

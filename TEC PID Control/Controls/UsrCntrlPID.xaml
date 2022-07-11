@@ -44,6 +44,7 @@
         <TextBlock Text="{Binding Text, ElementName=utbMP}"
                    DockPanel.Dock="Right" Width="75" Margin="0,0,21,0" FontSize="12" />
         <TextBlock x:Name="title" Text="{x:Static tpn:UsrCntrlPID.DeviceName}" />
+        <TextBlock x:Name="devicestitles" Margin="20,0,0,0"/>
       </DockPanel>
     </w:AnimExpander.Header>
     <AdornerDecorator>

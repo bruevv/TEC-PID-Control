@@ -16,9 +16,10 @@ namespace WPFControls
             {"us", 1e-6},
             {"ms", 1e-3},
             {"s", 1},
- //           {"ks", 1e3},
  //           {"Ms", 1e6},
+            {"min", 60},
             {"m", 60},
+            {"ks", 1e3 },
             {"h", 60*60},
             {"d", 60*60*24},
             {"y", 60*60*24*365.2422},
@@ -31,7 +32,7 @@ namespace WPFControls
     public UnitTime() : base() { }
     public UnitTime(string def) : base(def) { }
 
-    internal protected override string Invariant => "s";
+    internal protected override string invariant => "s";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -55,7 +56,7 @@ namespace WPFControls
     public UnitFrequency() : base() { }
     public UnitFrequency(string def) : base(def) { }
 
-    internal protected override string Invariant => "Hz";
+    internal protected override string invariant => "Hz";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
   [Designators("Wavelength", "nm")]
@@ -77,7 +78,7 @@ namespace WPFControls
     public UnitWavelength() : base() { }
     public UnitWavelength(string def) : base(def) { }
 
-    internal protected override string Invariant => "nm";
+    internal protected override string invariant => "nm";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
   [Designators("Wavenumbers", "k", "Energy", "eV")]
@@ -101,7 +102,7 @@ namespace WPFControls
     public UnitWavenumbers() : base() { }
     public UnitWavenumbers(string def) : base(def) { }
 
-    internal protected override string Invariant => "cm⁻¹";
+    internal protected override string invariant => "cm⁻¹";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -124,7 +125,7 @@ namespace WPFControls
     public UnitVoltage() : base() { }
     public UnitVoltage(string def) : base(def) { }
 
-    internal protected override string Invariant => "V";
+    internal protected override string invariant => "V";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -146,7 +147,7 @@ namespace WPFControls
     public UnitCurrent() : base() { }
     public UnitCurrent(string def) : base(def) { }
 
-    internal protected override string Invariant => "A";
+    internal protected override string invariant => "A";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -167,7 +168,7 @@ namespace WPFControls
     public UnitPercent() : base() { }
     public UnitPercent(string def) : base(def) { }
 
-    internal protected override string Invariant => " ";
+    internal protected override string invariant => " ";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -198,7 +199,7 @@ namespace WPFControls
     public UnitResistance() : base() { }
     public UnitResistance(string def) : base(def) { }
 
-    internal protected override string Invariant => "Ω";
+    internal protected override string invariant => "Ω";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -217,7 +218,7 @@ namespace WPFControls
     public UnitTemperatureC(string def) : base(def) { }
     public static double FromK(double from) => from + 273.15;
 
-    internal protected override string Invariant => "°C";
+    internal protected override string invariant => "°C";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
   [Designators("Temperature(Kelvins)", "TemperatureK")]
@@ -236,7 +237,7 @@ namespace WPFControls
     public UnitTemperatureK(string def) : base(def) { }
     public static double FromC(double from) => from - 273.15;
 
-    internal protected override string Invariant => "K";
+    internal protected override string invariant => "K";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
   [Designators("Relative Temperature", "RelTemperature")]
@@ -257,7 +258,7 @@ namespace WPFControls
     public UnitRelTemperature() : base() { }
     public UnitRelTemperature(string def) : base(def) { }
 
-    internal protected override string Invariant => "°C";
+    internal protected override string invariant => "°C";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -280,7 +281,7 @@ namespace WPFControls
     public UnitPower() : base() { }
     public UnitPower(string def) : base(def) { }
 
-    internal protected override string Invariant => "W";
+    internal protected override string invariant => "W";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 
@@ -304,7 +305,7 @@ namespace WPFControls
     public UnitBandTempCperS() : base() { }
     public UnitBandTempCperS(string def) : base(def) { }
 
-    internal protected override string Invariant => "°C/s";
+    internal protected override string invariant => "°C/s";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
   [Designators("TemperatureConS")]
@@ -313,13 +314,19 @@ namespace WPFControls
     static Dictionary<string, double> s_dic = new Dictionary<string, double>{
            {"°C·s", 1.0},
            {"°Cs", 1.0},
+           {"°C*s", 1.0},
            {"Cs", 1.0},
+           {"C*s", 1.0},
            {"°C·m",60.0},
            {"°Cm",60.0},
+           {"°C*m", 60.0},
            {"Cm",60.0},
+           {"C*m", 60.0},
            {"°C·h",3600.0},
            {"°Ch",3600.0},
+           {"°C*h",3600.0},
            {"Ch",3600.0},
+           {"C*h",3600.0},
     };
 
     public static readonly UnitBandTempConS Default = new UnitBandTempConS();
@@ -327,7 +334,7 @@ namespace WPFControls
     public UnitBandTempConS() : base() { }
     public UnitBandTempConS(string def) : base(def) { }
 
-    internal protected override string Invariant => "°C·s";
+    internal protected override string invariant => "°C·s";
     internal protected override Dictionary<string, double> dic => s_dic;
   }
 }

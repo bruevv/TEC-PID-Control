@@ -9,10 +9,10 @@ using System.Windows.Media;
 
 namespace WPFUtils.Adorners
 {
-  public class SimpleCircleAdorner : Adorner
+  public class ToolTipWithAdorner : Adorner
   {
     // Be sure to call the base class constructor.
-    public SimpleCircleAdorner(FrameworkElement adornedElement) : base(adornedElement)
+    public ToolTipWithAdorner(FrameworkElement adornedElement) : base(adornedElement)
     {
       adornedElement.MouseEnter += Invalidate;
       adornedElement.MouseLeave += Invalidate;
@@ -59,7 +59,7 @@ namespace WPFUtils.Adorners
         ToolTipService.SetPlacementRectangle(AdornedElement, new Rect(p, p));
       }
     }
-    static List<SimpleCircleAdorner> allSCAdorners = new();
+    static List<ToolTipWithAdorner> allSCAdorners = new();
     private static double inactiveOppacity = 0.2;
 
     public static void RefreshAllSCA()
@@ -71,11 +71,18 @@ namespace WPFUtils.Adorners
       foreach (var uie in GetLogicalChildCollection<T>(container))
         if (uie.ToolTip != null) RegisterAdorner(uie);
     }
-    public static SimpleCircleAdorner RegisterAdorner(FrameworkElement uie)
+
+    public static void EnableTooltip<T>(FrameworkElement container, bool enable = true) where T : FrameworkElement
+    {
+      foreach (var uie in ToolTipWithAdorner.GetLogicalChildCollection<TextBlock>(container)) {
+        if (uie.ToolTip != null) ToolTipService.SetIsEnabled(uie, enable);
+      }
+    }
+    public static ToolTipWithAdorner RegisterAdorner(FrameworkElement uie)
     {
       AdornerLayer myAdornerLayer = AdornerLayer.GetAdornerLayer(uie);
       if (myAdornerLayer == null) return null;
-      SimpleCircleAdorner sca = new SimpleCircleAdorner(uie);
+      ToolTipWithAdorner sca = new ToolTipWithAdorner(uie);
       myAdornerLayer.Add(sca);
       allSCAdorners.Add(sca);
       return sca;
