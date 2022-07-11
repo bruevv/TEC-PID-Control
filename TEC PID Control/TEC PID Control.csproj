@@ -81,7 +81,7 @@
   </Target>
 
   <ItemGroup>
-    <PDBFiles Include="bin\publish\CSUtils.pdb;bin\publish\CustomWindows.pdb;bin\publish\Devices.pdb;bin\publish\MathParserTK.pdb;bin\publish\TEC PID Control.pdb;bin\publish\WPFUtils.pdb" />
+    <PDBFiles Include="..\publish\*.pdb" />
   </ItemGroup>
 
   <Target Name="DeletePDBAfterPublish" AfterTargets="CopyFilesPublish">
