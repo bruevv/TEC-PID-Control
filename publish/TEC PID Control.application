@@ -14,14 +14,14 @@
     <framework targetVersion="4.5" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="Application Files\TEC PID Control_1_0_0_2\TEC PID Control.dll.manifest" size="6253">
+    <dependentAssembly dependencyType="install" codebase="Application Files\TEC PID Control_1_0_0_2\TEC PID Control.dll.manifest" size="5907">
       <assemblyIdentity name="TEC PID Control.exe" version="1.0.0.2" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>bmLN0YMesZX575o9y6BtQLrvZ7uXy5vp4ZciHJfHN7s=</dsig:DigestValue>
+        <dsig:DigestValue>NIeScv3DY/SCKCIVJeffM12ATVL7LwXPHBMSKwcP8SQ=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
