@@ -12,9 +12,9 @@ namespace TEC_PID_Control.Properties
   public class Settings : GenericSB<Settings>
   {
     bool firstRun = true;
-    bool showHelpMarkers = true;
-    string logFile = "debug.log";
-    Logger.Mode logMode = Logger.Mode.Error;
+    bool showHelpMarkers = true, showToolTips = true;
+    string logFile = "<Default>";
+    Logger.Mode logMode = Logger.Mode.AppState;
     MainInterface mI = new();
 
     PIDSettings pID = new();
@@ -25,8 +25,10 @@ namespace TEC_PID_Control.Properties
     [EditorBrowsable(EditorBrowsableState.Never)]
     public bool FirstRun { get => firstRun; set => ChangeProperty(ref firstRun, value); }
 
-    [Display(Name = "Show Help Markers", Description = "Show blue circles where Help-ToolTips are availabale. Needs restart.")]
+    [Display(Name = "Show Help Markers", Description = "Show blue circles where Help-ToolTips are available")]
     public bool ShowHelpMarkers { get => showHelpMarkers; set => ChangeProperty(ref showHelpMarkers, value); }
+    [Display(Name = "Show Help ToolTips", Description = "Show Help-ToolTips where they are available")]
+    public bool ShowToolTips { get => showToolTips; set => ChangeProperty(ref showToolTips, value); }
 
     [Display(Name = "Log Mode", Description = "Level of Logger (log file only). Requires restart.")]
     public Logger.Mode LogMode { get => logMode; set => ChangeProperty(ref logMode, value); }
@@ -226,44 +228,69 @@ namespace TEC_PID_Control.Properties
     double ctrlP = 5.0, ctrlI = 40.0, ctrlD = 3.0;
     double maxCtrlPar = 2.8, minCtrlPar = 0, globalGain = 2.8;
     double timeConstant = 0.3, maxIntegralError = 1, cRate = 0.1;
+    double pBandCin = 0.005, pBandCout = 0.01;
+    uint sPReachedFilter = 10;
+    double setPointReachTime = 5.0*60.0;
     bool rampEnable = true;
     PIDInterface pidInterface = new();
 
     [Display(Name = "P-Band", Description = "Proportional band of PID regulator in units of " +
       "temperature. If P-band is 1°C, P-component of control parameter will be 100% at 1°C error")]
+    [UnitBox(typeof(UnitRelTemperature), "°C", 1e-3, double.MaxValue)]
     public double CtrlP { get => ctrlP; set => ChangeProperty(ref ctrlP, value); }
 
     [Display(Name = "I-Band", Description = "Integral band of PID regulator in units of " +
      "temperature multiplied on time. If I-band is 1°C*m, I-component of control parameter will " +
       "be 100% at 1°C error accumulated over 1 minute")]
+    [UnitBox(typeof(UnitBandTempConS), "°C*s", 1e-3, double.MaxValue)]
     public double CtrlI { get => ctrlI; set => ChangeProperty(ref ctrlI, value); }
 
     [Display(Name = "D-Band", Description = "Differential (D) band of PID regulator in units of " +
       "temperature divided by time. If D-band is 1°C/s, D-component of control parameter will " +
       "be 100% when error has increased on 1°C over 1 second")]
+    [UnitBox(typeof(UnitBandTempCperS), "°C/s", 1e-3, double.MaxValue)]
     public double CtrlD { get => ctrlD; set => ChangeProperty(ref ctrlD, value); }
 
     [Display(Name = "Maximum Current", Description = "Current limit of PID controller:" +
      "control current will not be higher than this value")]
+    [UnitBox(typeof(UnitCurrent), "A")]
     public double MaxCtrlPar { get => maxCtrlPar; set => ChangeProperty(ref maxCtrlPar, value); }
 
     [Display(Name = "Minimum Current", Description = "The minimum PID control current. Normally" +
       "it should be set to 0 in unipolar controller")]
+    [UnitBox(typeof(UnitCurrent), "A")]
     public double MinCtrlPar { get => minCtrlPar; set => ChangeProperty(ref minCtrlPar, value); }
 
     [Display(Name = "PID Gain", Description = "This current will be set for PID control parameter calculated at 100%")]
+    [UnitBox(typeof(UnitCurrent), "A")]
     public double GlobalGain { get => globalGain; set => ChangeProperty(ref globalGain, value); }
 
     [Display(Name = "Time Constant", Description = "Time period for iterating PID control")]
+    [UnitBox(typeof(UnitTime), "s")]
     public double TimeConstant { get => timeConstant; set => ChangeProperty(ref timeConstant, value); }
 
     [Display(Name = "Max I Error", Description = "Max Integral (I) Error is the limit for I" +
       "component of PID control that is integrated over time")]
+    [UnitBox(typeof(UnitPercent ), " ", 0.0, 1.0)]
     public double MaxIntegralError { get => maxIntegralError; set => ChangeProperty(ref maxIntegralError, value); }
 
     [Display(Name = "Slope Rate", Description = "The rate of heating/cooling ramp that is used" +
       "every time new setpoint is set is Ramping is enabled")]
+    [UnitBox(typeof(UnitBandTempCperS), "°C/m", 0.0, double.MaxValue)]
     public double CRate { get => cRate; set => ChangeProperty(ref cRate, value); }
+  
+    [Display(Name = "PBand Reached In", Description = "Minimum PBand Value when SetPoint is Considered Reached")]
+    [UnitBox(typeof(UnitPercent), "%", 0.0, 1.0)]
+    public double PBandCin { get => pBandCin; set => ChangeProperty(ref pBandCin, value); }
+    [Display(Name = "PBand Reached Out", Description = "Maximum PBand Value when SetPoint Reached State Invalidated")]
+    [UnitBox(typeof(UnitPercent), "%", 0.0, 1.0)]
+    public double PBandCout { get => pBandCout; set => ChangeProperty(ref pBandCout, value); }
+    [Display(Name = "SP Reached Count", Description = "Number of PID Control Cycles Setpoint Reached Event Should Fire to Consider SetPoint is Actually Reached")]
+    public uint SPReachedFilter { get => sPReachedFilter; set => ChangeProperty(ref sPReachedFilter, value); }
+
+    [Display(Name = "Maximum SP Reach Time", Description = "If PID cannot reach setpoint in time, PID and power will be disabled. It is not recommended to set it over 5 minutes.")]
+    [UnitBox(typeof(UnitTime), "min", 10.0, 3600.0)]
+    public double SetPointReachTime { get => setPointReachTime; set => ChangeProperty(ref setPointReachTime, value); }
 
     [Display(Name = "Enable Ramp", Description = "If Ramping is enabled, new setpoint will" +
       "not be applyed immidiately, but gradually set starting from the current temperature")]

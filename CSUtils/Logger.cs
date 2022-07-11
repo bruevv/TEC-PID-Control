@@ -85,7 +85,9 @@ namespace CSUtils
     static string DefaultFilename = "debug.log";
 
     static Logger def = null;
+    public bool Exists => def != null;
     public static Logger Default => def ?? (def = new Logger(DefaultFilename, Mode.None));
+    public static Logger Instance => def;
 
     public string FileName { get; protected set; }
 
@@ -93,22 +95,23 @@ namespace CSUtils
 
     public Logger(string filename, Mode mode)
     {
-      if (def == null) def = this;
       LoggerMode = mode;
       if (mode == Mode.None) return;
-      if (def.LoggerMode == Mode.None) def = this;
 
       FileName = Path.GetFullPath(filename ?? DefaultFilename);
-      bool newfile = false;
-      if (!File.Exists(FileName)) newfile = true;
+      bool newfile = !File.Exists(FileName);
       var file = new FileStream(FileName, FileMode.Append, FileAccess.Write, FileShare.Read);
       logFile = new StreamWriter(file, Encoding);
       logFile.NewLine = "\n";
       if (newfile) {
+        GUtils.SetProgramDataFilePermissions(FileName);
         logFile?.WriteLine("Log started");
         logFile?.WriteLine(Assembly.GetEntryAssembly().FullName);
         logFile?.WriteLine($"Current DateTime '{DateTime.Now:yyyy/MM/dd HH:mm:ss}'");
       }
+
+      if (def == null) def = this;
+      if (def.LoggerMode == Mode.None) def = this;
 
       FlushTimer = new System.Timers.Timer(FLUSH_INTERVAL) { AutoReset = true };
       FlushTimer.Elapsed += PeriodicFlush;

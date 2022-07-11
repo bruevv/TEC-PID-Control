@@ -10,20 +10,21 @@ using System.Windows.Threading;
 
 namespace TEC_PID_Control.PID
 {
-  public interface IMeasureParameter
+  public interface IPhParameter
   {
+    string Name { get; }
     void Reset();
     void Init();
-    double Measure();
-
     bool ExpGoing { get; set; }
   }
-  public interface IControlParameter
+
+  public interface IMeasureParameter : IPhParameter
   {
-    void Reset();
-    void Init();
+    double Measure();
+  }
+  public interface IControlParameter : IPhParameter
+  {
     void Control(double parameter);
-    bool ExpGoing { get; set; }
   }
 }
 
@@ -47,7 +48,7 @@ namespace TEC_PID_Control.Controls
     }
 
     #region DPBinding
-    public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(PIDSettings), typeof(UsrCntrlPID), new PropertyMetadata(PIDSettings.Default));
+    public static readonly DependencyProperty SettingsProperty = DependencyProperty.Register(nameof(Settings), typeof(PIDSettings), typeof(UsrCntrlPID), new PropertyMetadata(PIDSettings.Default, SettingsCB));
 
     public static readonly DependencyProperty SetPointProperty =
         DependencyProperty.Register(nameof(SetPoint), typeof(double), typeof(UsrCntrlPID), new FrameworkPropertyMetadata(0.0, SetPointCB) { BindsTwoWayByDefault = true });
@@ -66,6 +67,14 @@ namespace TEC_PID_Control.Controls
     #endregion DPBinding
     #region DPCallBacks
     object setPointLock = new();
+    static void SettingsCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
+    {
+      var t = (UsrCntrlPID)o;
+      lock (t.setPointLock) {
+        t.settings = (PIDSettings)ea.NewValue;
+      }
+    }
+
     static void SetPointCB(DependencyObject o, DependencyPropertyChangedEventArgs ea)
     {
       var t = (UsrCntrlPID)o;
@@ -136,7 +145,7 @@ namespace TEC_PID_Control.Controls
     public PIDSettings Settings { get => (PIDSettings)GetValue(SettingsProperty); set => SetValue(SettingsProperty, value); }
 
     [Category("PID")]
-    [Display(Name ="Set Point", Description = "Final SetPoint if Ramp is enabled")]
+    [Display(Name = "Set Point", Description = "Final SetPoint if Ramp is enabled")]
     public double SetPoint {
       get { return (double)GetValue(SetPointProperty); }
       set { SetValue(SetPointProperty, value); }
@@ -181,6 +190,8 @@ namespace TEC_PID_Control.Controls
       GC.SuppressFinalize(this);
     }
     #endregion IDisposable
+
+    PIDSettings settings = null;
 
     public IMeasureParameter iM { get; set; }
     public IControlParameter iC { get; set; }
@@ -304,6 +315,7 @@ namespace TEC_PID_Control.Controls
 
             double error = mp - ImSetPoint;
             ierror += error * dtm;
+            lasterror ??= error;
             MeasurementStamp = Now;
 
             averagecount++; // for debug
@@ -333,16 +345,16 @@ namespace TEC_PID_Control.Controls
 
     void CycleUpdateParameters()
     {
-      ctrlP = Settings.CtrlP;
-      ctrlI = Settings.CtrlI;
-      ctrlD = Settings.CtrlD;
-      globalGain = Settings.GlobalGain;
-      maxIntegralError = Settings.MaxIntegralError;
-      timeConstant = Settings.TimeConstant;
-      minCtrlPar = Settings.MinCtrlPar;
-      maxCtrlPar = Settings.MaxCtrlPar;
-      cRate = Settings.CRate;
-      bool newRE = Settings.RampEnable;
+      ctrlP = settings.CtrlP;
+      ctrlI = settings.CtrlI;
+      ctrlD = settings.CtrlD;
+      globalGain = settings.GlobalGain;
+      maxIntegralError = settings.MaxIntegralError;
+      timeConstant = settings.TimeConstant;
+      minCtrlPar = settings.MinCtrlPar;
+      maxCtrlPar = settings.MaxCtrlPar;
+      cRate = settings.CRate;
+      bool newRE = settings.RampEnable;
       if (!isRampEnabled && newRE) resetRamp = true;
       isRampEnabled = newRE;
     }
@@ -384,21 +396,24 @@ namespace TEC_PID_Control.Controls
         return;
       }
     }
-    const float pbandC = 0.005f;
-    const float dbandC = 0.001f;
 
     DateTime SetPointLostTime;
     public TimeSpan SetPointReachTime { get; set; } = TimeSpan.FromMinutes(5);
+    uint SPReachedCount = 0;
     void UpdateSetPointReached()
     {
       bool oldispr = IsSPReached;
       bool newispr;
       if (oldispr) {
-        if (Math.Abs(pbandw) < 2 * pbandC && Math.Abs(dbandw) < 2 * dbandC) newispr = true;
+        if (Math.Abs(pbandw) < settings.PBandCout) newispr = true;
         else newispr = false;
       } else {
-        if (Math.Abs(pbandw) < pbandC && Math.Abs(dbandw) < dbandC) newispr = true;
-        else newispr = false;
+        if (Math.Abs(pbandw) < settings.PBandCin && SPReachedCount++ >= settings.SPReachedFilter) {
+          newispr = true;
+        } else {
+          newispr = false;
+          if (Math.Abs(pbandw) >= settings.PBandCin) SPReachedCount = 0;
+        }
       }
       if (newispr && !oldispr) {
         IsSPReached = true;
@@ -406,7 +421,7 @@ namespace TEC_PID_Control.Controls
         IsSPReached = false;
         SetPointLostTime = DateTime.Now;
       } else if (!newispr && !oldispr) {
-        if (DateTime.Now - SetPointLostTime > SetPointReachTime) {
+        if (DateTime.Now - SetPointLostTime > TimeSpan.FromSeconds(settings.SetPointReachTime)) {
           State |= EState.Error;
           throw new TimeoutException(
             $"PID could not reach Setpoint ({SetPoint} °C)\n" +
@@ -480,6 +495,7 @@ namespace TEC_PID_Control.Controls
     public void Init(IMeasureParameter im, IControlParameter ic)
     {
       iM = im; iC = ic;
+      devicestitles.Text = $"({ic.Name})";
 
       if (thread.IsAlive) StopThread();
       IsControlEnabled = false;
@@ -537,6 +553,7 @@ namespace TEC_PID_Control.Controls
     TempSensor TC;
     public TempSensorInterface(TempSensor tc) => TC = tc;
 
+    public string Name => TC.KC.Name;
     public void Init() => TC.ScheduleInit();
     public void Reset() => TC.KC.KD.ScheduleReset();
 
@@ -557,6 +574,8 @@ namespace TEC_PID_Control.Controls
     UsrCntrlGWPS ucGWPS;
 
     public GWIPSControlInterface(UsrCntrlGWPS ucgwps) => ucGWPS = ucgwps;
+
+    public string Name => ucGWPS.Name;
 
     public void Control(double parameter)
     {

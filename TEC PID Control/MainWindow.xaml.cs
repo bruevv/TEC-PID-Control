@@ -35,7 +35,6 @@ namespace TEC_PID_Control
           new FrameworkPropertyMetadata(20000));
         ToolTipService.PlacementProperty.OverrideMetadata(typeof(DependencyObject),
           new FrameworkPropertyMetadata(PlacementMode.Top));
-
         InitializeComponent();
 
         Dispatcher.ShutdownStarted += (o, e) => usrCntrlPID.Dispose();
@@ -44,10 +43,11 @@ namespace TEC_PID_Control
 
         UpdateSettings();
 
-        SimpleCircleAdorner.ShowHelpMarkers = () => Settings.Instance.ShowHelpMarkers;
-        SimpleCircleAdorner.IconBrush = (System.Windows.Media.Brush)FindResource("InfoIcon");
+        ToolTipWithAdorner.ShowHelpMarkers = () => Settings.Instance.ShowHelpMarkers;
+        ToolTipWithAdorner.IconBrush = (System.Windows.Media.Brush)FindResource("InfoIcon");
 
-        EnableHelpMarkerAdorners();
+        BuldHelpMarkerAdorners();
+        EnableTooltipsMI_Checked(null, null);
 
         KD = usrCntrlK2400.KD;
         GWPS = usrCntrlGWPS.GWPS;
@@ -62,19 +62,41 @@ namespace TEC_PID_Control
         usrCntrlPID.UpdateVIs += DllUpdateVIs;
 
       } catch (Exception e) {
-        logger?.log("Error Loading Application", e, Logger.Mode.Error, "APP");
-        MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger?.FileName ?? "<N/A>"}\n\nfor details", "Error");
+        string link = Environment.Is64BitProcess ?
+          @"https://aka.ms/vs/17/release/vc_redist.x64.exe" :
+          @"https://aka.ms/vs/17/release/vc_redist.x86.exe";
+
+        if (e.Message.Contains("0x8007007E")) {
+          logger?.log("Error Loading Application\n" +
+            "Try reinstalling application or\n" +
+            "installing the VS++ redistributtable:\n" +
+            link, e, Logger.Mode.Error, "APP");
+          var res = MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger?.FileName ?? "<N/A>"}\n\nfor details\n\n" +
+            "Try installing the VS++ redistributtable:\n" +
+            link + "\nPress Ok to download from this link", "Error", MessageBoxButton.OKCancel);
+          if (res == MessageBoxResult.OK) {
+            ProcessStartInfo psi = new ProcessStartInfo(link) { UseShellExecute = true };
+            Process p = new Process() { StartInfo = psi };
+            p.Start();
+          }
+        } else {
+          logger?.log("Error Loading Application", e, Logger.Mode.Error, "APP");
+          MessageBox.Show($"{e.Message}\n\nSee Log:\n\n{logger?.FileName ?? "<N/A>"}\n\nfor details", "Error");
+        }
         Application.Current.Shutdown();
-        //  Application.Current.Shutdown();
       }
     }
 
-    void EnableHelpMarkerAdorners()
+    void BuldHelpMarkerAdorners()
     {
-      SimpleCircleAdorner.AddToAllChilderenWithTooltip<TextBlock>(this);
-      SimpleCircleAdorner.AddToAllChilderenWithTooltip<ToggleButton>(this);
+      ToolTipWithAdorner.AddToAllChilderenWithTooltip<TextBlock>(this);
+      ToolTipWithAdorner.AddToAllChilderenWithTooltip<ToggleButton>(this);
     }
-
+    void EnableTooltips(bool enable)
+    {
+      ToolTipWithAdorner.EnableTooltip<TextBlock>(this, enable);
+      ToolTipWithAdorner.EnableTooltip<ToggleButton>(this, enable);
+    }
     void DllUpdateVIs(object sender, UsrCntrlPID.UpdateVIsEA e)
     {
       UsrCntrlGWPS[] ucga = { usrCntrlGWPS, usrCntrlGWPS2 };
@@ -189,7 +211,7 @@ namespace TEC_PID_Control
 
     void Exit(object sender, ExecutedRoutedEventArgs e) => Close();
 
-    void RefreshInterface(object s, RoutedEventArgs e) => SimpleCircleAdorner.RefreshAllSCA();
+    void RefreshInterface(object s, RoutedEventArgs e) => ToolTipWithAdorner.RefreshAllSCA();
 
     void EditSettings(object s, ExecutedRoutedEventArgs e)
     {
@@ -202,8 +224,23 @@ namespace TEC_PID_Control
     }
     void UpdateSettings()
     {
-      SimpleCircleAdorner.InactiveOppacity = Settings.Instance.Interface.HelpMarkersOpacity;
+      ToolTipWithAdorner.InactiveOppacity = Settings.Instance.Interface.HelpMarkersOpacity;
     }
+
+    void EnableTooltipsMI_Checked(object sender, RoutedEventArgs e)
+    {
+      if (Settings.Instance.ShowToolTips) {
+        EnableTooltips(true);
+      } else {
+        EnableTooltips(false);
+        if (Settings.Instance.ShowHelpMarkers) {
+          Settings.Instance.ShowHelpMarkers = false;
+          RefreshInterface(null, null);
+        }
+      }
+    }
+
+    void EBHMI_Click(object s, RoutedEventArgs e) => MessageBox.Show("Sorry, no better help available.", "Warning");
 
     //async void Set_Voltage_Click(object sender, RoutedEventArgs e)
     //{

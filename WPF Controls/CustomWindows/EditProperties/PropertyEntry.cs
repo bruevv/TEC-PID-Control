@@ -74,6 +74,7 @@ namespace CustomWindows.InternalClasses
       }
       set { if (Value is Unit) Value = value; }
     }
+    public string UnitDes => Unit?.Invariant;
     string format = null;
     public string Format => format;
     double minValue = double.NaN, maxValue = double.NaN;
@@ -144,8 +145,13 @@ namespace CustomWindows.InternalClasses
           Write(pInfo, propertySource, Value);
           InitialValue = Value;
         } catch (Exception e) {
+#if DEBUG
           MessageBox.Show($"Property '{Name}' cannot be set to '{Value}'.\n\n" +
             $"Exception '{e}'", "Error");
+#else
+          MessageBox.Show($"Property '{Name}' cannot be set to '{Value}'.\n\n" +
+            $"Exception '{e.Message}'", "Error");
+#endif
           Value = InitialValue;
         }
         NotifyPropertyChanged(nameof(HasChanged));

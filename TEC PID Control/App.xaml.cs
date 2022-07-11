@@ -56,6 +56,9 @@ namespace TEC_PID_Control
       ci.NumberFormat.NumberGroupSeparator = "";
       CultureInfo.CurrentCulture = ci;
       try {
+        if(Settings.Instance.LogFile== "<Default>") 
+          Settings.Instance.LogFile = GUtils.GenerateProgramDataFileName("Application.log");
+
         logger = new Logger(Settings.Instance.LogFile, Sets.LogMode);
       } catch (Exception ex) {
         MessageBox.Show(ex.Message, "Cannot Start Log");
@@ -71,13 +74,13 @@ namespace TEC_PID_Control
     protected override void OnExit(ExitEventArgs e)
     {
       logger?.log($"Application Closing", Logger.Mode.LogState);
-      logger?.Dispose();
 
       Settings.Instance.FirstRun = false;
       Settings.Instance.Save();
 
       mutex_AppGuid.Dispose();
 
+      logger?.Dispose();
       base.OnExit(e);
     }
     bool ShutdDownInitiated = false;

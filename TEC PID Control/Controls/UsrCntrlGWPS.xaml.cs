@@ -24,12 +24,14 @@ namespace TEC_PID_Control.Controls
     static readonly DependencyPropertyKey VoltageKey = DependencyProperty.RegisterReadOnly(nameof(Voltage), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
     static readonly DependencyPropertyKey CurrentKey = DependencyProperty.RegisterReadOnly(nameof(Current), typeof(double), typeof(UsrCntrlGWPS), new PropertyMetadata(double.NaN));
     static readonly DependencyPropertyKey IsConnectedKey = DependencyProperty.RegisterReadOnly(nameof(IsConnected), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
+    static readonly DependencyPropertyKey IsControlledKey = DependencyProperty.RegisterReadOnly(nameof(IsControlled), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
     static readonly DependencyPropertyKey IsOnKey = DependencyProperty.RegisterReadOnly(nameof(IsOn), typeof(bool), typeof(UsrCntrlGWPS), new PropertyMetadata(false));
     static readonly DependencyPropertyKey StateKey = DependencyProperty.RegisterReadOnly(nameof(State), typeof(SState), typeof(UsrCntrlGWPS), new PropertyMetadata(SState.Disconnected));
 
     public static readonly DependencyProperty VoltageProperty = VoltageKey.DependencyProperty;
     public static readonly DependencyProperty CurrentProperty = CurrentKey.DependencyProperty;
     public static readonly DependencyProperty IsConnectedProperty = IsConnectedKey.DependencyProperty;
+    public static readonly DependencyProperty IsControlledProperty = IsControlledKey.DependencyProperty;
     public static readonly DependencyProperty IsOnProperty = IsOnKey.DependencyProperty;
     public static readonly DependencyProperty StateProperty = StateKey.DependencyProperty;
 
@@ -58,6 +60,11 @@ namespace TEC_PID_Control.Controls
       protected set { SetValue(IsConnectedKey, value); }
     }
     [Category("Device")]
+    public bool IsControlled {
+      get { return (bool)GetValue(IsControlledProperty); }
+      protected set { SetValue(IsControlledKey, value); }
+    }
+    [Category("Device")]
     public bool IsOn {
       get { return (bool)GetValue(IsOnProperty); }
       protected set { SetValue(IsOnKey, value); }
@@ -74,7 +81,13 @@ namespace TEC_PID_Control.Controls
 
 
     static void IsOn_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).IsOn = (bool)e.NewValue;
-    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((UsrCntrlGWPS)d).State = (SState)e.NewValue;
+    static void State_PropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+      UsrCntrlGWPS d1 = ((UsrCntrlGWPS)d);
+      if ((d1.State & SState.Controlled) != (((SState)e.NewValue) & SState.Controlled))
+        d1.IsControlled = ((SState)e.NewValue).HasFlag(SState.Controlled);
+      d1.State = (SState)e.NewValue;
+    }
     #endregion DepPropsCB
 
     string attachedLogName = null;
@@ -101,6 +114,7 @@ namespace TEC_PID_Control.Controls
       SetBinding(Voltage_Prop, new Binding("Voltage") { Source = GWPS, Mode = BindingMode.OneWay });
       SetBinding(Current_Prop, new Binding("Current") { Source = GWPS, Mode = BindingMode.OneWay });
     }
+    public new string Name => title?.Text ?? "";
 
     void AddToLog(object s, Logger.LogFeedBEA e) => tbLog.Text += $">{e.Message}\n";
 

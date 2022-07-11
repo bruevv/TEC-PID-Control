@@ -42,7 +42,11 @@ namespace WPFControls
     /// <summary>
     /// The one should have value of "1"
     /// </summary>
-    internal protected abstract string Invariant { get; }
+    internal protected abstract string invariant { get; }
+    /// <summary>
+    /// The one should have value of "1"
+    /// </summary>
+    public string Invariant => invariant;
 
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Category("Common")]
@@ -105,7 +109,7 @@ namespace WPFControls
     protected Unit()
     {
       if (GetType() == typeof(NoUnit)) return;
-      defid = Invariant;
+      defid = invariant;
       DefVal = dic[defid];
     }
 
@@ -289,7 +293,7 @@ namespace WPFControls
 
     private NoUnit() : base() { }
 
-    internal protected override string Invariant => "";
+    internal protected override string invariant => "";
     internal protected override Dictionary<string, double> dic => null;
   }
   [AttributeUsage(AttributeTargets.Class)]
