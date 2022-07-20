@@ -39,38 +39,73 @@ namespace CSSettings
     public void RaisePropertyChanged(string pname = "") => OnPropertyChanged(this, pname);
     [XmlIgnore]
     public string FileName { get; protected set; } = null;
-    public static S LoadSettingsFile<S>(string filename = null)
-      where S : SettingsBase, new()
+    void LoadSettingsFile(string filename, bool append)
     {
-      if (string.IsNullOrEmpty(filename)) filename = GetDefaultSaveFileName(typeof(S));
+      if (string.IsNullOrEmpty(filename)) filename = GetDefaultSaveFileName(GetType());
 
       Logger.Log($"Opening Settings {filename}", Logger.Mode.Debug);
 
-      S newSettings;
-
       if (File.Exists(filename)) {
         try {
-          XmlSerializer ser = new XmlSerializer(typeof(S));
           using (Stream fs = new FileStream(filename, FileMode.Open)) {
             using (XmlReader reader = new XmlTextReader(fs)) {
-              if (ser.CanDeserialize(reader))
-                newSettings = (S)ser.Deserialize(reader);
-              else newSettings = new S();
+              ReadXml(reader, append);
             }
           }
         } catch (Exception e) {
-          Logger.Log($"Error reading settings file{filename}", e, Logger.Mode.Error);
-          newSettings = new S();
+          Logger.Log($"Error reading settings file {filename}", e, Logger.Mode.Error);
         }
       } else {
-        newSettings = new S();
+        Logger.Log($"Settings file does not exist: {filename}", Logger.Mode.AppState);
       }
 
-      newSettings.FileName = filename;
+      FileName = filename;
 
-      if (typeof(S).GetCustomAttribute<SharedPropertyAttribute>() != null) newSettings.CreateSPM();
+      if (GetType().GetCustomAttribute<SharedPropertyAttribute>() != null) CreateSPM();
+    }
+
+    public void LoadSettingsFile(string filename = null) => LoadSettingsFile(filename, true);
+    public static S LoadSettingsFile<S>(string filename = null) where S : SettingsBase, new()
+    {
+      S newSettings = new S();
+
+      newSettings.LoadSettingsFile(filename, false);
+
       return newSettings;
     }
+
+    //public static S LoadSettingsFile<S>(string filename = null)
+    //  where S : SettingsBase, new()
+    //{
+    //  if (string.IsNullOrEmpty(filename)) filename = GetDefaultSaveFileName(typeof(S));
+
+    //  Logger.Log($"Opening Settings {filename}", Logger.Mode.Debug);
+
+    //  S newSettings;
+
+    //  if (File.Exists(filename)) {
+    //    try {
+    //      XmlSerializer ser = new XmlSerializer(typeof(S));
+    //      using (Stream fs = new FileStream(filename, FileMode.Open)) {
+    //        using (XmlReader reader = new XmlTextReader(fs)) {
+    //          if (ser.CanDeserialize(reader))
+    //            newSettings = (S)ser.Deserialize(reader);
+    //          else newSettings = new S();
+    //        }
+    //      }
+    //    } catch (Exception e) {
+    //      Logger.Log($"Error reading settings file{filename}", e, Logger.Mode.Error);
+    //      newSettings = new S();
+    //    }
+    //  } else {
+    //    newSettings = new S();
+    //  }
+
+    //  newSettings.FileName = filename;
+
+    //  if (typeof(S).GetCustomAttribute<SharedPropertyAttribute>() != null) newSettings.CreateSPM();
+    //  return newSettings;
+    //}
 
     static string GetDefaultSaveFileName(Type T) => GUtils.GenerateProgramDataFileName(T.Name + ".settings");
     protected internal abstract IEnumerable<(PropertyInfo pi, SettingsBase o)> GetRecursiveProperties();
@@ -116,35 +151,8 @@ namespace CSSettings
     SharedPropertyManager sharedPropertyManager = null;
     void CreateSPM() => sharedPropertyManager = new SharedPropertyManager(this);
 
-    public XmlSchema GetSchema() => null;
 
     //static Dictionary<Type, object> TypeConverters = new Dictionary<Type, object>();
-    object GetConverter(PropertyInfo pi, bool failed = false)
-    {
-      Type t = pi.PropertyType;
-      if (!failed) {
-        if (t.IsPrimitive) {
-          return null;
-        } else {
-          ValueSerializer vs = ValueSerializer.GetSerializerFor(t);
-          if (vs != null) return vs;
-        }
-      }
-
-      List<Type> includedtypes = new List<Type>();
-
-      foreach (var xia in pi.GetCustomAttributes<XmlIncludeAttribute>())
-        includedtypes.Add(xia.Type);
-      foreach (var xia in pi.DeclaringType.GetCustomAttributes<XmlIncludeAttribute>())
-        includedtypes.Add(xia.Type);
-
-      try {
-        var xmlSerializer = new XmlSerializer(pi.PropertyType, includedtypes.ToArray());
-        return xmlSerializer;
-      } catch (Exception e) {
-        return e;
-      }
-    }
     //void FindConverter(PropertyInfo pi, bool failed = false)
     //{
     //  object output;
@@ -181,7 +189,37 @@ namespace CSSettings
     //  if (TypeConverters.ContainsKey(t)) TypeConverters[t] = output;
     //  else TypeConverters.Add(t, output);
     //}
-    public void ReadXml(XmlReader reader)
+
+    #region IXmlSerializable
+    object GetConverter(PropertyInfo pi, bool failed = false)
+    {
+      Type t = pi.PropertyType;
+      if (!failed) {
+        if (t.IsPrimitive) {
+          return null;
+        } else {
+          ValueSerializer vs = ValueSerializer.GetSerializerFor(t);
+          if (vs != null) return vs;
+        }
+      }
+
+      List<Type> includedtypes = new List<Type>();
+
+      foreach (var xia in pi.GetCustomAttributes<XmlIncludeAttribute>())
+        includedtypes.Add(xia.Type);
+      foreach (var xia in pi.DeclaringType.GetCustomAttributes<XmlIncludeAttribute>())
+        includedtypes.Add(xia.Type);
+
+      try {
+        var xmlSerializer = new XmlSerializer(pi.PropertyType, includedtypes.ToArray());
+        return xmlSerializer;
+      } catch (Exception e) {
+        return e;
+      }
+    }
+    public XmlSchema GetSchema() => null;
+    public void ReadXml(XmlReader reader) => ReadXml(reader, false);
+    public void ReadXml(XmlReader reader, bool append)
     {
       reader.MoveToContent();
       reader.ReadStartElement();
@@ -196,11 +234,12 @@ namespace CSSettings
             Type t = pa.PI.PropertyType;
             object o;
             if (typeof(SettingsBase).IsAssignableFrom(t)) {
-              XmlSerializer ser = new XmlSerializer(t);
+              o = null;
               using (XmlReader intreader = reader.ReadSubtree()) {
-                ConstructorInfo c = pa.PI.PropertyType.GetConstructor(new Type[] { });
-                o = c.Invoke(new object[] { });
-                ((IXmlSerializable)o).ReadXml(intreader);
+                SettingsBase sbo = (SettingsBase)pa.PI.GetValue(this);
+                //ConstructorInfo c = pa.PI.PropertyType.GetConstructor(new Type[] { });
+                //o = c.Invoke(new object[] { });
+                sbo.ReadXml(intreader, append);
                 reader.ReadEndElement();
               }
             } else {
@@ -240,10 +279,16 @@ TypeConverterSwitch:
                   break;
               }
             }
-            if (o != null) pa.Set(this, o);
-            else Logger.Default?.log($"Property '{name}' set to default <{pa.Get(this)}>", Logger.Mode.NoAutoPoll);
+            if (o != null) {
+              pa.Set(this, o);
+            } else if (append) {
+
+            } else {
+              Logger.Default?.log($"Property '{name}' set to default <{pa.Get(this)}>", Logger.Mode.NoAutoPoll);
+            }
           } catch { }
         } else {
+          Logger.Default?.log($"Cannot find property '{name}' in class '{GetType().FullName}'", Logger.Mode.Error);
           reader.Skip();
         }
         reader.MoveToContent();
@@ -306,6 +351,8 @@ TypeConverterSwitch:
 
       }
     }
+    #endregion IXmlSerializable
+
     protected class SharedPropertyManager
     {
       Dictionary<string, List<(object o, PropertyAccessors pa)>> AccessorsDic = null;

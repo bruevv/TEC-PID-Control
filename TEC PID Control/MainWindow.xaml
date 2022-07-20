@@ -6,7 +6,6 @@
                      xmlns:prop="clr-namespace:TEC_PID_Control.Properties"
                      xmlns:w="clr-namespace:WPFUtils;assembly=WPFUtils"
                      xmlns:av="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="av"
-                     xmlns:idd="clr-namespace:InteractiveDataDisplay.WPF;assembly=InteractiveDataDisplay.WPF"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                      xmlns:s="clr-namespace:System;assembly=System.Runtime"
                      x:Name="customWindow" x:Class="TEC_PID_Control.MainWindow" Background="Black"

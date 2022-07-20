@@ -41,10 +41,6 @@
   <Target Name="CopyFiles" AfterTargets="Build">
     <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(TargetDir)%(Filename)%(Extension)')" />
   </Target>
-  
-  <ItemGroup>
-    <PackageReference Include="InteractiveDataDisplay.NetCore.WPF" Version="1.0.2" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CSUtils\CSUtils.csproj" />
@@ -74,7 +70,7 @@
     </Page>
   </ItemGroup>
 
-  <Target Name="CopyFilesPublish" AfterTargets="Publish">
+  <Target Name="CopyFilesPublish" BeforeTargets="Publish">
     <Copy SourceFiles="@(DllFiles)" DestinationFiles="@(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" />
     <Message Text="Project File Name = $(MSBuildProjectFile)" />
     <Message Text="Copied dlls to @(DllFiles->'$(PublishDir)%(Filename)%(Extension)')" Importance="high" />
